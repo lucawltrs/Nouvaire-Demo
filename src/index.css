@@ -1,0 +1,46 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-gray-900 text-gray-100;
+  }
+}
+
+.prose-cyan {
+  --tw-prose-body: theme('colors.gray.300');
+  --tw-prose-headings: theme('colors.gray.100');
+  --tw-prose-links: theme('colors.cyan.400');
+  --tw-prose-bold: theme('colors.gray.100');
+  --tw-prose-code: theme('colors.cyan.400');
+  --tw-prose-pre-bg: theme('colors.gray.800');
+  --tw-prose-pre-code: theme('colors.gray.100');
+  --tw-prose-quotes: theme('colors.gray.300');
+  --tw-prose-quote-borders: theme('colors.cyan.500');
+}
+
+.prose-cyan h1,
+.prose-cyan h2,
+.prose-cyan h3,
+.prose-cyan h4,
+.prose-cyan h5,
+.prose-cyan h6 {
+  @apply text-gray-100 font-bold;
+}
+
+.prose-cyan a {
+  @apply text-cyan-400 hover:text-cyan-300 transition-colors;
+}
+
+.prose-cyan code {
+  @apply bg-gray-800 px-1.5 py-0.5 rounded text-cyan-400;
+}
+
+.prose-cyan pre {
+  @apply bg-gray-800 border border-gray-700 rounded-lg;
+}
+
+.prose-cyan blockquote {
+  @apply border-l-4 border-cyan-500 pl-4 italic text-gray-300;
+}
