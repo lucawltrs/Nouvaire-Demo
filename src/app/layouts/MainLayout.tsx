@@ -1,7 +1,7 @@
 import { ReactNode } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../lib/auth/useAuthStore';
-import { LayoutDashboard, FileText, LogOut, Cpu } from 'lucide-react';
+import { LayoutDashboard, FileText, LogOut, Tractor, Package, CircleUser } from 'lucide-react';
 
 interface MainLayoutProps {
   children: ReactNode;
@@ -19,6 +19,9 @@ export function MainLayout({ children }: MainLayoutProps) {
 
   const navItems = [
     { path: '/', label: 'Dashboard', icon: LayoutDashboard },
+    { path: '/producers', label: 'Producers', icon: Tractor },
+    { path: '/products', label: 'Products', icon: Package },
+    { path: '/projects', label: 'Projects', icon: CircleUser },
     { path: '/blog', label: 'Blog', icon: FileText },
   ];
 
@@ -29,12 +32,7 @@ export function MainLayout({ children }: MainLayoutProps) {
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center gap-8">
               <Link to="/" className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-gradient-to-r from-[#06b6d4] via-[#22d3ee] to-[#3b82f6] flex items-center justify-center shadow-lg shadow-cyan-500/50">
-                  <Cpu className="w-6 h-6 text-white" />
-                </div>
-                <span className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-[#06b6d4] via-[#22d3ee] to-[#3b82f6]">
-                  Wolters CMS
-                </span>
+                <img src="/assets/logo.png" alt="Wolters CMS Logo" className="w-16 h-16 object-contain" />
               </Link>
 
               <div className="flex gap-2">

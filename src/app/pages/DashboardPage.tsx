@@ -27,7 +27,7 @@ export function DashboardPage() {
           <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-[#06b6d4] via-[#22d3ee] to-[#3b82f6]">
             Dashboard
           </h1>
-          <p className="mt-2 text-gray-400">Welcome to Wolters Solutions CMS</p>
+          <p className="mt-2 text-gray-400">Welcome to Wolters Solutions Admin Panel</p>
         </div>
         <Link to="/blog/new">
           <Button>

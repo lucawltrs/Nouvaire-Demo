@@ -3,6 +3,9 @@ import { ProtectedRoute } from './lib/auth/ProtectedRoute';
 import { MainLayout } from './app/layouts/MainLayout';
 import { LoginPage } from './app/pages/LoginPage';
 import { DashboardPage } from './app/pages/DashboardPage';
+import { ProducersPage } from './app/pages/ProducersPage';
+import { ProductsPage } from './app/pages/ProductsPage';
+import { ProjectsPage } from './app/pages/ProjectsPage';
 import { BlogListPage } from './modules/blog/pages/BlogListPage';
 import { BlogEditorPage } from './modules/blog/pages/BlogEditorPage';
 import { BlogPreviewPage } from './modules/blog/pages/BlogPreviewPage';
@@ -19,6 +22,39 @@ function App() {
             <ProtectedRoute>
               <MainLayout>
                 <DashboardPage />
+              </MainLayout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/producers"
+          element={
+            <ProtectedRoute>
+              <MainLayout>
+                <ProducersPage />
+              </MainLayout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/products"
+          element={
+            <ProtectedRoute>
+              <MainLayout>
+                <ProductsPage />
+              </MainLayout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/projects"
+          element={
+            <ProtectedRoute>
+              <MainLayout>
+                <ProjectsPage />
               </MainLayout>
             </ProtectedRoute>
           }
