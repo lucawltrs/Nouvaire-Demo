@@ -1,4 +1,4 @@
-import { useState, FormEvent } from 'react';
+import { useState, FormEvent, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../lib/auth/useAuthStore';
 import { Button } from '../../components/ui/Button';
@@ -9,18 +9,28 @@ export function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
   const login = useAuthStore((state) => state.login);
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/', { replace: true });
+    }
+  }, [isAuthenticated, navigate]);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    setError('');
 
     try {
       await login(email, password);
       navigate('/');
     } catch (error) {
       console.error('Login failed:', error);
+      setError('Login fehlgeschlagen. Bitte überprüfen Sie Ihre Anmeldedaten.');
     } finally {
       setIsLoading(false);
     }
@@ -37,6 +47,12 @@ export function LoginPage() {
 
         <Card glow className="p-8">
           <form onSubmit={handleSubmit} className="space-y-6">
+            {error && (
+              <div className="bg-red-500/10 border border-red-500/50 text-red-500 px-4 py-3 rounded-lg text-sm">
+                {error}
+              </div>
+            )}
+
             <Input
               label="Email"
               type="email"
