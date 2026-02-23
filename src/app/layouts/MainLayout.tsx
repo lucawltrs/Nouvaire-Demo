@@ -1,26 +1,40 @@
-import { ReactNode } from 'react';
+import { ReactNode, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../lib/auth/useAuthStore';
-import { LayoutDashboard, FileText, LogOut, Tractor, Package, CircleUser } from 'lucide-react';
+import { LayoutDashboard, FileText, LogOut, CircleUser, ChevronDown } from 'lucide-react';
 
 interface MainLayoutProps {
   children: ReactNode;
+}
+
+interface NavItem {
+  path: string;
+  label: string;
+  icon?: any;
+  children?: { path: string; label: string }[];
 }
 
 export function MainLayout({ children }: MainLayoutProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout } = useAuthStore();
+  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
 
   const handleLogout = () => {
     logout();
     navigate('/login');
   };
 
-  const navItems = [
+  const navItems: NavItem[] = [
     { path: '/', label: 'Dashboard', icon: LayoutDashboard },
-    { path: '/producers', label: 'Producers', icon: Tractor },
-    { path: '/products', label: 'Products', icon: Package },
+    { 
+      path: '#', 
+      label: 'Eggfinder',
+      children: [
+        { path: '/products', label: 'Products' },
+        { path: '/producers', label: 'Producers' },
+      ]
+    },
     { path: '/projects', label: 'Projects', icon: CircleUser },
     { path: '/blog', label: 'Blog', icon: FileText },
   ];
@@ -38,8 +52,57 @@ export function MainLayout({ children }: MainLayoutProps) {
               <div className="flex gap-2">
                 {navItems.map((item) => {
                   const Icon = item.icon;
-                  const isActive = location.pathname === item.path ||
-                    (item.path !== '/' && location.pathname.startsWith(item.path));
+                  const isActive = item.children
+                    ? item.children.some(child => 
+                        location.pathname === child.path || location.pathname.startsWith(child.path + '/')
+                      )
+                    : location.pathname === item.path ||
+                      (item.path !== '/' && item.path !== '#' && location.pathname.startsWith(item.path));
+                  const isOpen = openDropdown === item.path;
+
+                  if (item.children) {
+                    return (
+                      <div
+                        key={item.path}
+                        className="relative"
+                        onMouseEnter={() => setOpenDropdown(item.path)}
+                        onMouseLeave={() => setOpenDropdown(null)}
+                      >
+                        <button
+                          className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
+                            isActive
+                              ? 'bg-gradient-to-r from-[#06b6d4] via-[#22d3ee] to-[#3b82f6] text-white shadow-lg shadow-cyan-500/30'
+                              : 'text-gray-400 hover:text-gray-200 hover:bg-gray-700'
+                          }`}
+                        >
+                          {Icon && <Icon size={18} />}
+                          <span className="font-medium">{item.label}</span>
+                          <ChevronDown size={16} className={`transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+                        </button>
+
+                        {isOpen && (
+                          <div className="absolute top-full left-0 mt-1 min-w-full bg-gray-800 border border-gray-700 rounded-lg shadow-lg overflow-hidden z-50 whitespace-nowrap">
+                            {item.children.map((child) => {
+                              const isChildActive = location.pathname === child.path;
+                              return (
+                                <Link
+                                  key={child.path}
+                                  to={child.path}
+                                  className={`block px-4 py-2 transition-all ${
+                                    isChildActive
+                                      ? 'bg-gradient-to-r from-[#06b6d4] via-[#22d3ee] to-[#3b82f6] text-white'
+                                      : 'text-gray-400 hover:text-gray-200 hover:bg-gray-700'
+                                  }`}
+                                >
+                                  {child.label}
+                                </Link>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  }
 
                   return (
                     <Link
@@ -51,7 +114,7 @@ export function MainLayout({ children }: MainLayoutProps) {
                           : 'text-gray-400 hover:text-gray-200 hover:bg-gray-700'
                       }`}
                     >
-                      <Icon size={18} />
+                      {Icon && <Icon size={18} />}
                       <span className="font-medium">{item.label}</span>
                     </Link>
                   );
