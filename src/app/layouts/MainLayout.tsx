@@ -1,7 +1,7 @@
 import { ReactNode, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../lib/auth/useAuthStore';
-import { LayoutDashboard, FileText, LogOut, CircleUser, ChevronDown } from 'lucide-react';
+import { LayoutDashboard, LogOut, CircleUser, ChevronDown } from 'lucide-react';
 
 interface MainLayoutProps {
   children: ReactNode;
@@ -32,11 +32,12 @@ export function MainLayout({ children }: MainLayoutProps) {
       label: 'Eggfinder',
       children: [
         { path: '/eggfinder', label: 'Dashboard' },
-        { path: '/products', label: 'Products' },
-        { path: '/producers', label: 'Producers' },
+        { path: '/products', label: 'Produkte' },
+        { path: '/categories', label: 'Kategorien' },
+        { path: '/producers', label: 'Produzenten' },
       ]
     },
-    { path: '/projects', label: 'Projects', icon: CircleUser },
+    { path: '/projects', label: 'Projekte', icon: CircleUser },
   ];
 
   return (
