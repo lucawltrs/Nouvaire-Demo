@@ -1,6 +1,7 @@
 import type { Producer, CreateProducerInput, ProducersApiResponse, ProducerApiResponse } from '../types';
+import { getConfig } from '../../../lib/config';
 
-const API_URL = import.meta.env.VITE_API_URL;
+const getApiUrl = () => getConfig().API_URL;
 
 const getAuthToken = (): string | null => {
   return localStorage.getItem('auth_token');
@@ -21,7 +22,7 @@ const authFetch = async (url: string, options: RequestInit = {}) => {
 export const producersApi = {
   async getAll(): Promise<Producer[]> {
     try {
-      const response = await authFetch(`${API_URL}/producers`);
+      const response = await authFetch(`${getApiUrl()}/producers`);
       
       if (!response.ok) {
         throw new Error('Failed to fetch producers');
@@ -37,7 +38,7 @@ export const producersApi = {
 
   async getById(id: number): Promise<Producer> {
     try {
-      const response = await authFetch(`${API_URL}/producers/${id}`);
+      const response = await authFetch(`${getApiUrl()}/producers/${id}`);
       
       if (!response.ok) {
         throw new Error('Failed to fetch producer');
@@ -53,7 +54,7 @@ export const producersApi = {
 
   async create(producer: CreateProducerInput): Promise<Producer> {
     try {
-      const response = await authFetch(`${API_URL}/producers`, {
+      const response = await authFetch(`${getApiUrl()}/producers`, {
         method: 'POST',
         body: JSON.stringify(producer),
       });
@@ -72,7 +73,7 @@ export const producersApi = {
 
   async update(id: number, producer: Partial<CreateProducerInput>): Promise<Producer> {
     try {
-      const response = await authFetch(`${API_URL}/producers/${id}`, {
+      const response = await authFetch(`${getApiUrl()}/producers/${id}`, {
         method: 'PUT',
         body: JSON.stringify(producer),
       });
@@ -91,7 +92,7 @@ export const producersApi = {
 
   async delete(id: number): Promise<void> {
     try {
-      const response = await authFetch(`${API_URL}/producers/${id}`, {
+      const response = await authFetch(`${getApiUrl()}/producers/${id}`, {
         method: 'DELETE',
       });
 

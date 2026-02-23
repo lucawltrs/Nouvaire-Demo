@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { getConfig } from '../config';
 
 interface User {
   id: number;
@@ -17,8 +18,7 @@ interface AuthStore {
   logout: () => void;
 }
 
-const API_URL = import.meta.env.VITE_API_URL;
-const TOKEN_EXPIRY_DAYS = import.meta.env.TOKEN_EXPIRY_DAYS;
+const TOKEN_EXPIRY_DAYS = 3;
 
 const isTokenValid = (): boolean => {
   const token = localStorage.getItem('auth_token');
@@ -51,7 +51,7 @@ export const useAuthStore = create<AuthStore>((set) => ({
 
   login: async (email: string, password: string) => {
     try {
-      const response = await fetch(`${API_URL}/auth/login`, {
+      const response = await fetch(`${getConfig().API_URL}/auth/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
