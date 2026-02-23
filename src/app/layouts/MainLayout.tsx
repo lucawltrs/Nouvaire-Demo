@@ -28,9 +28,10 @@ export function MainLayout({ children }: MainLayoutProps) {
   const navItems: NavItem[] = [
     { path: '/', label: 'Dashboard', icon: LayoutDashboard },
     { 
-      path: '#', 
+      path: '/eggfinder', 
       label: 'Eggfinder',
       children: [
+        { path: '/eggfinder', label: 'Dashboard' },
         { path: '/products', label: 'Products' },
         { path: '/producers', label: 'Producers' },
       ]
