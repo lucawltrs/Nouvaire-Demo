@@ -37,7 +37,6 @@ export function MainLayout({ children }: MainLayoutProps) {
       ]
     },
     { path: '/projects', label: 'Projects', icon: CircleUser },
-    { path: '/blog', label: 'Blog', icon: FileText },
   ];
 
   return (

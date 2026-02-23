@@ -4,9 +4,10 @@ import { MainLayout } from './app/layouts/MainLayout';
 import { LoginPage } from './app/pages/LoginPage';
 import { DashboardPage } from './app/pages/DashboardPage';
 import { EggfinderPage } from './app/pages/EggfinderPage';
-import { ProducersPage } from './modules/producers';
+import { ProducersPage, ProducerDetailPage } from './modules/producers';
 import { ProductsPage, ProductDetailPage } from './modules/products';
 import { ProjectsPage } from './modules/projects';
+import { CategoriesPage, CategoryDetailPage } from './modules/categories';
 
 function App() {
   return (
@@ -48,6 +49,17 @@ function App() {
         />
 
         <Route
+          path="/producers/:id"
+          element={
+            <ProtectedRoute>
+              <MainLayout>
+                <ProducerDetailPage />
+              </MainLayout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
           path="/products"
           element={
             <ProtectedRoute>
@@ -75,6 +87,28 @@ function App() {
             <ProtectedRoute>
               <MainLayout>
                 <ProjectsPage />
+              </MainLayout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/categories"
+          element={
+            <ProtectedRoute>
+              <MainLayout>
+                <CategoriesPage />
+              </MainLayout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/categories/:id"
+          element={
+            <ProtectedRoute>
+              <MainLayout>
+                <CategoryDetailPage />
               </MainLayout>
             </ProtectedRoute>
           }
