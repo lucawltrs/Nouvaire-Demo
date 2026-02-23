@@ -1,14 +1,12 @@
 import { Link } from 'react-router-dom';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
-import { Package, Tractor, Plus, TrendingUp, Users, Boxes } from 'lucide-react';
+import { Package, Tractor, Plus, TrendingUp, Users } from 'lucide-react';
 
 export function EggfinderPage() {
-  // Mock data - replace with real data stores later
   const totalProducers = 24;
   const totalProducts = 158;
   const activeProducers = 22;
-  const productsInStock = 142;
 
   const recentActivity = [
     { id: 1, type: 'producer', name: 'Bio-Hof Schmidt', date: '2026-02-22', action: 'added' },
