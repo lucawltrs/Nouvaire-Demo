@@ -1,6 +1,7 @@
 import type { Product, CreateProductInput, ProductsApiResponse, ProductApiResponse } from '../types';
+import { getConfig } from '../../../lib/config';
 
-const API_URL = import.meta.env.VITE_API_URL;
+const getApiUrl = () => getConfig().API_URL;
 
 // Helper Funktion um Token zu bekommen
 const getAuthToken = (): string | null => {
@@ -24,7 +25,7 @@ export const productsApi = {
   // GET /products - Liste aller Produkte
   async getAll(): Promise<Product[]> {
     try {
-      const response = await authFetch(`${API_URL}/products`);
+      const response = await authFetch(`${getApiUrl()}/products`);
       
       if (!response.ok) {
         throw new Error('Failed to fetch products');
@@ -41,7 +42,7 @@ export const productsApi = {
   // GET /products/:id - Einzelnes Produkt
   async getById(id: number): Promise<Product> {
     try {
-      const response = await authFetch(`${API_URL}/products/${id}`);
+      const response = await authFetch(`${getApiUrl()}/products/${id}`);
       
       if (!response.ok) {
         throw new Error('Failed to fetch product');
@@ -58,7 +59,7 @@ export const productsApi = {
   // POST /products - Neues Produkt erstellen
   async create(product: CreateProductInput): Promise<Product> {
     try {
-      const response = await authFetch(`${API_URL}/products`, {
+      const response = await authFetch(`${getApiUrl()}/products`, {
         method: 'POST',
         body: JSON.stringify(product),
       });
@@ -78,7 +79,7 @@ export const productsApi = {
   // PUT /products/:id - Produkt aktualisieren
   async update(id: number, product: Partial<CreateProductInput>): Promise<Product> {
     try {
-      const response = await authFetch(`${API_URL}/products/${id}`, {
+      const response = await authFetch(`${getApiUrl()}/products/${id}`, {
         method: 'PUT',
         body: JSON.stringify(product),
       });
@@ -98,7 +99,7 @@ export const productsApi = {
   // DELETE /products/:id - Produkt löschen
   async delete(id: number): Promise<void> {
     try {
-      const response = await authFetch(`${API_URL}/products/${id}`, {
+      const response = await authFetch(`${getApiUrl()}/products/${id}`, {
         method: 'DELETE',
       });
 

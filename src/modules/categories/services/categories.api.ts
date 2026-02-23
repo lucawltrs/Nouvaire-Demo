@@ -1,6 +1,7 @@
 import type { Category, CreateCategoryInput, CategoriesApiResponse, CategoryApiResponse } from '../types';
+import { getConfig } from '../../../lib/config';
 
-const API_URL = import.meta.env.VITE_API_URL;
+const getApiUrl = () => getConfig().API_URL;
 
 const getAuthToken = (): string | null => {
   return localStorage.getItem('auth_token');
@@ -21,7 +22,7 @@ const authFetch = async (url: string, options: RequestInit = {}) => {
 export const categoriesApi = {
   async getAll(): Promise<Category[]> {
     try {
-      const response = await authFetch(`${API_URL}/categories`);
+      const response = await authFetch(`${getApiUrl()}/categories`);
       
       if (!response.ok) {
         throw new Error('Failed to fetch categories');
@@ -37,7 +38,7 @@ export const categoriesApi = {
 
   async getById(id: number): Promise<Category> {
     try {
-      const response = await authFetch(`${API_URL}/categories/${id}`);
+      const response = await authFetch(`${getApiUrl()}/categories/${id}`);
       
       if (!response.ok) {
         throw new Error('Failed to fetch category');
@@ -53,7 +54,7 @@ export const categoriesApi = {
 
   async create(categoryData: CreateCategoryInput): Promise<Category> {
     try {
-      const response = await authFetch(`${API_URL}/categories`, {
+      const response = await authFetch(`${getApiUrl()}/categories`, {
         method: 'POST',
         body: JSON.stringify(categoryData),
       });
@@ -72,7 +73,7 @@ export const categoriesApi = {
 
   async update(id: number, categoryData: CreateCategoryInput): Promise<Category> {
     try {
-      const response = await authFetch(`${API_URL}/categories/${id}`, {
+      const response = await authFetch(`${getApiUrl()}/categories/${id}`, {
         method: 'PUT',
         body: JSON.stringify(categoryData),
       });
@@ -91,7 +92,7 @@ export const categoriesApi = {
 
   async delete(id: number): Promise<void> {
     try {
-      const response = await authFetch(`${API_URL}/categories/${id}`, {
+      const response = await authFetch(`${getApiUrl()}/categories/${id}`, {
         method: 'DELETE',
       });
 

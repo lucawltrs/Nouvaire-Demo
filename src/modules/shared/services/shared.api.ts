@@ -1,6 +1,7 @@
 import type { Producer, ProducersApiResponse, Category, CategoriesApiResponse } from '../types';
+import { getConfig } from '../../../lib/config';
 
-const API_URL = import.meta.env.VITE_API_URL;
+const getApiUrl = () => getConfig().API_URL;
 
 const getAuthToken = (): string | null => {
   return localStorage.getItem('auth_token');
@@ -21,7 +22,7 @@ const authFetch = async (url: string, options: RequestInit = {}) => {
 export const producersApi = {
   async getAll(): Promise<Producer[]> {
     try {
-      const response = await authFetch(`${API_URL}/producers`);
+      const response = await authFetch(`${getApiUrl()}/producers`);
       
       if (!response.ok) {
         throw new Error('Failed to fetch producers');
@@ -39,7 +40,7 @@ export const producersApi = {
 export const categoriesApi = {
   async getAll(): Promise<Category[]> {
     try {
-      const response = await authFetch(`${API_URL}/categories`);
+      const response = await authFetch(`${getApiUrl()}/categories`);
       
       if (!response.ok) {
         throw new Error('Failed to fetch categories');
