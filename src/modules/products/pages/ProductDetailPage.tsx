@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useProductsStore } from '../store/useProductsStore';
 import { ProductModal } from '../components/ProductModal';
+import { DeleteConfirmModal } from '../../../components/ui/DeleteConfirmModal';
 import { producersApi, categoriesApi } from '../../shared/services/shared.api';
 import type { Producer, Category } from '../../shared/types';
 import { Button } from '../../../components/ui/Button';
@@ -25,6 +26,8 @@ export function ProductDetailPage() {
   const [producer, setProducer] = useState<Producer | null>(null);
   const [category, setCategory] = useState<Category | null>(null);
   const [isLoadingMeta, setIsLoadingMeta] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -68,10 +71,19 @@ export function ProductDetailPage() {
     }
   };
 
-  const handleDelete = async () => {
-    if (selectedProduct && confirm('Möchten Sie dieses Produkt wirklich löschen?')) {
-      await deleteProduct(selectedProduct.id);
-      navigate('/products');
+  const handleDeleteClick = () => {
+    setIsDeleteModalOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (selectedProduct) {
+      setIsDeleting(true);
+      try {
+        await deleteProduct(selectedProduct.id);
+        navigate('/products');
+      } finally {
+        setIsDeleting(false);
+      }
     }
   };
 
@@ -122,7 +134,7 @@ export function ProductDetailPage() {
           <Button onClick={handleEdit}>
             Bearbeiten
           </Button>
-          <Button variant="danger" onClick={handleDelete}>
+          <Button variant="danger" onClick={handleDeleteClick}>
             Löschen
           </Button>
         </div>
@@ -214,6 +226,14 @@ export function ProductDetailPage() {
           product={selectedProduct}
         />
       )}
+
+      <DeleteConfirmModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        onConfirm={handleDeleteConfirm}
+        itemName={selectedProduct?.name || ''}
+        isLoading={isDeleting}
+      />
     </div>
   );
 }
