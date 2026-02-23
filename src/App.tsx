@@ -3,6 +3,7 @@ import { ProtectedRoute } from './lib/auth/ProtectedRoute';
 import { MainLayout } from './app/layouts/MainLayout';
 import { LoginPage } from './app/pages/LoginPage';
 import { DashboardPage } from './app/pages/DashboardPage';
+import { EggfinderPage } from './app/pages/EggfinderPage';
 import { ProducersPage } from './app/pages/ProducersPage';
 import { ProductsPage } from './app/pages/ProductsPage';
 import { ProjectsPage } from './app/pages/ProjectsPage';
@@ -22,6 +23,17 @@ function App() {
             <ProtectedRoute>
               <MainLayout>
                 <DashboardPage />
+              </MainLayout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/eggfinder"
+          element={
+            <ProtectedRoute>
+              <MainLayout>
+                <EggfinderPage />
               </MainLayout>
             </ProtectedRoute>
           }
