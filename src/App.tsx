@@ -4,12 +4,9 @@ import { MainLayout } from './app/layouts/MainLayout';
 import { LoginPage } from './app/pages/LoginPage';
 import { DashboardPage } from './app/pages/DashboardPage';
 import { EggfinderPage } from './app/pages/EggfinderPage';
-import { ProducersPage } from './app/pages/ProducersPage';
-import { ProductsPage } from './app/pages/ProductsPage';
-import { ProjectsPage } from './app/pages/ProjectsPage';
-import { BlogListPage } from './modules/blog/pages/BlogListPage';
-import { BlogEditorPage } from './modules/blog/pages/BlogEditorPage';
-import { BlogPreviewPage } from './modules/blog/pages/BlogPreviewPage';
+import { ProducersPage } from './modules/producers';
+import { ProductsPage, ProductDetailPage } from './modules/products';
+import { ProjectsPage } from './modules/projects';
 
 function App() {
   return (
@@ -62,55 +59,22 @@ function App() {
         />
 
         <Route
+          path="/products/:id"
+          element={
+            <ProtectedRoute>
+              <MainLayout>
+                <ProductDetailPage />
+              </MainLayout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
           path="/projects"
           element={
             <ProtectedRoute>
               <MainLayout>
                 <ProjectsPage />
-              </MainLayout>
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/blog"
-          element={
-            <ProtectedRoute>
-              <MainLayout>
-                <BlogListPage />
-              </MainLayout>
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/blog/new"
-          element={
-            <ProtectedRoute>
-              <MainLayout>
-                <BlogEditorPage />
-              </MainLayout>
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/blog/:id"
-          element={
-            <ProtectedRoute>
-              <MainLayout>
-                <BlogEditorPage />
-              </MainLayout>
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/blog/:id/preview"
-          element={
-            <ProtectedRoute>
-              <MainLayout>
-                <BlogPreviewPage />
               </MainLayout>
             </ProtectedRoute>
           }
