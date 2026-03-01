@@ -41,7 +41,7 @@ export function MainLayout({ children }: MainLayoutProps) {
   ];
 
   return (
-    <div className="min-h-screen bg-page">
+    <div className="min-h-screen bg-page flex flex-col">
       <nav className="bg-sidebar border-b border-border">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
@@ -141,9 +141,25 @@ export function MainLayout({ children }: MainLayoutProps) {
         </div>
       </nav>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
         {children}
       </main>
+      
+      <footer className="mt-auto border-t border-border bg-sidebar">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <p className="text-center text-sm text-gray-600">
+            Developed by{' '}
+            <a 
+              href="https://wolters-solutions.de" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="text-brand-primary hover:text-brand-hover transition-colors font-medium"
+            >
+              Wolters Solutions
+            </a>
+          </p>
+        </div>
+      </footer>
     </div>
   );
 }

@@ -37,8 +37,8 @@ export function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-page flex items-center justify-center px-4">
-      <div className="w-full max-w-md">
+    <div className="min-h-screen bg-page flex flex-col items-center justify-center px-4">
+      <div className="flex-1 w-full max-w-md flex flex-col items-center justify-center">
         <div className="text-center mb-8">
           <div className="flex justify-center">
             <img src="/assets/logo.svg" alt="4CRM Logo" className="w-32 h-32 object-contain" />
@@ -79,6 +79,22 @@ export function LoginPage() {
           </form>
         </Card>
       </div>
+      
+      <footer className="w-full border-t border-border bg-sidebar">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <p className="text-center text-sm text-gray-600">
+            Developed by{' '}
+            <a 
+              href="https://wolters-solutions.de" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="text-brand-primary hover:text-brand-hover transition-colors font-medium"
+            >
+              Wolters Solutions
+            </a>
+          </p>
+        </div>
+      </footer>
     </div>
   );
 }
