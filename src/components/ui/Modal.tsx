@@ -44,15 +44,15 @@ export function Modal({ isOpen, onClose, title, children, size = 'md' }: ModalPr
             leaveTo="opacity-0 scale-95"
           >
             <Dialog.Panel
-              className={`w-full ${sizeClasses[size]} bg-gray-800 rounded-lg border border-gray-700 shadow-xl shadow-cyan-500/10`}
+              className={`w-full ${sizeClasses[size]} bg-white rounded-lg border border-border shadow-xl`}
             >
-              <div className="flex items-center justify-between px-6 py-4 border-b border-gray-700">
-                <Dialog.Title className="text-xl font-semibold text-gray-100">
+              <div className="flex items-center justify-between px-6 py-4 border-b border-border">
+                <Dialog.Title className="text-xl font-semibold text-gray-900">
                   {title}
                 </Dialog.Title>
                 <button
                   onClick={onClose}
-                  className="text-gray-400 hover:text-gray-200 transition-colors"
+                  className="text-gray-500 hover:text-gray-900 transition-colors"
                 >
                   <X size={20} />
                 </button>
