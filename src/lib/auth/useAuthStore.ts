@@ -14,8 +14,10 @@ interface AuthStore {
   user: User | null;
   token: string | null;
   isAuthenticated: boolean;
+  isCheckingAuth: boolean;
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
+  checkAuth: () => Promise<void>;
 }
 
 const TOKEN_EXPIRY_DAYS = 3;
@@ -48,6 +50,50 @@ export const useAuthStore = create<AuthStore>((set) => ({
   user: null,
   token: isTokenValid() ? localStorage.getItem('auth_token') : null,
   isAuthenticated: isTokenValid(),
+  isCheckingAuth: false,
+
+  checkAuth: async () => {
+    const token = localStorage.getItem('auth_token');
+    
+    if (!token || !isTokenValid()) {
+      clearToken();
+      set({ user: null, token: null, isAuthenticated: false, isCheckingAuth: false });
+      return;
+    }
+
+    set({ isCheckingAuth: true });
+
+    try {
+      const response = await fetch(`${getConfig().API_URL}/auth/check`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Auth check failed');
+      }
+
+      const data = await response.json();
+
+      if (data.status === 'success' && data.data?.user) {
+        set({ 
+          user: data.data.user, 
+          token, 
+          isAuthenticated: true,
+          isCheckingAuth: false 
+        });
+      } else {
+        throw new Error('Invalid response');
+      }
+    } catch (error) {
+      console.error('Auth check error:', error);
+      clearToken();
+      set({ user: null, token: null, isAuthenticated: false, isCheckingAuth: false });
+    }
+  },
 
   login: async (email: string, password: string) => {
     try {

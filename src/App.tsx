@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { ProtectedRoute } from './lib/auth/ProtectedRoute';
 import { MainLayout } from './app/layouts/MainLayout';
@@ -8,8 +9,15 @@ import { ProducersPage, ProducerDetailPage } from './modules/producers';
 import { ProductsPage, ProductDetailPage } from './modules/products';
 import { ProjectsPage } from './modules/projects';
 import { CategoriesPage, CategoryDetailPage } from './modules/categories';
+import { useAuthStore } from './lib/auth/useAuthStore';
 
 function App() {
+  const checkAuth = useAuthStore((state) => state.checkAuth);
+
+  useEffect(() => {
+    checkAuth();
+  }, [checkAuth]);
+
   return (
     <BrowserRouter>
       <Routes>

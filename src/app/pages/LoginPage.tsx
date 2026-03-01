@@ -37,12 +37,13 @@ export function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-900 flex items-center justify-center px-4">
+    <div className="min-h-screen bg-page flex items-center justify-center px-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <div className="flex justify-center">
-            <img src="/assets/logo.png" alt="Wolters Solutions Logo" className="w-48 h-48 object-contain" />
+            <img src="/assets/logo.svg" alt="4CRM Logo" className="w-32 h-32 object-contain" />
           </div>
+          <h1 className="mt-4 text-3xl font-bold text-gray-900">4CRM Systems</h1>
         </div>
 
         <Card glow className="p-8">

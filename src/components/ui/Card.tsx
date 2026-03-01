@@ -10,10 +10,10 @@ interface CardProps {
 export function Card({ children, className = '', hover = false, glow = false }: CardProps) {
   return (
     <div
-      className={`bg-gray-800 rounded-lg border border-gray-700 ${
-        glow ? 'shadow-lg shadow-cyan-500/10' : ''
+      className={`bg-card rounded-lg border border-border ${
+        glow ? 'shadow-md' : 'shadow-sm'
       } ${
-        hover ? 'transition-all duration-200 hover:border-cyan-500/50 hover:shadow-lg hover:shadow-cyan-500/20' : ''
+        hover ? 'transition-all duration-200 hover:border-brand-500 hover:shadow-lg' : ''
       } ${className}`}
     >
       {children}

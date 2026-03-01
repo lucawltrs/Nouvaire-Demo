@@ -132,14 +132,14 @@ export function ProducerDetailPage() {
 
               <div>
                 <h3 className="text-sm font-semibold text-gray-400 mb-2">📞 Telefon</h3>
-                <a href={`tel:${selectedProducer.phone}`} className="text-cyan-400 hover:text-cyan-300">
+                <a href={`tel:${selectedProducer.phone}`} className="text-brand-400 hover:text-brand-300">
                   {selectedProducer.phone}
                 </a>
               </div>
 
               <div>
                 <h3 className="text-sm font-semibold text-gray-400 mb-2">📧 E-Mail</h3>
-                <a href={`mailto:${selectedProducer.email}`} className="text-cyan-400 hover:text-cyan-300">
+                <a href={`mailto:${selectedProducer.email}`} className="text-brand-400 hover:text-brand-300">
                   {selectedProducer.email}
                 </a>
               </div>
@@ -150,7 +150,7 @@ export function ProducerDetailPage() {
                   href={selectedProducer.website} 
                   target="_blank" 
                   rel="noopener noreferrer"
-                  className="text-cyan-400 hover:text-cyan-300"
+                  className="text-brand-400 hover:text-brand-300"
                 >
                   {selectedProducer.website}
                 </a>
