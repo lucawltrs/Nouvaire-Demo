@@ -38,18 +38,18 @@ export function LoginPage() {
 
   return (
     <div className="min-h-screen bg-page flex flex-col items-center justify-center px-4">
-      <div className="flex-1 w-full max-w-md flex flex-col items-center justify-center">
-        <div className="text-center mb-8">
+      <div className="flex-1 w-full max-w-md flex flex-col items-center justify-center py-8">
+        <div className="text-center mb-6 sm:mb-8">
           <div className="flex justify-center">
-            <img src="/assets/logo.svg" alt="4CRM Logo" className="w-32 h-32 object-contain" />
+            <img src="/assets/logo.svg" alt="4CRM Logo" className="w-24 h-24 sm:w-32 sm:h-32 object-contain" />
           </div>
-          <h1 className="mt-4 text-3xl font-bold text-gray-900">4CRM Systems</h1>
+          <h1 className="mt-4 text-2xl sm:text-3xl font-bold text-gray-900">4CRM Systems</h1>
         </div>
 
-        <Card glow className="p-8">
-          <form onSubmit={handleSubmit} className="space-y-6">
+        <Card glow className="p-6 sm:p-8 w-full">
+          <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
             {error && (
-              <div className="bg-red-500/10 border border-red-500/50 text-red-500 px-4 py-3 rounded-lg text-sm">
+              <div className="bg-red-500/10 border border-red-500/50 text-red-500 px-4 py-3 rounded-lg text-xs sm:text-sm">
                 {error}
               </div>
             )}

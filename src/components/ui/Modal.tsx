@@ -44,20 +44,20 @@ export function Modal({ isOpen, onClose, title, children, size = 'md' }: ModalPr
             leaveTo="opacity-0 scale-95"
           >
             <Dialog.Panel
-              className={`w-full ${sizeClasses[size]} bg-white rounded-lg border border-border shadow-xl`}
+              className={`w-full ${sizeClasses[size]} bg-white rounded-lg border border-border shadow-xl max-h-[90vh] flex flex-col`}
             >
-              <div className="flex items-center justify-between px-6 py-4 border-b border-border">
-                <Dialog.Title className="text-xl font-semibold text-gray-900">
+              <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-border">
+                <Dialog.Title className="text-lg sm:text-xl font-semibold text-gray-900">
                   {title}
                 </Dialog.Title>
                 <button
                   onClick={onClose}
-                  className="text-gray-500 hover:text-gray-900 transition-colors"
+                  className="text-gray-500 hover:text-gray-900 transition-colors shrink-0 ml-4"
                 >
                   <X size={20} />
                 </button>
               </div>
-              <div className="p-6">{children}</div>
+              <div className="p-4 sm:p-6 overflow-y-auto">{children}</div>
             </Dialog.Panel>
           </Transition.Child>
         </div>
