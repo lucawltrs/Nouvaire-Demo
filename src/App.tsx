@@ -4,11 +4,12 @@ import { ProtectedRoute } from './lib/auth/ProtectedRoute';
 import { MainLayout } from './app/layouts/MainLayout';
 import { LoginPage } from './app/pages/LoginPage';
 import { DashboardPage } from './app/pages/DashboardPage';
-import { EggfinderPage } from './app/pages/EggfinderPage';
-import { ProducersPage, ProducerDetailPage } from './modules/producers';
-import { ProductsPage, ProductDetailPage } from './modules/products';
-import { ProjectsPage } from './modules/projects';
-import { CategoriesPage, CategoryDetailPage } from './modules/categories';
+import FourBasedPage from './app/pages/FourBasedPage';
+import FourBasedModelsPage from './app/pages/FourBasedModelsPage';
+import { FourBasedModelDetailPage } from './modules/4based/pages/FourBasedModelDetailPage';
+import { FourBasedModelStatisticsPage } from './modules/4based/pages/FourBasedModelStatisticsPage';
+import { FourBasedModelChatsPage } from './modules/4based/pages/FourBasedModelChatsPage';
+import { FourBasedModelSingleChatPage } from './modules/4based/pages/FourBasedModelSingleChatPage';
 import { useAuthStore } from './lib/auth/useAuthStore';
 
 function App() {
@@ -34,95 +35,67 @@ function App() {
           }
         />
 
-        <Route
-          path="/eggfinder"
-          element={
-            <ProtectedRoute>
-              <MainLayout>
-                <EggfinderPage />
-              </MainLayout>
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/producers"
-          element={
-            <ProtectedRoute>
-              <MainLayout>
-                <ProducersPage />
-              </MainLayout>
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/producers/:id"
-          element={
-            <ProtectedRoute>
-              <MainLayout>
-                <ProducerDetailPage />
-              </MainLayout>
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/products"
-          element={
-            <ProtectedRoute>
-              <MainLayout>
-                <ProductsPage />
-              </MainLayout>
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/products/:id"
-          element={
-            <ProtectedRoute>
-              <MainLayout>
-                <ProductDetailPage />
-              </MainLayout>
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/projects"
-          element={
-            <ProtectedRoute>
-              <MainLayout>
-                <ProjectsPage />
-              </MainLayout>
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/categories"
-          element={
-            <ProtectedRoute>
-              <MainLayout>
-                <CategoriesPage />
-              </MainLayout>
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/categories/:id"
-          element={
-            <ProtectedRoute>
-              <MainLayout>
-                <CategoryDetailPage />
-              </MainLayout>
-            </ProtectedRoute>
-          }
-        />
-
         <Route path="*" element={<Navigate to="/" replace />} />
+          <Route
+            path="/4based"
+            element={
+              <ProtectedRoute>
+                <MainLayout>
+                  <FourBasedPage />
+                </MainLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/4based/models"
+            element={
+              <ProtectedRoute>
+                <MainLayout>
+                  <FourBasedModelsPage />
+                </MainLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/4based/models/:fourbasedId"
+            element={
+              <ProtectedRoute>
+                <MainLayout>
+                  <FourBasedModelDetailPage />
+                </MainLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/4based/models/:fourbasedId/statistics"
+            element={
+              <ProtectedRoute>
+                <MainLayout>
+                  <FourBasedModelStatisticsPage />
+                </MainLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/4based/models/:fourbasedId/chats"
+            element={
+              <ProtectedRoute>
+                <MainLayout>
+                  <FourBasedModelChatsPage />
+                </MainLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/4based/models/:fourbasedId/chats/:chatId"
+            element={
+              <ProtectedRoute>
+                <MainLayout>
+                  <FourBasedModelSingleChatPage />
+                </MainLayout>
+              </ProtectedRoute>
+            }
+          />
       </Routes>
     </BrowserRouter>
   );
