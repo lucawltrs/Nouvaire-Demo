@@ -29,7 +29,7 @@ export function MainLayout({ children }: MainLayoutProps) {
   const navItems: NavItem[] = [
     { path: '/', label: 'Dashboard', icon: LayoutDashboard },
     { path: '/accounts', label: 'Accounts', icon: Users },
-    { path: '/chats', label: 'Chats', icon: MessagesSquare },
+    { path: '/inbox', label: 'Inbox', icon: MessagesSquare },
     { path: '/performance', label: 'Performance', icon: BarChart3 },
     { path: '/settings', label: 'Settings', icon: Settings },
   ];

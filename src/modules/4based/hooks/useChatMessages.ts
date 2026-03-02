@@ -6,6 +6,29 @@ import {
 
 const PAGE_SIZE = 20;
 
+// ---------------------------------------------------------------------------
+// Module-level cache so messages survive chat switches within the same session.
+// Key format: `${fourbasedId}:${chatId}`
+// ---------------------------------------------------------------------------
+interface CacheEntry {
+  messages: FourBasedChatMessage[];
+  nextOffset: number;
+  hasMore: boolean;
+}
+
+const _cache = new Map<string, CacheEntry>();
+
+const cacheKey = (fourbasedId: string, chatId: string) => `${fourbasedId}:${chatId}`;
+
+const readCache = (fourbasedId?: string, chatId?: string): CacheEntry | undefined => {
+  if (!fourbasedId || !chatId) return undefined;
+  return _cache.get(cacheKey(fourbasedId, chatId));
+};
+
+const writeCache = (fourbasedId: string, chatId: string, entry: CacheEntry) => {
+  _cache.set(cacheKey(fourbasedId, chatId), entry);
+};
+
 const toTime = (message: FourBasedChatMessage) => {
   const raw = message.created_at ?? message.updated_at;
 
@@ -54,6 +77,18 @@ export function useChatMessages(fourbasedId?: string, chatId?: string) {
       return;
     }
 
+    // ---------- cache hit: restore instantly without a network request ----------
+    const cached = readCache(fourbasedId, chatId);
+    if (cached) {
+      setMessages(cached.messages);
+      nextOffsetRef.current = cached.nextOffset;
+      setHasMore(cached.hasMore);
+      setError(null);
+      setLoadOlderError(null);
+      return;
+    }
+    // --------------------------------------------------------------------------
+
     setIsInitialLoading(true);
     setError(null);
     setLoadOlderError(null);
@@ -68,11 +103,15 @@ export function useChatMessages(fourbasedId?: string, chatId?: string) {
       });
 
       const ascending = [...(result.response ?? [])].reverse();
-      // UI remains chronological ascending (oldest -> newest).
-      setMessages(mergeChronological([], ascending));
+      const merged = mergeChronological([], ascending);
+      const nextOffset = result.pagination?.next_offset ?? PAGE_SIZE;
+      const hasMorePages = Boolean(result.pagination?.has_more);
 
-      nextOffsetRef.current = result.pagination?.next_offset ?? PAGE_SIZE;
-      setHasMore(Boolean(result.pagination?.has_more));
+      setMessages(merged);
+      nextOffsetRef.current = nextOffset;
+      setHasMore(hasMorePages);
+
+      writeCache(fourbasedId, chatId, { messages: merged, nextOffset, hasMore: hasMorePages });
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Fehler beim Laden der Nachrichten';
       setError(message);
@@ -108,15 +147,20 @@ export function useChatMessages(fourbasedId?: string, chatId?: string) {
 
       const ascendingOlder = [...(result.response ?? [])].reverse();
       let prependedCount = 0;
+      const newNextOffset = result.pagination?.next_offset ?? nextOffsetRef.current + PAGE_SIZE;
+      const newHasMore = Boolean(result.pagination?.has_more);
 
       setMessages((prev) => {
         const merged = mergeChronological(prev, ascendingOlder);
         prependedCount = Math.max(0, merged.length - prev.length);
+        if (fourbasedId && chatId) {
+          writeCache(fourbasedId, chatId, { messages: merged, nextOffset: newNextOffset, hasMore: newHasMore });
+        }
         return merged;
       });
 
-      nextOffsetRef.current = result.pagination?.next_offset ?? nextOffsetRef.current + PAGE_SIZE;
-      setHasMore(Boolean(result.pagination?.has_more));
+      nextOffsetRef.current = newNextOffset;
+      setHasMore(newHasMore);
 
       // Used by caller to keep scroll position stable after prepend.
       return prependedCount;
@@ -131,8 +175,19 @@ export function useChatMessages(fourbasedId?: string, chatId?: string) {
   }, [chatId, fourbasedId, hasMore]);
 
   const appendLocalMessage = useCallback((message: FourBasedChatMessage) => {
-    setMessages((prev) => mergeChronological(prev, [message]));
-  }, []);
+    setMessages((prev) => {
+      const merged = mergeChronological(prev, [message]);
+      if (fourbasedId && chatId) {
+        const cached = readCache(fourbasedId, chatId);
+        writeCache(fourbasedId, chatId, {
+          messages: merged,
+          nextOffset: cached?.nextOffset ?? nextOffsetRef.current,
+          hasMore: cached?.hasMore ?? false,
+        });
+      }
+      return merged;
+    });
+  }, [fourbasedId, chatId]);
 
   return {
     messages,

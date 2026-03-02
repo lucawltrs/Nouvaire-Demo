@@ -4,6 +4,8 @@ import { ProtectedRoute } from './lib/auth/ProtectedRoute';
 import { MainLayout } from './app/layouts/MainLayout';
 import { LoginPage } from './app/pages/LoginPage';
 import { DashboardPage } from './app/pages/DashboardPage';
+import { InboxPage } from './app/pages/InboxPage';
+import { InboxChatPage } from './app/pages/InboxChatPage';
 import FourBasedPage from './app/pages/FourBasedPage';
 import FourBasedModelsPage from './app/pages/FourBasedModelsPage';
 import { FourBasedModelDetailPage } from './modules/4based/pages/FourBasedModelDetailPage';
@@ -30,6 +32,28 @@ function App() {
             <ProtectedRoute>
               <MainLayout>
                 <DashboardPage />
+              </MainLayout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/inbox"
+          element={
+            <ProtectedRoute>
+              <MainLayout>
+                <InboxPage />
+              </MainLayout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/inbox/:fourbased_id/chat/:chat_id"
+          element={
+            <ProtectedRoute>
+              <MainLayout>
+                <InboxChatPage />
               </MainLayout>
             </ProtectedRoute>
           }
