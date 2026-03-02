@@ -1,16 +1,19 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
+import { Link } from 'react-router-dom';
 import { Card } from '../../components/ui/Card';
-import { Receipt, Inbox, MessageSquareText, Heart, Users, Circle, Clock, ChevronDown, AlertCircle, User } from 'lucide-react';
+import { Receipt, Inbox, MessageSquareText, Heart, Users, Circle, Clock, ChevronDown, AlertCircle, User, CheckCheck, CornerUpLeft, Loader2 } from 'lucide-react';
 import { 
   dashboardApi, 
   type DashboardAccount,
   type DashboardApiResponse,
+  type MergedUnreadChat,
   aggregateDashboard,
   mergeUnreadChats,
   formatCurrency,
   formatDate,
   formatRelativeTime,
 } from '../../modules/dashboard';
+import { ToastContainer, toast } from '../../lib/toast';
 
 type RangeDays = 7 | 30 | 90;
 
@@ -20,6 +23,7 @@ export function DashboardPage() {
   const [error, setError] = useState<string | null>(null);
   const [rangeDays, setRangeDays] = useState<RangeDays>(30);
   const [selectedAccountId, setSelectedAccountId] = useState<string>('all');
+  const [removedChatIds, setRemovedChatIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     const fetchDashboard = async () => {
@@ -28,6 +32,7 @@ export function DashboardPage() {
         setError(null);
         const data = await dashboardApi.getDashboard(rangeDays);
         setResponse(data);
+        setRemovedChatIds(new Set()); // Reset removed chats on new data
       } catch (err) {
         console.error('Failed to fetch dashboard data:', err);
         setError('Failed to load dashboard data. Please try again later.');
@@ -39,6 +44,34 @@ export function DashboardPage() {
     fetchDashboard();
   }, [rangeDays]);
 
+  // Handler to update KPIs after marking a chat as read
+  const handleChatMarkedAsRead = useCallback((chatKey: string, unreadCount: number) => {
+    setRemovedChatIds((prev) => new Set(prev).add(chatKey));
+    // Update KPIs und erzwinge neue Referenz für das Array
+    setResponse((prev) => {
+      if (!prev) return prev;
+      const updatedData = prev.data.map((account) => {
+        const chatBelongsToAccount = account.lists.latest_unread_chats.some(
+          (chat) => `${chat.fourbased_id || account.profile.fourbased_id}:${chat.chat_id}` === chatKey
+        );
+        if (!chatBelongsToAccount) return account;
+        return {
+          ...account,
+          kpis: {
+            ...account.kpis,
+            unread_chats: Math.max(0, account.kpis.unread_chats - 1),
+            unread_messages: Math.max(0, account.kpis.unread_messages - unreadCount),
+          },
+        };
+      });
+      // Neue Referenz für das Array erzwingen
+      return {
+        ...prev,
+        data: [...updatedData],
+      };
+    });
+  }, []);
+
   // Compute aggregated or single account data
   const { kpis, chats } = useMemo(() => {
     if (!response?.data) {
@@ -47,7 +80,8 @@ export function DashboardPage() {
 
     if (selectedAccountId === 'all') {
       const aggregated = aggregateDashboard(response.data);
-      const merged = mergeUnreadChats(response.data);
+      const merged = mergeUnreadChats(response.data)
+        .filter((chat) => !removedChatIds.has(`${chat.fourbased_id}:${chat.chat_id}`));
       return { kpis: aggregated, chats: merged };
     }
 
@@ -69,13 +103,17 @@ export function DashboardPage() {
           last_activity_date: account.kpis.status.last_activity_date,
         },
       },
-      chats: account.lists.latest_unread_chats.map(chat => ({
-        ...chat,
-        account_name: account.profile.name,
-        account_img_url: account.profile.img_url,
-      })).slice(0, 10),
+      chats: account.lists.latest_unread_chats
+        .map(chat => ({
+          ...chat,
+          fourbased_id: chat.fourbased_id || account.profile.fourbased_id,
+          account_name: account.profile.name,
+          account_img_url: account.profile.img_url,
+        }))
+        .filter((chat) => !removedChatIds.has(`${chat.fourbased_id}:${chat.chat_id}`))
+        .slice(0, 10),
     };
-  }, [response, selectedAccountId]);
+  }, [response, selectedAccountId, removedChatIds]);
 
   if (isLoading) {
     return (
@@ -111,6 +149,7 @@ export function DashboardPage() {
 
   return (
     <div className="space-y-8">
+      <ToastContainer />
       <DashboardHeader
         rangeDays={rangeDays}
         onRangeChange={setRangeDays}
@@ -130,7 +169,8 @@ export function DashboardPage() {
       {chats.length > 0 && (
         <LatestChatsSection 
           chats={chats} 
-          showAccountName={selectedAccountId === 'all'} 
+          showAccountName={selectedAccountId === 'all'}
+          onChatMarkedAsRead={handleChatMarkedAsRead}
         />
       )}
 
@@ -356,49 +396,107 @@ function KpiCard({ title, value, icon: Icon, gradient, subtitle }: KpiCardProps)
 // ============================================================================
 
 interface LatestChatsSectionProps {
-  chats: Array<{
-    customer_name: string;
-    last_message_preview: string;
-    unread_count: number;
-    last_message_at: string;
-    account_name: string;
-    account_img_url?: string;
-  }>;
+  chats: MergedUnreadChat[];
   showAccountName: boolean;
+  onChatMarkedAsRead: (chatKey: string, unreadCount: number) => void;
 }
 
-function LatestChatsSection({ chats, showAccountName }: LatestChatsSectionProps) {
+function LatestChatsSection({ chats, showAccountName, onChatMarkedAsRead }: LatestChatsSectionProps) {
+  const [loadingChats, setLoadingChats] = useState<Set<string>>(new Set());
+
+  const handleMarkAsRead = async (chat: MergedUnreadChat) => {
+    const chatKey = `${chat.fourbased_id}:${chat.chat_id}`;
+    
+    console.log('Chat object:', chat);
+    console.log('fourbased_id:', chat.fourbased_id);
+    console.log('chat_id:', chat.chat_id);
+    
+    if (loadingChats.has(chatKey)) return;
+
+    setLoadingChats((prev) => new Set(prev).add(chatKey));
+
+    try {
+      await dashboardApi.markChatAsRead(chat.fourbased_id, chat.chat_id);
+      toast.success('Marked as read');
+      onChatMarkedAsRead(chatKey, chat.unread_count);
+    } catch (error) {
+      console.error('Failed to mark chat as read:', error);
+      toast.error('Failed to mark as read');
+    } finally {
+      setLoadingChats((prev) => {
+        const next = new Set(prev);
+        next.delete(chatKey);
+        return next;
+      });
+    }
+  };
+
   return (
     <div>
       <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4">Latest unread chats</h2>
       <Card className="divide-y divide-gray-200 bg-white border border-gray-200">
-        {chats.map((chat, index) => (
-          <div key={index} className="p-4 sm:p-6 hover:bg-gray-50 transition-colors">
-            <div className="flex items-start gap-4">
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-2 flex-wrap">
-                  <h3 className="font-semibold text-sm sm:text-base text-gray-900">{chat.customer_name}</h3>
-                  {chat.unread_count > 0 && (
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#ED4C27] text-white shrink-0">
-                      {chat.unread_count} new
-                    </span>
-                  )}
-                  {showAccountName && (
-                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700 shrink-0">
-                      <Avatar src={chat.account_img_url} alt={chat.account_name} size="sm" />
-                      <span>{chat.account_name}</span>
-                    </span>
-                  )}
+        {chats.map((chat) => {
+          const chatKey = `${chat.fourbased_id}:${chat.chat_id}`;
+          const isLoading = loadingChats.has(chatKey);
+          
+          return (
+            <div key={chatKey} className="p-4 sm:p-6 hover:bg-gray-50 transition-colors">
+              <div className="flex items-start gap-4">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-2 flex-wrap">
+                    <h3 className="font-semibold text-sm sm:text-base text-gray-900">{chat.customer_name}</h3>
+                    {chat.unread_count > 0 && (
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#ED4C27] text-white shrink-0">
+                        {chat.unread_count} new
+                      </span>
+                    )}
+                    {showAccountName && (
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700 shrink-0">
+                        <Avatar src={chat.account_img_url} alt={chat.account_name} size="sm" />
+                        <span>{chat.account_name}</span>
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs sm:text-sm text-gray-600 line-clamp-2 mb-2">{chat.last_message_preview}</p>
+                  <div className="flex items-center text-xs text-gray-500">
+                    <Clock size={12} className="mr-1" />
+                    {formatDate(chat.last_message_at)}
+                  </div>
                 </div>
-                <p className="text-xs sm:text-sm text-gray-600 line-clamp-2 mb-2">{chat.last_message_preview}</p>
-                <div className="flex items-center text-xs text-gray-500">
-                  <Clock size={12} className="mr-1" />
-                  {formatDate(chat.last_message_at)}
+
+                {/* Action Buttons */}
+                <div className="flex items-center gap-2 shrink-0">
+                  {/* Reply Button */}
+                  <Link
+                    to={`/4based/models/${chat.fourbased_id}/chats/${chat.chat_id}`}
+                    className="inline-flex items-center justify-center gap-1.5 px-3 py-2 text-xs sm:text-sm font-medium text-gray-700 hover:text-white bg-white hover:bg-gray-600 border border-gray-300 hover:border-gray-600 rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-1"
+                    title="Reply"
+                  >
+                    <CornerUpLeft size={16} />
+                    <span className="hidden sm:inline">Reply</span>
+                  </Link>
+
+                  {/* Mark as Read Button */}
+                  <button
+                    onClick={() => handleMarkAsRead(chat)}
+                    disabled={isLoading}
+                    className="inline-flex items-center justify-center gap-1.5 px-3 py-2 text-xs sm:text-sm font-medium text-white bg-[#ED4C27] hover:bg-[#D8431F] border border-[#ED4C27] hover:border-[#D8431F] rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-[#ED4C27] focus:ring-offset-1 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow-md"
+                    title="Mark as read"
+                  >
+                    {isLoading ? (
+                      <Loader2 size={16} className="animate-spin" />
+                    ) : (
+                      <CheckCheck size={16} />
+                    )}
+                    <span className="hidden sm:inline">
+                      {isLoading ? 'Marking...' : 'Mark as read'}
+                    </span>
+                  </button>
                 </div>
               </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </Card>
     </div>
   );

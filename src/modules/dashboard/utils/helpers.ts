@@ -58,6 +58,7 @@ export function mergeUnreadChats(accounts: DashboardAccount[]): MergedUnreadChat
     account.lists.latest_unread_chats.forEach((chat) => {
       allChats.push({
         ...chat,
+        fourbased_id: chat.fourbased_id || account.profile.fourbased_id,
         account_name: account.profile.name,
         account_img_url: account.profile.img_url,
       });
