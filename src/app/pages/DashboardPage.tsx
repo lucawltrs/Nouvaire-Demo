@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { Card } from '../../components/ui/Card';
-import { Receipt, Inbox, MessageSquareText, Heart, Users, Circle, Clock, ChevronDown, AlertCircle, User, CheckCheck, CornerUpLeft, Loader2 } from 'lucide-react';
+import { Receipt, Inbox, MessageSquareText, Heart, Users, Circle, Clock, ChevronDown, AlertCircle, User, CheckCheck, CornerUpLeft, Loader2, RotateCcw } from 'lucide-react';
 import { 
   dashboardApi, 
   type DashboardAccount,
@@ -25,24 +25,24 @@ export function DashboardPage() {
   const [selectedAccountId, setSelectedAccountId] = useState<string>('all');
   const [removedChatIds, setRemovedChatIds] = useState<Set<string>>(new Set());
 
-  useEffect(() => {
-    const fetchDashboard = async () => {
-      try {
-        setIsLoading(true);
-        setError(null);
-        const data = await dashboardApi.getDashboard(rangeDays);
-        setResponse(data);
-        setRemovedChatIds(new Set()); // Reset removed chats on new data
-      } catch (err) {
-        console.error('Failed to fetch dashboard data:', err);
-        setError('Failed to load dashboard data. Please try again later.');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchDashboard();
+  const fetchDashboard = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      const data = await dashboardApi.getDashboard(rangeDays);
+      setResponse(data);
+      setRemovedChatIds(new Set()); // Reset removed chats on new data
+    } catch (err) {
+      console.error('Failed to fetch dashboard data:', err);
+      setError('Failed to load dashboard data. Please try again later.');
+    } finally {
+      setIsLoading(false);
+    }
   }, [rangeDays]);
+
+  useEffect(() => {
+    fetchDashboard();
+  }, [fetchDashboard]);
 
   // Handler to update KPIs after marking a chat as read
   const handleChatMarkedAsRead = useCallback((chatKey: string, unreadCount: number) => {
@@ -125,6 +125,8 @@ export function DashboardPage() {
           selectedAccountId={selectedAccountId}
           onAccountChange={setSelectedAccountId}
           meta={null}
+          onReload={fetchDashboard}
+          isLoading={isLoading}
         />
         <LoadingSkeleton />
       </div>
@@ -141,6 +143,8 @@ export function DashboardPage() {
           selectedAccountId={selectedAccountId}
           onAccountChange={setSelectedAccountId}
           meta={null}
+          onReload={fetchDashboard}
+          isLoading={isLoading}
         />
         <ErrorState error={error || 'Unknown error'} onRetry={() => window.location.reload()} />
       </div>
@@ -157,6 +161,8 @@ export function DashboardPage() {
         selectedAccountId={selectedAccountId}
         onAccountChange={setSelectedAccountId}
         meta={response.meta}
+        onReload={fetchDashboard}
+        isLoading={isLoading}
       />
 
       {kpis && (
@@ -197,6 +203,8 @@ interface DashboardHeaderProps {
   selectedAccountId: string;
   onAccountChange: (id: string) => void;
   meta: DashboardApiResponse['meta'] | null;
+  onReload: () => void;
+  isLoading: boolean;
 }
 
 function DashboardHeader({
@@ -206,6 +214,8 @@ function DashboardHeader({
   selectedAccountId,
   onAccountChange,
   meta,
+  onReload,
+  isLoading,
 }: DashboardHeaderProps) {
   const [isAccountDropdownOpen, setIsAccountDropdownOpen] = useState(false);
 
@@ -225,7 +235,16 @@ function DashboardHeader({
         )}
       </div>
 
-      <div className="flex flex-wrap gap-3">
+      <div className="flex flex-wrap gap-3 items-center">
+        {/* Reload Button */}
+        <button
+          onClick={onReload}
+          className={`flex items-center justify-center px-3 sm:px-4 py-2 bg-[#ED4C27] hover:bg-[#D8431F] border border-[#ED4C27] hover:border-[#D8431F] rounded-lg transition-colors shadow-sm hover:shadow-md ${isLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
+          title="Reload dashboard"
+          disabled={isLoading}
+        >
+          <RotateCcw size={20} className="text-white" style={isLoading ? { animation: 'spin-ccw 1s linear infinite' } : {}} />
+        </button>
         {/* Range Selector */}
         <div className="flex rounded-lg border border-gray-300 bg-white overflow-hidden">
           {([7, 30, 90] as RangeDays[]).map((range) => (
