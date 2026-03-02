@@ -26,6 +26,8 @@ export interface DashboardAccount {
 }
 
 export interface LatestUnreadChat {
+  chat_id: string;
+  fourbased_id: string;
   customer_name: string;
   last_message_preview: string;
   unread_count: number;

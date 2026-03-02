@@ -80,21 +80,6 @@ export function LoginPage() {
         </Card>
       </div>
       
-      <footer className="w-full border-t border-border bg-sidebar">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <p className="text-center text-sm text-gray-600">
-            Developed by{' '}
-            <a 
-              href="https://wolters-solutions.de" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="text-brand-primary hover:text-brand-hover transition-colors font-medium"
-            >
-              Wolters Solutions
-            </a>
-          </p>
-        </div>
-      </footer>
     </div>
   );
 }

@@ -32,4 +32,23 @@ export const dashboardApi = {
       throw error;
     }
   },
+
+  async markChatAsRead(fourbasedId: string, chatId: string): Promise<void> {
+    try {
+      const url = `${getApiUrl()}/4based/users/${fourbasedId}/chats/${chatId}/update-messages-status-received`;
+      console.log('Marking chat as read:', { fourbasedId, chatId, url });
+      
+      const response = await fourbasedFetch(url, { 
+        method: 'PUT'
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Failed to mark chat as read: ${response.status} - ${errorText}`);
+      }
+    } catch (error) {
+      console.error('Error marking chat as read:', error);
+      throw error;
+    }
+  },
 };
