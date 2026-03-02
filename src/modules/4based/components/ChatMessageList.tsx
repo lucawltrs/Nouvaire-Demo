@@ -99,7 +99,7 @@ export function ChatMessageList({
             <div
               className={`max-w-[80%] rounded-2xl px-4 py-2 border ${
                 ownMessage
-                  ? 'bg-cyan-500/20 border-cyan-500/40 text-gray-100'
+                  ? 'bg-[#ED4C27] border-[#ED4C27]/70 text-white'
                   : 'bg-gray-800 border-gray-700 text-gray-100'
               }`}
             >
@@ -113,7 +113,7 @@ export function ChatMessageList({
                 </a>
               )}
               <p className="whitespace-pre-wrap break-words">{message.message || '-'}</p>
-              <div className="mt-1 flex items-center justify-end gap-1 text-[11px] text-gray-400">
+              <div className={`mt-1 flex items-center justify-end gap-1 text-[11px] ${ownMessage ? 'text-white/70' : 'text-gray-400'}`}>
                 <span>{formatChatTimestamp(message.created_at ?? message.updated_at)}</span>
                 {status === 'sent' && <span aria-label="Gesendet">✓</span>}
                 {status === 'received' && <span className="text-blue-400" aria-label="Empfangen">✓✓</span>}
