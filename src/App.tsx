@@ -13,6 +13,8 @@ import { FourBasedModelStatisticsPage } from './modules/4based/pages/FourBasedMo
 import { FourBasedModelChatsPage } from './modules/4based/pages/FourBasedModelChatsPage';
 import { FourBasedModelSingleChatPage } from './modules/4based/pages/FourBasedModelSingleChatPage';
 import { useAuthStore } from './lib/auth/useAuthStore';
+import CloudOverviewPage from './app/pages/cloud/CloudOverviewPage';
+import CloudUserAssetsPage from './app/pages/cloud/CloudUserAssetsPage';
 
 function App() {
   const checkAuth = useAuthStore((state) => state.checkAuth);
@@ -59,7 +61,6 @@ function App() {
           }
         />
 
-        <Route path="*" element={<Navigate to="/" replace />} />
           <Route
             path="/4based"
             element={
@@ -120,6 +121,27 @@ function App() {
               </ProtectedRoute>
             }
           />
+          <Route
+            path="/cloud"
+            element={
+              <ProtectedRoute>
+                <MainLayout>
+                  <CloudOverviewPage />
+                </MainLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/cloud/users/:fourbased_id"
+            element={
+              <ProtectedRoute>
+                <MainLayout>
+                  <CloudUserAssetsPage />
+                </MainLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
   );

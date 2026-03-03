@@ -1,7 +1,7 @@
 import { ReactNode, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../lib/auth/useAuthStore';
-import { LayoutDashboard, LogOut, ChevronDown, MessagesSquare, BarChart3, Users, Settings, Menu, X } from 'lucide-react';
+import { LayoutDashboard, LogOut, ChevronDown, MessagesSquare, BarChart3, Users, Settings, Menu, X, Cloud } from 'lucide-react';
 
 interface MainLayoutProps {
   children: ReactNode;
@@ -30,6 +30,7 @@ export function MainLayout({ children }: MainLayoutProps) {
     { path: '/', label: 'Dashboard', icon: LayoutDashboard },
     { path: '/accounts', label: 'Accounts', icon: Users },
     { path: '/inbox', label: 'Inbox', icon: MessagesSquare },
+    { path: '/cloud', label: 'Cloud', icon: Cloud },
     { path: '/performance', label: 'Performance', icon: BarChart3 },
     { path: '/settings', label: 'Settings', icon: Settings },
   ];
