@@ -15,6 +15,8 @@ import { FourBasedModelSingleChatPage } from './modules/4based/pages/FourBasedMo
 import { useAuthStore } from './lib/auth/useAuthStore';
 import CloudOverviewPage from './app/pages/cloud/CloudOverviewPage';
 import CloudUserAssetsPage from './app/pages/cloud/CloudUserAssetsPage';
+import { AccountsListPage } from './app/pages/accounts/AccountsListPage';
+import { AccountDetailPage } from './app/pages/accounts/AccountDetailPage';
 
 function App() {
   const checkAuth = useAuthStore((state) => state.checkAuth);
@@ -137,6 +139,26 @@ function App() {
               <ProtectedRoute>
                 <MainLayout>
                   <CloudUserAssetsPage />
+                </MainLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/accounts"
+            element={
+              <ProtectedRoute>
+                <MainLayout>
+                  <AccountsListPage />
+                </MainLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/accounts/:fourbased_id"
+            element={
+              <ProtectedRoute>
+                <MainLayout>
+                  <AccountDetailPage />
                 </MainLayout>
               </ProtectedRoute>
             }

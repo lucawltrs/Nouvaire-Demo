@@ -182,7 +182,7 @@ export function DashboardPage() {
 
       {chats.length === 0 && (
         <Card className="p-12">
-          <div className="text-center text-gray-500">
+          <div className="text-center text-gray-400">
             <Inbox className="w-12 h-12 mx-auto mb-3 opacity-50" />
             <p>No unread chats</p>
           </div>
@@ -227,9 +227,9 @@ function DashboardHeader({
   return (
     <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
       <div>
-        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Dashboard</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-100">Dashboard</h1>
         {meta && (
-          <p className="mt-2 text-xs sm:text-sm text-gray-500">
+          <p className="mt-2 text-xs sm:text-sm text-gray-400">
             Last updated: {formatDate(meta.generated_at)} • Accounts: {meta.total_accounts}
           </p>
         )}
@@ -246,7 +246,7 @@ function DashboardHeader({
           <RotateCcw size={20} className="text-white" style={isLoading ? { animation: 'spin-ccw 1s linear infinite' } : {}} />
         </button>
         {/* Range Selector */}
-        <div className="flex rounded-lg border border-gray-300 bg-white overflow-hidden">
+        <div className="flex rounded-lg border border-slate-600 bg-card overflow-hidden">
           {([7, 30, 90] as RangeDays[]).map((range) => (
             <button
               key={range}
@@ -254,7 +254,7 @@ function DashboardHeader({
               className={`px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium transition-colors ${
                 rangeDays === range
                   ? 'bg-[#ED4C27] text-white'
-                  : 'text-gray-700 hover:bg-gray-50'
+                  : 'text-gray-300 hover:bg-slate-700'
               }`}
             >
               {range} days
@@ -266,7 +266,7 @@ function DashboardHeader({
         <div className="relative">
           <button
             onClick={() => setIsAccountDropdownOpen(!isAccountDropdownOpen)}
-            className="flex items-center gap-2 px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors min-w-0 max-w-[200px] sm:max-w-none"
+            className="flex items-center gap-2 px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-gray-300 bg-card border border-slate-600 rounded-lg hover:bg-slate-700 transition-colors min-w-0 max-w-[200px] sm:max-w-none"
           >
             <span className="truncate">{selectedLabel}</span>
             <ChevronDown size={16} className={`transition-transform shrink-0 ${isAccountDropdownOpen ? 'rotate-180' : ''}`} />
@@ -278,7 +278,7 @@ function DashboardHeader({
                 className="fixed inset-0 z-10"
                 onClick={() => setIsAccountDropdownOpen(false)}
               />
-              <div className="absolute right-0 top-full mt-2 w-56 sm:w-64 bg-white border border-gray-300 rounded-lg shadow-lg overflow-hidden z-20">
+              <div className="absolute right-0 top-full mt-2 w-56 sm:w-64 bg-card border border-slate-600 rounded-lg shadow-lg overflow-hidden z-20">
                 <button
                   onClick={() => {
                     onAccountChange('all');
@@ -287,7 +287,7 @@ function DashboardHeader({
                   className={`flex items-center gap-3 w-full text-left px-4 py-2 text-xs sm:text-sm transition-colors ${
                     selectedAccountId === 'all'
                       ? 'bg-[#ED4C27] text-white'
-                      : 'text-gray-700 hover:bg-gray-50'
+                      : 'text-gray-300 hover:bg-slate-700'
                   }`}
                 >
                   <Users size={18} className="shrink-0" />
@@ -303,7 +303,7 @@ function DashboardHeader({
                     className={`flex items-center gap-3 w-full text-left px-4 py-2 text-xs sm:text-sm transition-colors ${
                       selectedAccountId === account.profile.fourbased_id
                         ? 'bg-[#ED4C27] text-white'
-                        : 'text-gray-700 hover:bg-gray-50'
+                        : 'text-gray-300 hover:bg-slate-700'
                     }`}
                   >
                     <Avatar src={account.profile.img_url} alt={account.profile.name} size="sm" />
@@ -397,14 +397,14 @@ interface KpiCardProps {
 
 function KpiCard({ title, value, icon: Icon, gradient, subtitle }: KpiCardProps) {
   return (
-    <Card className="p-4 sm:p-6 bg-white border border-gray-200 hover:shadow-lg transition-shadow">
+    <Card className="p-4 sm:p-6 border border-slate-600 hover:shadow-lg transition-shadow">
       <div className="flex items-center justify-between mb-3 sm:mb-4">
-        <p className="text-xs sm:text-sm font-medium text-gray-600">{title}</p>
+        <p className="text-xs sm:text-sm font-medium text-gray-400">{title}</p>
         <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-gradient-to-br ${gradient} flex items-center justify-center`}>
           <Icon className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
         </div>
       </div>
-      <p className="text-xl sm:text-2xl font-bold text-gray-900 mb-1">{value}</p>
+      <p className="text-xl sm:text-2xl font-bold text-gray-100 mb-1">{value}</p>
       <p className="text-xs text-gray-500">{subtitle}</p>
     </Card>
   );
@@ -452,31 +452,31 @@ function LatestChatsSection({ chats, showAccountName, onChatMarkedAsRead }: Late
 
   return (
     <div>
-      <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4">Latest unread chats</h2>
-      <Card className="divide-y divide-gray-200 bg-white border border-gray-200">
+      <h2 className="text-xl sm:text-2xl font-bold text-gray-100 mb-4">Latest unread chats</h2>
+      <Card className="divide-y divide-slate-700 border border-slate-600">
         {chats.map((chat) => {
           const chatKey = `${chat.fourbased_id}:${chat.chat_id}`;
           const isLoading = loadingChats.has(chatKey);
           
           return (
-            <div key={chatKey} className="p-4 sm:p-6 hover:bg-gray-50 transition-colors">
+            <div key={chatKey} className="p-4 sm:p-6 hover:bg-slate-700/50 transition-colors">
               <div className="flex items-start gap-4">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-2 flex-wrap">
-                    <h3 className="font-semibold text-sm sm:text-base text-gray-900">{chat.customer_name}</h3>
+                    <h3 className="font-semibold text-sm sm:text-base text-gray-100">{chat.customer_name}</h3>
                     {chat.unread_count > 0 && (
                       <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#ED4C27] text-white shrink-0">
                         {chat.unread_count} new
                       </span>
                     )}
                     {showAccountName && (
-                      <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700 shrink-0">
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-700 text-gray-300 shrink-0">
                         <Avatar src={chat.account_img_url} alt={chat.account_name} size="sm" />
                         <span>{chat.account_name}</span>
                       </span>
                     )}
                   </div>
-                  <p className="text-xs sm:text-sm text-gray-600 line-clamp-2 mb-2">{chat.last_message_preview}</p>
+                  <p className="text-xs sm:text-sm text-gray-400 line-clamp-2 mb-2">{chat.last_message_preview}</p>
                   <div className="flex items-center text-xs text-gray-500">
                     <Clock size={12} className="mr-1" />
                     {formatDate(chat.last_message_at)}
@@ -488,7 +488,7 @@ function LatestChatsSection({ chats, showAccountName, onChatMarkedAsRead }: Late
                   {/* Reply Button */}
                   <Link
                     to={`/4based/models/${chat.fourbased_id}/chats/${chat.chat_id}`}
-                    className="inline-flex items-center justify-center gap-1.5 px-3 py-2 text-xs sm:text-sm font-medium text-gray-700 hover:text-white bg-white hover:bg-gray-600 border border-gray-300 hover:border-gray-600 rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-1"
+                    className="inline-flex items-center justify-center gap-1.5 px-3 py-2 text-xs sm:text-sm font-medium text-gray-300 hover:text-white bg-slate-700 hover:bg-slate-600 border border-slate-600 hover:border-slate-500 rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-1"
                     title="Reply"
                   >
                     <CornerUpLeft size={16} />
@@ -530,20 +530,20 @@ function LoadingSkeleton() {
     <div className="space-y-8 animate-pulse">
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
         {Array.from({ length: 6 }).map((_, i) => (
-          <div key={i} className="bg-white border border-gray-200 rounded-2xl p-6">
-            <div className="h-4 bg-gray-200 rounded w-20 mb-4"></div>
-            <div className="h-8 bg-gray-200 rounded w-24 mb-2"></div>
-            <div className="h-3 bg-gray-200 rounded w-16"></div>
+          <div key={i} className="bg-card border border-slate-700 rounded-2xl p-6">
+            <div className="h-4 bg-slate-700 rounded w-20 mb-4"></div>
+            <div className="h-8 bg-slate-700 rounded w-24 mb-2"></div>
+            <div className="h-3 bg-slate-700 rounded w-16"></div>
           </div>
         ))}
       </div>
-      <div className="bg-white border border-gray-200 rounded-2xl p-6">
-        <div className="h-6 bg-gray-200 rounded w-40 mb-4"></div>
+      <div className="bg-card border border-slate-700 rounded-2xl p-6">
+          <div className="h-6 bg-slate-700 rounded w-40 mb-4"></div>
         {Array.from({ length: 3 }).map((_, i) => (
           <div key={i} className="mb-4">
-            <div className="h-4 bg-gray-200 rounded w-32 mb-2"></div>
-            <div className="h-3 bg-gray-200 rounded w-full mb-1"></div>
-            <div className="h-3 bg-gray-200 rounded w-24"></div>
+            <div className="h-4 bg-slate-700 rounded w-32 mb-2"></div>
+            <div className="h-3 bg-slate-700 rounded w-full mb-1"></div>
+            <div className="h-3 bg-slate-700 rounded w-24"></div>
           </div>
         ))}
       </div>
@@ -562,13 +562,13 @@ interface ErrorStateProps {
 
 function ErrorState({ error, onRetry }: ErrorStateProps) {
   return (
-    <Card className="p-12 bg-white border border-gray-200">
+    <Card className="p-12 border border-slate-600">
       <div className="text-center max-w-md mx-auto">
-        <div className="w-16 h-16 rounded-full bg-red-50 flex items-center justify-center mx-auto mb-4">
+        <div className="w-16 h-16 rounded-full bg-red-900/30 flex items-center justify-center mx-auto mb-4">
           <AlertCircle className="w-8 h-8 text-red-500" />
         </div>
-        <h3 className="text-lg font-semibold text-gray-900 mb-2">Error loading dashboard</h3>
-        <p className="text-gray-600 mb-6">{error}</p>
+        <h3 className="text-lg font-semibold text-gray-100 mb-2">Error loading dashboard</h3>
+        <p className="text-gray-400 mb-6">{error}</p>
         <button
           onClick={onRetry}
           className="px-6 py-2 bg-[#ED4C27] hover:bg-[#D8431F] text-white font-medium rounded-lg transition-colors"
@@ -605,7 +605,7 @@ function Avatar({ src, alt, size = 'md' }: AvatarProps) {
 
   if (!src) {
     return (
-      <div className={`${sizeClasses[size]} rounded-full bg-gray-200 flex items-center justify-center shrink-0`}>
+      <div className={`${sizeClasses[size]} rounded-full bg-slate-700 flex items-center justify-center shrink-0`}>
         <User size={iconSizes[size]} className="text-gray-500" />
       </div>
     );
@@ -621,7 +621,7 @@ function Avatar({ src, alt, size = 'md' }: AvatarProps) {
         e.currentTarget.style.display = 'none';
         const parent = e.currentTarget.parentElement;
         if (parent) {
-          parent.innerHTML = `<div class="${sizeClasses[size]} rounded-full bg-gray-200 flex items-center justify-center shrink-0"><svg xmlns="http://www.w3.org/2000/svg" width="${iconSizes[size]}" height="${iconSizes[size]}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-gray-500"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg></div>`;
+          parent.innerHTML = `<div class="${sizeClasses[size]} rounded-full bg-slate-700 flex items-center justify-center shrink-0"><svg xmlns="http://www.w3.org/2000/svg" width="${iconSizes[size]}" height="${iconSizes[size]}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-gray-500"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg></div>`;
         }
       }}
     />

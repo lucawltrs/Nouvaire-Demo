@@ -43,7 +43,7 @@ export function MainLayout({ children }: MainLayoutProps) {
             {/* Logo */}
             <Link to="/" className="flex items-center gap-2 sm:gap-3 shrink-0">
               <img src="/assets/logo.svg" alt="4based CRM Logo" className="w-10 h-10 sm:w-12 sm:h-12 object-contain" />
-              <span className="text-xl sm:text-2xl font-bold text-gray-900">CRM</span>
+              <span className="text-xl sm:text-2xl font-bold text-gray-100">CRM</span>
             </Link>
 
             {/* Desktop Navigation */}
@@ -71,7 +71,7 @@ export function MainLayout({ children }: MainLayoutProps) {
                           className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
                             isActive
                               ? 'bg-brand-primary hover:bg-brand-hover text-white shadow-md'
-                              : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                              : 'text-gray-400 hover:text-gray-100 hover:bg-slate-700'
                           }`}
                         >
                           {Icon && <Icon size={18} />}
@@ -80,7 +80,7 @@ export function MainLayout({ children }: MainLayoutProps) {
                         </button>
 
                         {isOpen && (
-                          <div className="absolute top-full left-0 mt-1 min-w-full bg-white border border-border rounded-lg shadow-lg overflow-hidden z-50 whitespace-nowrap">
+                          <div className="absolute top-full left-0 mt-1 min-w-full bg-card border border-border rounded-lg shadow-lg overflow-hidden z-50 whitespace-nowrap">
                             {item.children.map((child) => {
                               const isChildActive = location.pathname === child.path;
                               return (
@@ -90,7 +90,7 @@ export function MainLayout({ children }: MainLayoutProps) {
                                   className={`block px-4 py-2 transition-all ${
                                     isChildActive
                                       ? 'bg-brand-primary hover:bg-brand-hover text-white'
-                                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                                      : 'text-gray-400 hover:text-gray-100 hover:bg-slate-700'
                                   }`}
                                 >
                                   {child.label}
@@ -110,7 +110,7 @@ export function MainLayout({ children }: MainLayoutProps) {
                       className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
                         isActive
                           ? 'bg-brand-primary hover:bg-brand-hover text-white shadow-md'
-                          : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                      : 'text-gray-400 hover:text-gray-100 hover:bg-slate-700'
                       }`}
                     >
                       {Icon && <Icon size={18} />}
@@ -124,12 +124,12 @@ export function MainLayout({ children }: MainLayoutProps) {
             {/* Desktop User Info */}
             <div className="hidden lg:flex items-center gap-4 shrink-0">
               <div className="text-right">
-                <p className="text-sm text-gray-500">Signed in as</p>
-                <p className="text-sm font-medium text-gray-900">{user?.email}</p>
+                <p className="text-sm text-gray-400">Signed in as</p>
+                <p className="text-sm font-medium text-gray-100">{user?.email}</p>
               </div>
               <button
                 onClick={handleLogout}
-                className="flex items-center gap-2 px-4 py-2 rounded-lg text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-all"
+                className="flex items-center gap-2 px-4 py-2 rounded-lg text-gray-400 hover:text-gray-100 hover:bg-slate-700 transition-all"
               >
                 <LogOut size={18} />
                 <span>Logout</span>
@@ -139,7 +139,7 @@ export function MainLayout({ children }: MainLayoutProps) {
             {/* Mobile Menu Button */}
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="lg:hidden p-2 rounded-lg text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-all"
+              className="lg:hidden p-2 rounded-lg text-gray-400 hover:text-gray-100 hover:bg-slate-700 transition-all"
             >
               {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
             </button>
@@ -166,7 +166,7 @@ export function MainLayout({ children }: MainLayoutProps) {
                           className={`w-full flex items-center justify-between gap-2 px-4 py-3 rounded-lg transition-all ${
                             isActive
                               ? 'bg-brand-primary text-white'
-                              : 'text-gray-600 hover:bg-gray-100'
+                              : 'text-gray-400 hover:bg-slate-700'
                           }`}
                         >
                           <div className="flex items-center gap-2">
@@ -188,7 +188,7 @@ export function MainLayout({ children }: MainLayoutProps) {
                                   className={`block px-4 py-2 rounded-lg transition-all ${
                                     isChildActive
                                       ? 'bg-brand-primary text-white'
-                                      : 'text-gray-600 hover:bg-gray-100'
+                                      : 'text-gray-400 hover:bg-slate-700'
                                   }`}
                                 >
                                   {child.label}
@@ -209,7 +209,7 @@ export function MainLayout({ children }: MainLayoutProps) {
                       className={`flex items-center gap-2 px-4 py-3 rounded-lg transition-all ${
                         isActive
                           ? 'bg-brand-primary text-white'
-                          : 'text-gray-600 hover:bg-gray-100'
+                          : 'text-gray-400 hover:bg-slate-700'
                       }`}
                     >
                       {Icon && <Icon size={18} />}
@@ -221,15 +221,15 @@ export function MainLayout({ children }: MainLayoutProps) {
                 {/* Mobile User Info & Logout */}
                 <div className="pt-4 mt-4 border-t border-border">
                   <div className="px-4 py-2">
-                    <p className="text-xs text-gray-500">Signed in as</p>
-                    <p className="text-sm font-medium text-gray-900 truncate">{user?.email}</p>
+                    <p className="text-xs text-gray-400">Signed in as</p>
+                    <p className="text-sm font-medium text-gray-100 truncate">{user?.email}</p>
                   </div>
                   <button
                     onClick={() => {
                       handleLogout();
                       setIsMobileMenuOpen(false);
                     }}
-                    className="w-full flex items-center gap-2 px-4 py-3 rounded-lg text-gray-600 hover:bg-gray-100 transition-all"
+                    className="w-full flex items-center gap-2 px-4 py-3 rounded-lg text-gray-400 hover:bg-slate-700 transition-all"
                   >
                     <LogOut size={18} />
                     <span className="font-medium">Logout</span>
@@ -247,7 +247,7 @@ export function MainLayout({ children }: MainLayoutProps) {
       
       <footer className="mt-auto border-t border-border bg-sidebar">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <p className="text-center text-xs text-gray-600">
+            <p className="text-center text-xs text-gray-400">
             Developed by{' '}
             <a 
               href="https://wolters-solutions.de" 

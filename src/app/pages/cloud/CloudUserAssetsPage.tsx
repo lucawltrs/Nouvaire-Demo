@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import {
   ArrowLeft,
   Copy,
@@ -20,7 +20,7 @@ import type { CloudAsset, CloudUser } from '../../../modules/cloud/types';
 // ── Skeleton tile ─────────────────────────────────────────────────────────────
 function SkeletonTile() {
   return (
-    <div className="rounded-xl bg-gray-100 animate-pulse aspect-square" />
+    <div className="rounded-xl bg-slate-700 animate-pulse aspect-square" />
   );
 }
 
@@ -48,7 +48,7 @@ function FilterChip({
               color: '#ED4C27',
               borderColor: 'rgba(237,76,39,0.3)',
             }
-          : { background: '#fff', color: '#374151', borderColor: '#e5e7eb' }
+          : { background: '#1E293B', color: '#9CA3AF', borderColor: '#334155' }
       }
     >
       {label}
@@ -58,7 +58,6 @@ function FilterChip({
 
 // ── Asset tile ────────────────────────────────────────────────────────────────
 function AssetTile({ asset }: { asset: CloudAsset }) {
-  const navigate = useNavigate();
 
   const handleCopy = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -85,10 +84,10 @@ function AssetTile({ asset }: { asset: CloudAsset }) {
       onKeyDown={(e) => {
         if (e.key === 'Enter') window.open(unblurUrl(asset.img_url), '_blank', 'noopener,noreferrer');
       }}
-      className="group relative rounded-xl overflow-hidden border border-gray-200 hover:shadow-lg transition-shadow cursor-pointer bg-white"
+      className="group relative rounded-xl overflow-hidden border border-slate-700 hover:shadow-lg transition-shadow cursor-pointer bg-card"
     >
       {/* Preview */}
-      <div className="aspect-square bg-gray-100 overflow-hidden">
+      <div className="aspect-square bg-slate-700 overflow-hidden">
         {asset.fileStackType === 'video' ? (
           <div className="w-full h-full flex items-center justify-center bg-gray-900 relative">
             <img
@@ -116,7 +115,7 @@ function AssetTile({ asset }: { asset: CloudAsset }) {
           type="button"
           onClick={handleCopy}
           title="Link kopieren"
-          className="w-7 h-7 bg-white/90 hover:bg-white rounded-lg flex items-center justify-center shadow text-gray-700 transition-colors"
+          className="w-7 h-7 bg-slate-700/90 hover:bg-slate-700 rounded-lg flex items-center justify-center shadow text-gray-300 transition-colors"
         >
           <Copy size={13} />
         </button>
@@ -124,14 +123,14 @@ function AssetTile({ asset }: { asset: CloudAsset }) {
           type="button"
           onClick={handleOpen}
           title="Original öffnen"
-          className="w-7 h-7 bg-white/90 hover:bg-white rounded-lg flex items-center justify-center shadow text-gray-700 transition-colors"
+          className="w-7 h-7 bg-slate-700/90 hover:bg-slate-700 rounded-lg flex items-center justify-center shadow text-gray-300 transition-colors"
         >
           <ExternalLink size={13} />
         </button>
       </div>
 
       {/* Footer */}
-      <div className="px-2 py-1.5 border-t border-gray-100">
+      <div className="px-2 py-1.5 border-t border-slate-700">
         <p className="text-[11px] text-gray-400 truncate">{relativeTime(asset.created_at)}</p>
       </div>
     </div>
@@ -144,12 +143,12 @@ function UserAvatar({ src, name, size = 'sm' }: { src?: string | null; name: str
   const iconSz = size === 'md' ? 18 : 14;
   if (!src)
     return (
-      <div className={`${cls} rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center shrink-0 text-gray-500 font-semibold text-xs`}>
+      <div className={`${cls} rounded-full bg-slate-700 border border-slate-600 flex items-center justify-center shrink-0 text-gray-400 font-semibold text-xs`}>
         <User size={iconSz} />
       </div>
     );
   return (
-    <img src={src} alt={name} className={`${cls} rounded-full object-cover shrink-0 border border-gray-200`} />
+        <img src={src} alt={name} className={`${cls} rounded-full object-cover shrink-0 border border-slate-600`} />
   );
 }
 
@@ -250,7 +249,7 @@ export default function CloudUserAssetsPage() {
       <div className="flex items-center gap-3 flex-wrap">
         <Link
           to="/cloud"
-          className="flex items-center justify-center w-9 h-9 rounded-lg border border-gray-200 bg-white shadow-sm text-gray-500 hover:text-gray-800 hover:bg-gray-50 transition-colors shrink-0"
+          className="flex items-center justify-center w-9 h-9 rounded-lg border border-slate-600 bg-card shadow-sm text-gray-400 hover:text-gray-100 hover:bg-slate-700 transition-colors shrink-0"
           aria-label="Zurück zur Übersicht"
         >
           <ArrowLeft size={16} />
@@ -260,7 +259,7 @@ export default function CloudUserAssetsPage() {
           <>
             <UserAvatar src={user.img_url} name={user.name} size="md" />
             <div className="min-w-0">
-              <h1 className="text-xl font-bold text-gray-900 truncate">{user.name}</h1>
+              <h1 className="text-xl font-bold text-gray-100 truncate">{user.name}</h1>
               {user.email && <p className="text-xs text-gray-500 truncate">{user.email}</p>}
             </div>
             {user.assets_count != null && (
@@ -284,7 +283,7 @@ export default function CloudUserAssetsPage() {
             </a>
           </>
         ) : (
-          <div className="h-6 w-40 bg-gray-200 rounded animate-pulse" />
+          <div className="h-6 w-40 bg-slate-700 rounded animate-pulse" />
         )}
       </div>
 
@@ -329,12 +328,12 @@ export default function CloudUserAssetsPage() {
       ) : error ? (
         <div className="flex flex-col items-center justify-center gap-3 py-20 text-center">
           <AlertCircle size={36} className="text-red-400" />
-          <p className="text-gray-700 font-medium">Fehler beim Laden</p>
+          <p className="text-gray-300 font-medium">Fehler beim Laden</p>
           <p className="text-sm text-gray-500">{error}</p>
           <button
             type="button"
             onClick={() => loadInitial(filter)}
-            className="flex items-center gap-2 mt-2 px-4 py-2 text-sm rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors text-gray-700"
+            className="flex items-center gap-2 mt-2 px-4 py-2 text-sm rounded-lg border border-slate-600 hover:bg-slate-700 transition-colors text-gray-300"
           >
             <RefreshCw size={14} /> Erneut versuchen
           </button>

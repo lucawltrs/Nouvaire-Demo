@@ -43,7 +43,7 @@ export function LoginPage() {
           <div className="flex justify-center">
             <img src="/assets/logo.svg" alt="4CRM Logo" className="w-24 h-24 sm:w-32 sm:h-32 object-contain" />
           </div>
-          <h1 className="mt-4 text-2xl sm:text-3xl font-bold text-gray-900">4CRM Systems</h1>
+          <h1 className="mt-4 text-2xl sm:text-3xl font-bold text-gray-100">4CRM Systems</h1>
         </div>
 
         <Card glow className="p-6 sm:p-8 w-full">

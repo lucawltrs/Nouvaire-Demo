@@ -201,7 +201,7 @@ export function InboxPage() {
           <EmptyState filter={filter} />
         ) : (
           <>
-            <Card className="divide-y divide-gray-200 bg-white border border-gray-200 overflow-hidden">
+            <Card className="divide-y divide-slate-700 border border-slate-600 overflow-hidden">
               {filteredChats.map((chat) => {
               const key = `${chat.fourbased_id}:${chat.chat_id}`;
               return (
@@ -278,8 +278,8 @@ function InboxHeader({
     <div className="flex flex-col gap-3">
       {/* Title row */}
       <div>
-        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Inbox</h1>
-        <p className="mt-1 text-xs sm:text-sm text-gray-500">Last 30 days</p>
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-100">Inbox</h1>
+        <p className="mt-1 text-xs sm:text-sm text-gray-400">Last 30 days</p>
       </div>
 
       {/* Controls row: search (left) + actions (right) */}
@@ -292,7 +292,7 @@ function InboxHeader({
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
             placeholder="Search chats…"
-            className="w-full pl-8 pr-3 py-2 text-sm bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ED4C27]/40 focus:border-[#ED4C27] placeholder-gray-400 transition-colors"
+            className="w-full pl-8 pr-3 py-2 text-sm bg-slate-800 border border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ED4C27]/40 focus:border-[#ED4C27] text-gray-100 placeholder-gray-500 transition-colors"
           />
         </div>
 
@@ -316,13 +316,13 @@ function InboxHeader({
         </button>
 
         {/* Filter tabs: All / Unread */}
-        <div className="flex rounded-lg border border-gray-300 bg-white overflow-hidden">
+        <div className="flex rounded-lg border border-slate-600 bg-card overflow-hidden">
           {(['all', 'unread'] as InboxFilter[]).map((f) => (
             <button
               key={f}
               onClick={() => onFilterChange(f)}
               className={`px-4 py-2 text-xs sm:text-sm font-medium transition-colors capitalize ${
-                filter === f ? 'bg-[#ED4C27] text-white' : 'text-gray-700 hover:bg-gray-50'
+                filter === f ? 'bg-[#ED4C27] text-white' : 'text-gray-300 hover:bg-slate-700'
               }`}
             >
               {f === 'all' ? 'All' : 'Unread'}
@@ -335,7 +335,7 @@ function InboxHeader({
           <div className="relative">
             <button
               onClick={() => setIsDropdownOpen((o) => !o)}
-              className="flex items-center gap-2 px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors max-w-[180px] sm:max-w-none"
+              className="flex items-center gap-2 px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-gray-300 bg-card border border-slate-600 rounded-lg hover:bg-slate-700 transition-colors max-w-[180px] sm:max-w-none"
             >
               <span className="truncate">{selectedAccountName}</span>
               <ChevronDown
@@ -347,7 +347,7 @@ function InboxHeader({
             {isDropdownOpen && (
               <>
                 <div className="fixed inset-0 z-10" onClick={() => setIsDropdownOpen(false)} />
-                <div className="absolute right-0 top-full mt-2 w-56 bg-white border border-gray-200 rounded-lg shadow-lg z-20 overflow-hidden">
+                <div className="absolute right-0 top-full mt-2 w-56 bg-card border border-slate-600 rounded-lg shadow-lg z-20 overflow-hidden">
                   <button
                     onClick={() => {
                       onScopeChange('all');
@@ -356,7 +356,7 @@ function InboxHeader({
                     className={`flex items-center gap-3 w-full text-left px-4 py-2.5 text-sm transition-colors ${
                       scope === 'all'
                         ? 'bg-[#ED4C27] text-white'
-                        : 'text-gray-700 hover:bg-gray-50'
+                        : 'text-gray-300 hover:bg-slate-700'
                     }`}
                   >
                     <Users size={16} className="shrink-0" />
@@ -372,7 +372,7 @@ function InboxHeader({
                       className={`flex items-center gap-3 w-full text-left px-4 py-2.5 text-sm transition-colors ${
                         scope === 'single' && selectedFourbasedId === acc.fourbased_id
                           ? 'bg-[#ED4C27] text-white'
-                          : 'text-gray-700 hover:bg-gray-50'
+                          : 'text-gray-300 hover:bg-slate-700'
                       }`}
                     >
                       <AccountAvatar src={acc.img_url} name={acc.name} size="sm" />
@@ -404,7 +404,7 @@ function ChatRow({ chat, showAccountName, isLoading, onMarkAsRead }: ChatRowProp
   return (
     <Link
       to={`/inbox/${chat.fourbased_id}/chat/${chat.chat_id}`}
-      className="flex items-center gap-3 sm:gap-4 px-4 sm:px-6 py-4 hover:bg-gray-50 transition-colors group"
+      className="flex items-center gap-3 sm:gap-4 px-4 sm:px-6 py-4 hover:bg-slate-700/50 transition-colors group"
       style={{ textDecoration: 'none', color: 'inherit' }}
     >
       {/* Avatar */}
@@ -413,7 +413,7 @@ function ChatRow({ chat, showAccountName, isLoading, onMarkAsRead }: ChatRowProp
       {/* Main content */}
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 flex-wrap mb-0.5">
-          <span className="font-semibold text-sm text-gray-900 truncate">{chat.customer_name}</span>
+          <span className="font-semibold text-sm text-gray-100 truncate">{chat.customer_name}</span>
 
           {/* Sales badge */}
           {typeof chat.sales_volume === 'number' && (
@@ -435,7 +435,7 @@ function ChatRow({ chat, showAccountName, isLoading, onMarkAsRead }: ChatRowProp
           )}
 
           {showAccountName && chat.account_name && (
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600 shrink-0">
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-slate-700 text-gray-400 shrink-0">
               <AccountAvatar src={chat.account_img_url} name={chat.account_name} size="xs" />
               {chat.account_name}
             </span>
@@ -471,7 +471,7 @@ function ChatRow({ chat, showAccountName, isLoading, onMarkAsRead }: ChatRowProp
           {/* Chat öffnen */}
           <span
             title="Chat öffnen"
-            className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-gray-500 bg-white hover:bg-gray-100 border border-gray-200 hover:border-gray-300 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-1 group-hover:border-[#ED4C27]"
+            className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-gray-400 bg-slate-700 hover:bg-slate-600 border border-slate-600 hover:border-slate-500 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-1 group-hover:border-[#ED4C27]"
             style={{ pointerEvents: 'none' }}
           >
             <MessageSquare size={14} />
@@ -506,7 +506,7 @@ function AccountAvatar({ src, name, size = 'md' }: AccountAvatarProps) {
 
     return (
       <div
-        className={`${sizeClass} rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center shrink-0 text-gray-500 font-semibold ${textClass}`}
+        className={`${sizeClass} rounded-full bg-slate-700 border border-slate-600 flex items-center justify-center shrink-0 text-gray-400 font-semibold ${textClass}`}
       >
         {initials || <User size={iconSize} />}
       </div>
@@ -531,15 +531,15 @@ function AccountAvatar({ src, name, size = 'md' }: AccountAvatarProps) {
 
 function LoadingSkeleton() {
   return (
-    <Card className="divide-y divide-gray-100 bg-white border border-gray-200 overflow-hidden animate-pulse">
+    <Card className="divide-y divide-slate-700 border border-slate-600 overflow-hidden animate-pulse">
       {Array.from({ length: 6 }).map((_, i) => (
         <div key={i} className="flex items-center gap-4 px-6 py-4">
-          <div className="w-9 h-9 rounded-full bg-gray-200 shrink-0" />
+          <div className="w-9 h-9 rounded-full bg-slate-700 shrink-0" />
           <div className="flex-1 space-y-2">
-            <div className="h-3.5 bg-gray-200 rounded w-32" />
-            <div className="h-3 bg-gray-200 rounded w-48" />
+            <div className="h-3.5 bg-slate-700 rounded w-32" />
+            <div className="h-3 bg-slate-700 rounded w-48" />
           </div>
-          <div className="h-3 bg-gray-200 rounded w-12" />
+          <div className="h-3 bg-slate-700 rounded w-12" />
         </div>
       ))}
     </Card>
@@ -552,10 +552,10 @@ function LoadingSkeleton() {
 
 function EmptyState({ filter }: { filter: InboxFilter }) {
   return (
-    <Card className="p-12 bg-white border border-gray-200">
-      <div className="text-center text-gray-400">
+    <Card className="p-12 border border-slate-600">
+      <div className="text-center text-gray-500">
         <MessageSquareOff className="w-12 h-12 mx-auto mb-3 opacity-50" />
-        <p className="font-medium text-gray-600">
+        <p className="font-medium text-gray-400">
           {filter === 'unread' ? 'No unread chats' : 'No chats found'}
         </p>
         <p className="text-sm mt-1">
@@ -572,13 +572,13 @@ function EmptyState({ filter }: { filter: InboxFilter }) {
 
 function ErrorState({ error, onRetry }: { error: string; onRetry: () => void }) {
   return (
-    <Card className="p-12 bg-white border border-gray-200">
+    <Card className="p-12 border border-slate-600">
       <div className="text-center max-w-md mx-auto">
-        <div className="w-16 h-16 rounded-full bg-red-50 flex items-center justify-center mx-auto mb-4">
+        <div className="w-16 h-16 rounded-full bg-red-900/30 flex items-center justify-center mx-auto mb-4">
           <AlertCircle className="w-8 h-8 text-red-500" />
         </div>
-        <h3 className="text-lg font-semibold text-gray-900 mb-2">Error loading inbox</h3>
-        <p className="text-gray-500 mb-6 text-sm">{error}</p>
+        <h3 className="text-lg font-semibold text-gray-100 mb-2">Error loading inbox</h3>
+        <p className="text-gray-400 mb-6 text-sm">{error}</p>
         <button
           onClick={onRetry}
           className="px-6 py-2 bg-[#ED4C27] hover:bg-[#D8431F] text-white text-sm font-medium rounded-lg transition-colors"
