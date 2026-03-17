@@ -189,6 +189,29 @@ export function useChatMessages(fourbasedId?: string, chatId?: string) {
     });
   }, [fourbasedId, chatId]);
 
+  const removeLocalMessage = useCallback((messageId: string) => {
+    setMessages((prev) => {
+      const filtered = prev.filter((m) => m._id !== messageId);
+      if (fourbasedId && chatId) {
+        const cached = readCache(fourbasedId, chatId);
+        writeCache(fourbasedId, chatId, {
+          messages: filtered,
+          nextOffset: cached?.nextOffset ?? nextOffsetRef.current,
+          hasMore: cached?.hasMore ?? false,
+        });
+      }
+      return filtered;
+    });
+  }, [fourbasedId, chatId]);
+
+  const refresh = useCallback(async () => {
+    if (!fourbasedId || !chatId) return;
+    if (fourbasedId && chatId) {
+      _cache.delete(cacheKey(fourbasedId, chatId));
+    }
+    await loadInitial();
+  }, [fourbasedId, chatId, loadInitial]);
+
   return {
     messages,
     isInitialLoading,
@@ -198,5 +221,7 @@ export function useChatMessages(fourbasedId?: string, chatId?: string) {
     hasMore,
     loadOlder,
     appendLocalMessage,
+    removeLocalMessage,
+    refresh,
   };
 }
