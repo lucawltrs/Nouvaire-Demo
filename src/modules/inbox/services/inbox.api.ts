@@ -1,4 +1,4 @@
-import type { InboxApiResponse, InboxQueryParams } from '../types';
+import type { InboxAccount, InboxApiResponse, InboxQueryParams } from '../types';
 import { getConfig } from '../../../lib/config';
 
 const getApiUrl = () => getConfig().API_URL;
@@ -40,6 +40,14 @@ export const inboxApi = {
     }
 
     return response.json() as Promise<InboxApiResponse>;
+  },
+
+  async getAccounts(): Promise<InboxAccount[]> {
+    const response = await fourbasedFetch(`${getApiUrl()}/4based/users`);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch accounts: ${response.status}`);
+    }
+    return response.json() as Promise<InboxAccount[]>;
   },
 
   async markChatAsRead(fourbasedId: string, chatId: string): Promise<void> {

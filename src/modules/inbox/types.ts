@@ -1,6 +1,13 @@
 export type InboxFilter = 'all' | 'unread';
 export type InboxScope = 'all' | 'single';
 
+export interface InboxAccount {
+  fourbased_id: string;
+  name: string;
+  img_url?: string;
+  identifier?: string;
+}
+
 export interface ChatListItem {
   chat_id: string;
   fourbased_id: string;
