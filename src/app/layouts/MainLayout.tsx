@@ -41,9 +41,9 @@ export function MainLayout({ children }: MainLayoutProps) {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
-            <Link to="/" className="flex items-center gap-2 sm:gap-3 shrink-0">
-              <img src="/assets/logo.svg" alt="4based CRM Logo" className="w-10 h-10 sm:w-12 sm:h-12 object-contain" />
-              <span className="text-xl sm:text-2xl font-bold text-gray-100">CRM</span>
+            <Link to="/" className="flex items-center gap-1 shrink-0">
+              <img src="/assets/logo-free.png" alt="Nouvaire Logo" className="w-10 h-10 sm:w-12 sm:h-12 object-contain" />
+              <span className="text-xl sm:text-2xl font-bold text-gray-100">Nouvaire</span>
             </Link>
 
             {/* Desktop Navigation */}
@@ -246,18 +246,22 @@ export function MainLayout({ children }: MainLayoutProps) {
       </main>
       
       <footer className="mt-auto border-t border-border bg-sidebar">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-            <p className="text-center text-xs text-gray-400">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
+          <p className="text-xs text-gray-400">
             Developed by{' '}
-            <a 
-              href="https://wolters-solutions.de" 
-              target="_blank" 
+            <a
+              href="https://wolters-solutions.de"
+              target="_blank"
               rel="noopener noreferrer"
               className="text-brand-primary hover:text-brand-hover transition-colors font-medium"
             >
               Wolters Solutions
             </a>
           </p>
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-slate-700 border border-slate-600 text-[11px] font-mono text-gray-400 select-none">
+            <span className="w-1.5 h-1.5 rounded-full bg-brand-primary"></span>
+            v{__APP_VERSION__}
+          </span>
         </div>
       </footer>
     </div>
