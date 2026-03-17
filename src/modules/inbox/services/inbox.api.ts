@@ -1,11 +1,10 @@
-import type { InboxApiResponse, InboxQueryParams } from '../types';
+import type { InboxAccount, InboxApiResponse, InboxQueryParams } from '../types';
 import { getConfig } from '../../../lib/config';
 
 const getApiUrl = () => getConfig().API_URL;
-const get4basedToken = () => getConfig().FOURBASED_BEARER_TOKEN;
 
 const fourbasedFetch = async (url: string, options: RequestInit = {}) => {
-  const token = get4basedToken();
+  const token = localStorage.getItem('auth_token');
   const headers = {
     'Content-Type': 'application/json',
     ...(token && { Authorization: `Bearer ${token}` }),
@@ -41,6 +40,14 @@ export const inboxApi = {
     }
 
     return response.json() as Promise<InboxApiResponse>;
+  },
+
+  async getAccounts(): Promise<InboxAccount[]> {
+    const response = await fourbasedFetch(`${getApiUrl()}/4based/users`);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch accounts: ${response.status}`);
+    }
+    return response.json() as Promise<InboxAccount[]>;
   },
 
   async markChatAsRead(fourbasedId: string, chatId: string): Promise<void> {

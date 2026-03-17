@@ -125,7 +125,7 @@ const getApiUrl = () => getConfig().API_URL;
 const API_BASE = `${getApiUrl()}/4based`;
 
 const getAuthHeaders = () => ({
-  Authorization: `Bearer ${getConfig().FOURBASED_BEARER_TOKEN}`,
+  Authorization: `Bearer ${localStorage.getItem('auth_token')}`,
   "Content-Type": "application/json",
 });
 
