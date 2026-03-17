@@ -198,6 +198,20 @@ export const fetchUserDashboard = async (fourbasedId: string) => {
   return parseJson(response) as Promise<FourBasedDashboardResult>;
 };
 
+export const sendChatMessage = async (
+  fourbasedId: string,
+  chatId: string,
+  message: string
+) => {
+  const response = await fetch(`${API_BASE}/users/${fourbasedId}/chats/${chatId}/message`, {
+    method: "POST",
+    headers: getAuthHeaders(),
+    body: JSON.stringify({ message, message_price: 0, file_stack_id: null }),
+  });
+
+  return parseJson(response);
+};
+
 export const markAllUserMessagesAsReceived = async (fourbasedId: string) => {
   const response = await fetch(`${API_BASE}/users/${fourbasedId}/chats/update-messages-status-received/bulk`, {
     method: "PUT",

@@ -1,5 +1,5 @@
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { useEffect, useState, useCallback, useMemo } from 'react';
+import { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { Card } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
@@ -11,7 +11,9 @@ import type { ChatListItem } from '../../modules/inbox/types';
 import { ToastContainer } from '../../lib/toast';
 import { useChatMessages } from '../../modules/4based/hooks/useChatMessages';
 import { ChatMessageList } from '../../modules/4based/components/ChatMessageList';
+import { sendChatMessage } from '../../modules/4based/services/4based.api';
 import type { FourBasedChatMessage } from '../../modules/4based/services/4based.api';
+import { toast } from '../../lib/toast';
 
 const formatChatTimestamp = (value?: string) => {
   if (!value) return '-';
@@ -31,6 +33,8 @@ export function InboxChatPage() {
   const [chatsError, setChatsError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [messageInput, setMessageInput] = useState('');
+  const [isSending, setIsSending] = useState(false);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const {
     messages,
@@ -41,6 +45,8 @@ export function InboxChatPage() {
     hasMore,
     loadOlder,
     appendLocalMessage,
+    removeLocalMessage,
+    refresh,
   } = useChatMessages(fourbased_id, chat_id);
 
   // activeChat is derived — no need to re-fetch when only chat_id changes
@@ -79,24 +85,47 @@ export function InboxChatPage() {
 
   const isOwnMessage = (message: FourBasedChatMessage) => message.user_id === fourbased_id;
 
-  const handleSendMessage = () => {
-    if (!fourbased_id || !chat_id || !messageInput.trim()) return;
+  const handleSendMessage = async () => {
+    if (!fourbased_id || !chat_id || !messageInput.trim() || isSending) return;
 
     const now = new Date();
     const pad = (n: number) => String(n).padStart(2, '0');
     const createdAt = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+    const tempId = `local-${now.getTime()}`;
+    const trimmed = messageInput.trim();
 
     const tempMessage: FourBasedChatMessage = {
-      _id: `local-${now.getTime()}`,
+      _id: tempId,
       chat_id,
       user_id: fourbased_id,
-      message: messageInput.trim(),
+      message: trimmed,
       created_at: createdAt,
       updated_at: createdAt,
     };
 
     appendLocalMessage(tempMessage);
     setMessageInput('');
+    setIsSending(true);
+
+    try {
+      await sendChatMessage(fourbased_id, chat_id, trimmed);
+      await refresh();
+    } catch (err) {
+      removeLocalMessage(tempId);
+      setMessageInput(trimmed);
+      const message = err instanceof Error ? err.message : 'Nachricht konnte nicht gesendet werden';
+      toast.error(message);
+    } finally {
+      setIsSending(false);
+      textareaRef.current?.focus();
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+      e.preventDefault();
+      handleSendMessage();
+    }
   };
 
   const accountName = activeChat?.account_name ?? chats[0]?.account_name ?? fourbased_id;
@@ -232,13 +261,15 @@ export function InboxChatPage() {
             <div className="p-4 border-t border-slate-700 shrink-0">
               <div className="flex items-end gap-3">
                 <Textarea
+                  ref={textareaRef}
                   value={messageInput}
                   onChange={(e) => setMessageInput(e.target.value)}
-                  placeholder="Nachricht eingeben..."
+                  onKeyDown={handleKeyDown}
+                  placeholder="Nachricht eingeben... (Strg+Enter zum Senden)"
                   rows={3}
                 />
-                <Button onClick={handleSendMessage} disabled={!messageInput.trim()}>
-                  Senden
+                <Button onClick={handleSendMessage} disabled={!messageInput.trim() || isSending}>
+                  {isSending ? 'Sendet...' : 'Senden'}
                 </Button>
               </div>
             </div>
@@ -254,7 +285,7 @@ function AccountAvatar({ src, name, size = 'md' }: { src?: string; name: string;
   const sizeClass = { sm: 'w-8 h-8', md: 'w-10 h-10' }[size];
   const iconSize = { sm: 14, md: 20 }[size];
   if (!src) {
-    const initials = name.split(' ').slice(0, 2).map((w) => w[0]?.toUpperCase() ?? '').join('');
+    const initials = (name ?? '').split(' ').slice(0, 2).map((w) => w[0]?.toUpperCase() ?? '').join('');
     return (
       <div className={`${sizeClass} rounded-full bg-slate-700 border border-slate-600 flex items-center justify-center shrink-0 text-gray-400 font-semibold text-xs`}>
         {initials || <User size={iconSize} />}

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { Button } from '../../../components/ui/Button';
 import { Card } from '../../../components/ui/Card';
@@ -7,10 +7,12 @@ import { Textarea } from '../../../components/ui/Textarea';
 import {
   fetchUserByFourBasedId,
   fetchUserChats,
+  sendChatMessage,
   FourBasedAccount,
   FourBasedChatItem,
   FourBasedChatMessage,
 } from '../services/4based.api';
+import { toast } from '../../../lib/toast';
 import { useChatMessages } from '../hooks/useChatMessages';
 import { ChatMessageList } from '../components/ChatMessageList';
 
@@ -36,7 +38,9 @@ export function FourBasedModelSingleChatPage() {
   const [account, setAccount] = useState<FourBasedAccount | null>(null);
   const [chat, setChat] = useState<FourBasedChatItem | null>(null);
   const [messageInput, setMessageInput] = useState('');
+  const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const {
     messages,
     isInitialLoading,
@@ -46,6 +50,8 @@ export function FourBasedModelSingleChatPage() {
     hasMore,
     loadOlder,
     appendLocalMessage,
+    removeLocalMessage,
+    refresh,
   } = useChatMessages(fourbasedId, chatId);
 
   const getChatPartnerName = (chatItem: FourBasedChatItem) => {
@@ -87,26 +93,49 @@ export function FourBasedModelSingleChatPage() {
 
   const isOwnMessage = (message: FourBasedChatMessage) => message.user_id === account?.fourbased_id;
 
-  const handleSendMessage = () => {
-    if (!account || !chat || !messageInput.trim()) {
+  const handleSendMessage = async () => {
+    if (!account || !chat || !messageInput.trim() || isSending) {
       return;
     }
 
     const now = new Date();
     const pad = (num: number) => String(num).padStart(2, '0');
     const createdAt = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+    const tempId = `local-${now.getTime()}`;
+    const trimmed = messageInput.trim();
 
     const tempMessage: FourBasedChatMessage = {
-      _id: `local-${now.getTime()}`,
+      _id: tempId,
       chat_id: chat._id,
       user_id: account.fourbased_id,
-      message: messageInput.trim(),
+      message: trimmed,
       created_at: createdAt,
       updated_at: createdAt,
     };
 
     appendLocalMessage(tempMessage);
     setMessageInput('');
+    setIsSending(true);
+
+    try {
+      await sendChatMessage(account.fourbased_id, chat._id, trimmed);
+      await refresh();
+    } catch (err) {
+      removeLocalMessage(tempId);
+      setMessageInput(trimmed);
+      const message = err instanceof Error ? err.message : 'Nachricht konnte nicht gesendet werden';
+      toast.error(message);
+    } finally {
+      setIsSending(false);
+      textareaRef.current?.focus();
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+      e.preventDefault();
+      handleSendMessage();
+    }
   };
 
   if (isInitialLoading) {
@@ -190,13 +219,15 @@ export function FourBasedModelSingleChatPage() {
           <div className="p-4 border-t border-gray-700 shrink-0">
             <div className="flex items-end gap-3">
               <Textarea
+                ref={textareaRef}
                 value={messageInput}
                 onChange={(e) => setMessageInput(e.target.value)}
-                placeholder="Nachricht eingeben..."
+                onKeyDown={handleKeyDown}
+                placeholder="Nachricht eingeben... (Strg+Enter zum Senden)"
                 rows={3}
               />
-              <Button onClick={handleSendMessage} disabled={!messageInput.trim()}>
-                Senden
+              <Button onClick={handleSendMessage} disabled={!messageInput.trim() || isSending}>
+                {isSending ? 'Sendet...' : 'Senden'}
               </Button>
             </div>
           </div>

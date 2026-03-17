@@ -401,7 +401,7 @@ function AccountAvatar({ src, name, size = 'md' }: AccountAvatarProps) {
   const textClass = { xs: 'text-[8px]', sm: 'text-[10px]', md: 'text-sm' }[size];
 
   if (!src) {
-    const initials = name
+    const initials = (name ?? '')
       .split(' ')
       .slice(0, 2)
       .map((w) => w[0]?.toUpperCase() ?? '')
