@@ -2,12 +2,13 @@ import { getConfig } from '../../lib/config';
 import type { CloudUser, CloudAssetDetails, CloudAssetsResponse } from './types';
 
 const apiFetch = async (path: string, options: RequestInit = {}) => {
-  const { API_URL, FOURBASED_BEARER_TOKEN } = getConfig();
+  const { API_URL } = getConfig();
+  const token = localStorage.getItem('auth_token');
   const res = await fetch(`${API_URL}${path}`, {
     ...options,
     headers: {
       'Content-Type': 'application/json',
-      ...(FOURBASED_BEARER_TOKEN ? { Authorization: `Bearer ${FOURBASED_BEARER_TOKEN}` } : {}),
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...options.headers,
     },
   });

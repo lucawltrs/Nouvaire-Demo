@@ -2,10 +2,9 @@ import type { InboxApiResponse, InboxQueryParams } from '../types';
 import { getConfig } from '../../../lib/config';
 
 const getApiUrl = () => getConfig().API_URL;
-const get4basedToken = () => getConfig().FOURBASED_BEARER_TOKEN;
 
 const fourbasedFetch = async (url: string, options: RequestInit = {}) => {
-  const token = get4basedToken();
+  const token = localStorage.getItem('auth_token');
   const headers = {
     'Content-Type': 'application/json',
     ...(token && { Authorization: `Bearer ${token}` }),
