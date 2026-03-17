@@ -79,6 +79,15 @@ export function mergeUnreadChats(accounts: DashboardAccount[]): MergedUnreadChat
  * Parses a date string (may be "YYYY-MM-DD HH:mm:ss" or ISO) to Date
  */
 export function parseDateTime(dateStr: string): Date {
+  // Debugging: Log input value
+  if (dateStr === null || dateStr === undefined) {
+    console.warn('parseDateTime: dateStr is null or undefined', dateStr);
+    return new Date(0); // Fallback: Unix-Epoch
+  }
+  if (typeof dateStr !== 'string') {
+    console.warn('parseDateTime: dateStr is not a string', dateStr);
+    return new Date(0);
+  }
   // If it's in format "YYYY-MM-DD HH:mm:ss", convert to ISO
   if (dateStr.includes(' ') && !dateStr.includes('T')) {
     const isoStr = dateStr.replace(' ', 'T');

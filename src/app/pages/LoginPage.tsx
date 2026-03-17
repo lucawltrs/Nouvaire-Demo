@@ -41,9 +41,9 @@ export function LoginPage() {
       <div className="flex-1 w-full max-w-md flex flex-col items-center justify-center py-8">
         <div className="text-center mb-6 sm:mb-8">
           <div className="flex justify-center">
-            <img src="/assets/logo.svg" alt="4CRM Logo" className="w-24 h-24 sm:w-32 sm:h-32 object-contain" />
+            <img src="/assets/logo-crown.png" alt="Logo" className="w-24 h-24 sm:w-32 sm:h-32 object-contain" />
           </div>
-          <h1 className="mt-4 text-2xl sm:text-3xl font-bold text-gray-900">4CRM Systems</h1>
+          <h1 className="mt-4 text-2xl sm:text-3xl font-bold text-gray-100">Nouvaire.io</h1>
         </div>
 
         <Card glow className="p-6 sm:p-8 w-full">

@@ -111,18 +111,18 @@ export function InboxChatPage() {
           <button
             type="button"
             onClick={() => navigate('/inbox')}
-            className="flex items-center justify-center w-9 h-9 rounded-lg border border-gray-200 bg-white shadow-sm text-gray-500 hover:text-gray-800 hover:bg-gray-50 transition-colors shrink-0"
+            className="flex items-center justify-center w-9 h-9 rounded-lg border border-slate-600 bg-card shadow-sm text-gray-400 hover:text-gray-100 hover:bg-slate-700 transition-colors shrink-0"
             aria-label="Zurück zur Übersicht"
           >
             <ArrowLeft size={16} />
           </button>
-          <div className="flex items-center gap-3 px-3 py-2 rounded-xl bg-white border border-gray-200 shadow-sm flex-1 min-w-0">
+          <div className="flex items-center gap-3 px-3 py-2 rounded-xl bg-card border border-slate-600 shadow-sm flex-1 min-w-0">
             <AccountAvatar src={accountImgUrl} name={accountName ?? ''} size="md" />
             <div className="min-w-0 flex-1">
               <p className="text-xs text-gray-400 font-medium uppercase tracking-wide leading-none mb-0.5">
                 Ausgewählter Account
               </p>
-              <p className="font-bold text-sm text-gray-900 truncate">{accountName}</p>
+              <p className="font-bold text-sm text-gray-100 truncate">{accountName}</p>
             </div>
           </div>
         </div>
@@ -139,7 +139,7 @@ export function InboxChatPage() {
         </div>
 
         {/* Chat list */}
-        <Card className="flex-1 overflow-y-auto divide-y divide-gray-200 min-h-0">
+        <Card className="flex-1 overflow-y-auto divide-y divide-slate-700 min-h-0">
           {isLoadingChats ? (
             <div className="flex items-center justify-center h-32">
               <Loader2 size={20} className="animate-spin text-gray-400" />
@@ -157,11 +157,11 @@ export function InboxChatPage() {
                 <Link
                   key={chat.chat_id}
                   to={`/inbox/${chat.fourbased_id}/chat/${chat.chat_id}`}
-                  className={`flex items-center gap-3 px-4 py-3 transition-colors hover:bg-gray-50 ${isActive ? 'border-l-4 border-[#ED4C27] bg-orange-50' : ''}`}
+                  className={`flex items-center gap-3 px-4 py-3 transition-colors hover:bg-slate-700 ${isActive ? 'border-l-4 border-[#ED4C27] bg-orange-900/20' : ''}`}
                 >
                   <AccountAvatar src={chat.customer_avatar_url} name={chat.customer_name} size="sm" />
                   <div className="flex-1 min-w-0">
-                    <span className="font-semibold text-sm text-gray-900 truncate block">{chat.customer_name}</span>
+                    <span className="font-semibold text-sm text-gray-100 truncate block">{chat.customer_name}</span>
                     <p className="text-xs text-gray-500 truncate">{chat.last_message_preview}</p>
                   </div>
                   {chat.is_unread && (
@@ -189,10 +189,10 @@ export function InboxChatPage() {
           <Card className="rounded-2xl flex flex-col flex-1 min-h-0">
             {/* Chat header */}
             {activeChat && (
-              <div className="p-4 border-b border-gray-200 flex items-center gap-3 shrink-0">
+              <div className="p-4 border-b border-slate-700 flex items-center gap-3 shrink-0">
                 <AccountAvatar src={activeChat.customer_avatar_url} name={activeChat.customer_name} size="md" />
                 <div className="min-w-0 flex-1">
-                  <h1 className="text-lg font-bold text-gray-900 truncate">{activeChat.customer_name}</h1>
+                  <h1 className="text-lg font-bold text-gray-100 truncate">{activeChat.customer_name}</h1>
                   <div className="mt-1">
                     <Badge>Zuletzt aktiv: {formatChatTimestamp(activeChat.last_message_at)}</Badge>
                   </div>
@@ -202,7 +202,7 @@ export function InboxChatPage() {
                   href={`https://4based.com/profile/${encodeURIComponent(activeChat.customer_name.replace(/\s+/g, '-'))}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="ml-2 inline-flex items-center justify-center w-9 h-9 rounded-full hover:bg-orange-100 text-[#ED4C27]"
+                  className="ml-2 inline-flex items-center justify-center w-9 h-9 rounded-full hover:bg-slate-700 text-[#ED4C27]"
                   title={`Profil von ${activeChat.customer_name}`}
                 >
                   <User size={18} />
@@ -229,7 +229,7 @@ export function InboxChatPage() {
             />
 
             {/* Message input */}
-            <div className="p-4 border-t border-gray-200 shrink-0">
+            <div className="p-4 border-t border-slate-700 shrink-0">
               <div className="flex items-end gap-3">
                 <Textarea
                   value={messageInput}
@@ -256,7 +256,7 @@ function AccountAvatar({ src, name, size = 'md' }: { src?: string; name: string;
   if (!src) {
     const initials = name.split(' ').slice(0, 2).map((w) => w[0]?.toUpperCase() ?? '').join('');
     return (
-      <div className={`${sizeClass} rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center shrink-0 text-gray-500 font-semibold text-xs`}>
+      <div className={`${sizeClass} rounded-full bg-slate-700 border border-slate-600 flex items-center justify-center shrink-0 text-gray-400 font-semibold text-xs`}>
         {initials || <User size={iconSize} />}
       </div>
     );
