@@ -1,4 +1,4 @@
-import type { InboxAccount, InboxApiResponse, InboxQueryParams } from '../types';
+import type { InboxAccount, InboxApiResponse, InboxQueryParams, PivotData, PredefinedText } from '../types';
 import { getConfig } from '../../../lib/config';
 
 const getApiUrl = () => getConfig().API_URL;
@@ -58,5 +58,23 @@ export const inboxApi = {
       const text = await response.text();
       throw new Error(`Failed to mark as read: ${response.status} - ${text}`);
     }
+  },
+
+  async getPredefinedTexts(fourbasedId: string): Promise<PredefinedText[]> {
+    const response = await fourbasedFetch(`${getApiUrl()}/4based/users/${fourbasedId}/predefined-texts`);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch predefined texts: ${response.status}`);
+    }
+    const raw = await response.json();
+    return Array.isArray(raw) ? raw : (raw?.data ?? []);
+  },
+
+  async getPivot(fourbasedId: string, customerId: string): Promise<PivotData> {
+    const response = await fourbasedFetch(`${getApiUrl()}/4based/users/${fourbasedId}/pivot/${customerId}`);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch pivot: ${response.status}`);
+    }
+    const raw = await response.json();
+    return raw?.response ?? raw;
   },
 };

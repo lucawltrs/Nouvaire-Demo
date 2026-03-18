@@ -13,13 +13,26 @@ import {
   Layers,
   CheckCircle2,
   XCircle,
+  MessageSquare,
+  Plus,
+  Pencil,
+  Trash2,
+  Save,
+  X,
+  Loader2,
 } from 'lucide-react';
 import { Card } from '../../../components/ui/Card';
+import { getConfig } from '../../../lib/config';
 import { accountsApi } from '../../../modules/accounts/accountsApi';
 import type { Account } from '../../../modules/accounts/types';
 import { formatCurrency, formatRelativeTime } from '../../../modules/dashboard';
 
-type Tab = 'overview' | 'inbox' | 'cloud';
+type Tab = 'overview' | 'inbox' | 'cloud' | 'settings';
+
+interface PredefinedText {
+  id: number | string;
+  message: string;
+}
 
 export function AccountDetailPage() {
   const { fourbased_id } = useParams<{ fourbased_id: string }>();
@@ -150,7 +163,7 @@ export function AccountDetailPage() {
 
       {/* Tabs */}
       <div className="flex border-b border-slate-700 gap-1">
-        {(['overview', 'inbox', 'cloud'] as Tab[]).map((tab) => (
+        {(['overview', 'inbox', 'cloud', 'settings'] as Tab[]).map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
@@ -169,6 +182,7 @@ export function AccountDetailPage() {
       {activeTab === 'overview' && <OverviewTab account={account} />}
       {activeTab === 'inbox' && <InboxTab fourbasedId={account.fourbased_id} />}
       {activeTab === 'cloud' && <CloudTab fourbasedId={account.fourbased_id} />}
+      {activeTab === 'settings' && <SettingsTab fourbasedId={account.fourbased_id} />}
     </div>
   );
 }
@@ -334,6 +348,247 @@ function CloudTab({ fourbasedId }: { fourbasedId: string }) {
           Open Cloud
         </Link>
       </div>
+    </Card>
+  );
+}
+
+// ============================================================================
+// Settings Tab
+// ============================================================================
+
+function SettingsTab({ fourbasedId }: { fourbasedId: string }) {
+  return (
+    <div className="space-y-6">
+      <PredefinedTextsCard fourbasedId={fourbasedId} />
+      {/* Placeholder for future settings sections */}
+      <Card className="p-6 border border-dashed border-slate-700">
+        <p className="text-sm text-gray-500 text-center">Weitere Einstellungen folgen…</p>
+      </Card>
+    </div>
+  );
+}
+
+function PredefinedTextsCard({ fourbasedId }: { fourbasedId: string }) {
+  const [texts, setTexts] = useState<PredefinedText[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [newMessage, setNewMessage] = useState('');
+  const [isAdding, setIsAdding] = useState(false);
+  const [editId, setEditId] = useState<number | string | null>(null);
+  const [editMessage, setEditMessage] = useState('');
+  const [savingId, setSavingId] = useState<number | string | null>(null);
+  const [deletingId, setDeletingId] = useState<number | string | null>(null);
+
+  const apiBase = `${getConfig().API_URL}/4based/users/${fourbasedId}/predefined-texts`;
+
+  const authHeaders = useCallback(
+    () => ({
+      'Content-Type': 'application/json',
+      ...(localStorage.getItem('auth_token')
+        ? { Authorization: `Bearer ${localStorage.getItem('auth_token')}` }
+        : {}),
+    }),
+    [],
+  );
+
+  const fetchTexts = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const res = await fetch(apiBase, { headers: authHeaders() });
+      if (!res.ok) throw new Error();
+      const raw = await res.json();
+      setTexts(Array.isArray(raw) ? raw : (raw?.data ?? []));
+    } catch {
+      setError('Vordefinierte Texte konnten nicht geladen werden.');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [apiBase, authHeaders]);
+
+  useEffect(() => {
+    fetchTexts();
+  }, [fetchTexts]);
+
+  const handleAdd = async () => {
+    const msg = newMessage.trim();
+    if (!msg) return;
+    setIsAdding(true);
+    try {
+      const res = await fetch(apiBase, {
+        method: 'POST',
+        headers: authHeaders(),
+        body: JSON.stringify({ message: msg }),
+      });
+      if (!res.ok) throw new Error();
+      const created = await res.json();
+      setTexts((prev) => [...prev, created?.data ?? created]);
+      setNewMessage('');
+    } catch {
+      setError('Text konnte nicht hinzugefügt werden.');
+    } finally {
+      setIsAdding(false);
+    }
+  };
+
+  const handleUpdate = async (id: number | string) => {
+    const msg = editMessage.trim();
+    if (!msg) return;
+    setSavingId(id);
+    try {
+      const res = await fetch(`${apiBase}/${id}`, {
+        method: 'PUT',
+        headers: authHeaders(),
+        body: JSON.stringify({ message: msg }),
+      });
+      if (!res.ok) throw new Error();
+      const updated = await res.json();
+      setTexts((prev) =>
+        prev.map((t) => (t.id === id ? (updated?.data ?? updated) : t)),
+      );
+      setEditId(null);
+      setEditMessage('');
+    } catch {
+      setError('Text konnte nicht aktualisiert werden.');
+    } finally {
+      setSavingId(null);
+    }
+  };
+
+  const handleDelete = async (id: number | string) => {
+    setDeletingId(id);
+    try {
+      const res = await fetch(`${apiBase}/${id}`, {
+        method: 'DELETE',
+        headers: authHeaders(),
+      });
+      if (!res.ok) throw new Error();
+      setTexts((prev) => prev.filter((t) => t.id !== id));
+    } catch {
+      setError('Text konnte nicht gelöscht werden.');
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
+  return (
+    <Card className="p-6 border border-slate-600">
+      <div className="flex items-center gap-3 mb-5">
+        <div className="w-8 h-8 rounded-lg bg-[#ED4C27]/15 flex items-center justify-center">
+          <MessageSquare size={16} className="text-[#ED4C27]" />
+        </div>
+        <div>
+          <h3 className="text-sm font-semibold text-gray-100">Vordefinierte Texte</h3>
+          <p className="text-xs text-gray-500">Schnellantworten für diesen Account</p>
+        </div>
+      </div>
+
+      {error && (
+        <div className="mb-4 flex items-center gap-2 text-xs text-red-400 bg-red-900/20 border border-red-800/40 rounded-lg px-3 py-2">
+          <AlertCircle size={13} />
+          {error}
+        </div>
+      )}
+
+      {/* Add new */}
+      <div className="flex gap-2 mb-5">
+        <input
+          type="text"
+          value={newMessage}
+          onChange={(e) => setNewMessage(e.target.value)}
+          onKeyDown={(e) => e.key === 'Enter' && handleAdd()}
+          placeholder="Neuen Text eingeben…"
+          disabled={isAdding}
+          className="flex-1 min-w-0 bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-sm text-gray-100 placeholder-gray-500 focus:outline-none focus:border-[#ED4C27] focus:ring-1 focus:ring-[#ED4C27]/30 disabled:opacity-50 transition"
+        />
+        <button
+          onClick={handleAdd}
+          disabled={isAdding}
+          className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-white bg-[#ED4C27] hover:bg-[#D8431F] rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
+        >
+          {isAdding ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}
+          Hinzufügen
+        </button>
+      </div>
+
+      {/* List */}
+      {isLoading ? (
+        <div className="space-y-2">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="h-10 bg-slate-700 rounded-lg animate-pulse" />
+          ))}
+        </div>
+      ) : texts.length === 0 ? (
+        <div className="text-center py-8 text-gray-500">
+          <MessageSquare size={28} className="mx-auto mb-2 opacity-30" />
+          <p className="text-sm">Noch keine vordefinierten Texte</p>
+        </div>
+      ) : (
+        <ul className="space-y-2">
+          {texts.map((text) => (
+            <li
+              key={text.id}
+              className="flex items-center gap-2 bg-slate-800/60 border border-slate-700 rounded-lg px-3 py-2 group"
+            >
+              {editId === text.id ? (
+                <>
+                  <input
+                    type="text"
+                    value={editMessage}
+                    onChange={(e) => setEditMessage(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') handleUpdate(text.id);
+                      if (e.key === 'Escape') { setEditId(null); setEditMessage(''); }
+                    }}
+                    autoFocus
+                    className="flex-1 min-w-0 bg-slate-700 border border-slate-600 rounded px-2 py-1 text-sm text-gray-100 focus:outline-none focus:border-[#ED4C27]"
+                  />
+                  <button
+                    onClick={() => handleUpdate(text.id)}
+                    disabled={savingId === text.id}
+                    className="p-1.5 text-green-400 hover:text-green-300 disabled:opacity-50 transition-colors"
+                    title="Speichern"
+                  >
+                    {savingId === text.id
+                      ? <Loader2 size={14} className="animate-spin" />
+                      : <Save size={14} />}
+                  </button>
+                  <button
+                    onClick={() => { setEditId(null); setEditMessage(''); }}
+                    className="p-1.5 text-gray-400 hover:text-gray-200 transition-colors"
+                    title="Abbrechen"
+                  >
+                    <X size={14} />
+                  </button>
+                </>
+              ) : (
+                <>
+                  <span className="flex-1 text-sm text-gray-200 truncate">{text.message}</span>
+                  <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button
+                      onClick={() => { setEditId(text.id); setEditMessage(text.message); }}
+                      className="p-1.5 text-gray-400 hover:text-gray-100 transition-colors"
+                      title="Bearbeiten"
+                    >
+                      <Pencil size={13} />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(text.id)}
+                      disabled={deletingId === text.id}
+                      className="p-1.5 text-gray-400 hover:text-red-400 disabled:opacity-50 transition-colors"
+                      title="Löschen"
+                    >
+                      {deletingId === text.id
+                        ? <Loader2 size={13} className="animate-spin" />
+                        : <Trash2 size={13} />}
+                    </button>
+                  </div>
+                </>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
     </Card>
   );
 }
