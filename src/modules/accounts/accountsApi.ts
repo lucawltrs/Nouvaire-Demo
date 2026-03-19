@@ -56,4 +56,16 @@ export const accountsApi = {
       throw new Error('Failed to sync accounts');
     }
   },
+
+  async addAccount(identifier: string, password: string): Promise<void> {
+    const response = await fourbasedFetch(`${getApiUrl()}/4based/login`, {
+      method: 'POST',
+      body: JSON.stringify({ identifier, password }),
+    });
+
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error((err as { message?: string }).message ?? 'Failed to add account');
+    }
+  },
 };

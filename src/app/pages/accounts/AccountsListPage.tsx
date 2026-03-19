@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Users, ChevronRight, AlertCircle, Circle, RefreshCw, UserPlus } from 'lucide-react';
 import { Card } from '../../../components/ui/Card';
+import { Modal } from '../../../components/ui/Modal';
+import { Input } from '../../../components/ui/Input';
 import { accountsApi } from '../../../modules/accounts/accountsApi';
 import type { Account } from '../../../modules/accounts/types';
 import { ToastContainer, toast } from '../../../lib/toast';
@@ -11,6 +13,7 @@ export function AccountsListPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSyncing, setIsSyncing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const navigate = useNavigate();
 
   const fetchAccounts = useCallback(async () => {
@@ -45,9 +48,21 @@ export function AccountsListPage() {
     }
   };
 
+  const handleAddAccount = async (identifier: string, password: string) => {
+    await accountsApi.addAccount(identifier, password);
+    toast.success('Account added successfully');
+    setIsAddModalOpen(false);
+    await fetchAccounts();
+  };
+
   return (
     <div className="space-y-6">
       <ToastContainer />
+      <AddAccountModal
+        isOpen={isAddModalOpen}
+        onClose={() => setIsAddModalOpen(false)}
+        onSubmit={handleAddAccount}
+      />
 
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -65,6 +80,7 @@ export function AccountsListPage() {
             {isSyncing ? 'Syncing…' : 'Sync All'}
           </button>
           <button
+            onClick={() => setIsAddModalOpen(true)}
             className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-[#ED4C27] hover:bg-[#D8431F] rounded-lg transition-colors shadow-sm"
           >
             <UserPlus size={16} />
@@ -284,5 +300,87 @@ function ErrorState({ error, onRetry }: { error: string; onRetry: () => void }) 
         </button>
       </div>
     </Card>
+  );
+}
+
+// ============================================================================
+// Add Account Modal
+// ============================================================================
+
+interface AddAccountModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onSubmit: (identifier: string, password: string) => Promise<void>;
+}
+
+function AddAccountModal({ isOpen, onClose, onSubmit }: AddAccountModalProps) {
+  const [identifier, setIdentifier] = useState('');
+  const [password, setPassword] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
+
+  const handleClose = () => {
+    setIdentifier('');
+    setPassword('');
+    setFormError(null);
+    onClose();
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setFormError(null);
+    setIsSubmitting(true);
+    try {
+      await onSubmit(identifier.trim(), password);
+      setIdentifier('');
+      setPassword('');
+    } catch (err) {
+      setFormError(err instanceof Error ? err.message : 'Failed to add account');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <Modal isOpen={isOpen} onClose={handleClose} title="Add Account" size="sm">
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <Input
+          label="Identifier (Email)"
+          type="email"
+          placeholder="user@example.com"
+          value={identifier}
+          onChange={(e) => setIdentifier(e.target.value)}
+          required
+          autoFocus
+        />
+        <Input
+          label="Password"
+          type="password"
+          placeholder="••••••••"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+        />
+        {formError && (
+          <p className="text-sm text-red-400">{formError}</p>
+        )}
+        <div className="flex justify-end gap-3 pt-2">
+          <button
+            type="button"
+            onClick={handleClose}
+            className="px-4 py-2 text-sm font-medium text-gray-300 bg-slate-700 hover:bg-slate-600 border border-slate-600 rounded-lg transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            className="px-4 py-2 text-sm font-medium text-white bg-[#ED4C27] hover:bg-[#D8431F] rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isSubmitting ? 'Adding…' : 'Add Account'}
+          </button>
+        </div>
+      </form>
+    </Modal>
   );
 }
