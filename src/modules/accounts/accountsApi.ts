@@ -57,10 +57,10 @@ export const accountsApi = {
     }
   },
 
-  async addAccount(identifier: string, password: string): Promise<void> {
-    const response = await fourbasedFetch(`${getApiUrl()}/4based/login`, {
+  async addAccount(email: string, password: string): Promise<void> {
+    const response = await fourbasedFetch(`${getApiUrl()}/4based/store/credentials`, {
       method: 'POST',
-      body: JSON.stringify({ identifier, password }),
+      body: JSON.stringify({ email, password }),
     });
 
     if (!response.ok) {

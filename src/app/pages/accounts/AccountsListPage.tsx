@@ -314,13 +314,13 @@ interface AddAccountModalProps {
 }
 
 function AddAccountModal({ isOpen, onClose, onSubmit }: AddAccountModalProps) {
-  const [identifier, setIdentifier] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
 
   const handleClose = () => {
-    setIdentifier('');
+    setEmail('');
     setPassword('');
     setFormError(null);
     onClose();
@@ -331,8 +331,8 @@ function AddAccountModal({ isOpen, onClose, onSubmit }: AddAccountModalProps) {
     setFormError(null);
     setIsSubmitting(true);
     try {
-      await onSubmit(identifier.trim(), password);
-      setIdentifier('');
+      await onSubmit(email.trim(), password);
+      setEmail('');
       setPassword('');
     } catch (err) {
       setFormError(err instanceof Error ? err.message : 'Failed to add account');
@@ -345,11 +345,11 @@ function AddAccountModal({ isOpen, onClose, onSubmit }: AddAccountModalProps) {
     <Modal isOpen={isOpen} onClose={handleClose} title="Add Account" size="sm">
       <form onSubmit={handleSubmit} className="space-y-4">
         <Input
-          label="Identifier (Email)"
+          label="E-Mail"
           type="email"
           placeholder="user@example.com"
-          value={identifier}
-          onChange={(e) => setIdentifier(e.target.value)}
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
           required
           autoFocus
         />
