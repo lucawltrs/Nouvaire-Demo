@@ -7,7 +7,7 @@ import { Textarea } from '../../components/ui/Textarea';
 import { Input } from '../../components/ui/Input';
 import { Loader2, User, ArrowLeft, Search } from 'lucide-react';
 import { inboxApi } from '../../modules/inbox/services/inbox.api';
-import type { ChatListItem } from '../../modules/inbox/types';
+import type { ChatListItem, PredefinedText, PivotData } from '../../modules/inbox/types';
 import { ToastContainer } from '../../lib/toast';
 import { useChatMessages } from '../../modules/4based/hooks/useChatMessages';
 import { ChatMessageList } from '../../modules/4based/components/ChatMessageList';
@@ -34,6 +34,9 @@ export function InboxChatPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [messageInput, setMessageInput] = useState('');
   const [isSending, setIsSending] = useState(false);
+  const [predefinedTexts, setPredefinedTexts] = useState<PredefinedText[]>([]);
+  const [pivotData, setPivotData] = useState<PivotData | null>(null);
+  const [isPivotLoading, setIsPivotLoading] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const {
@@ -83,7 +86,27 @@ export function InboxChatPage() {
     fetchChats();
   }, [fetchChats]);
 
+  useEffect(() => {
+    if (!fourbased_id) return;
+    inboxApi.getPredefinedTexts(fourbased_id).then(setPredefinedTexts).catch(() => {});
+  }, [fourbased_id]);
+
   const isOwnMessage = (message: FourBasedChatMessage) => message.user_id === fourbased_id;
+
+  // Derive customer_id from messages (first message not sent by us)
+  const customerId = useMemo(
+    () => messages.find(m => m.user_id !== fourbased_id)?.user_id ?? null,
+    [messages, fourbased_id],
+  );
+
+  useEffect(() => {
+    if (!fourbased_id || !customerId) { setPivotData(null); return; }
+    setIsPivotLoading(true);
+    inboxApi.getPivot(fourbased_id, customerId)
+      .then(setPivotData)
+      .catch(() => setPivotData(null))
+      .finally(() => setIsPivotLoading(false));
+  }, [fourbased_id, customerId]);
 
   const handleSendMessage = async () => {
     if (!fourbased_id || !chat_id || !messageInput.trim() || isSending) return;
@@ -204,7 +227,7 @@ export function InboxChatPage() {
       </aside>
 
       {/* Main chat area */}
-      <main className="flex-1 min-h-0 flex flex-col">
+      <main className="flex-1 min-h-0 flex flex-col" style={{ minWidth: 0 }}>
         <ToastContainer />
         {isInitialLoading ? (
           <div className="flex items-center justify-center flex-1">
@@ -276,6 +299,59 @@ export function InboxChatPage() {
           </Card>
         )}
       </main>
+      {/* Right panel: predefined texts + pivot info */}
+      {(predefinedTexts.length > 0 || isPivotLoading || pivotData) && (
+        <aside className="w-56 shrink-0 flex flex-col gap-2 min-h-0">
+          {predefinedTexts.length > 0 && (
+            <Card className="max-h-[50vh] overflow-y-auto p-3 flex flex-col gap-2 shrink-0">
+              <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 shrink-0">
+                Vordefinierte Texte
+              </p>
+              {predefinedTexts.map((pt) => (
+                <button
+                  key={pt.id}
+                  type="button"
+                  onClick={() => {
+                    setMessageInput(pt.message);
+                    textareaRef.current?.focus();
+                  }}
+                  className="w-full text-left rounded-lg px-3 py-2 text-xs text-gray-200 bg-slate-700/60 hover:bg-slate-600 border border-slate-600 hover:border-[#ED4C27] transition-colors"
+                >
+                  <span className="block text-gray-400 line-clamp-3">{pt.message}</span>
+                </button>
+              ))}
+            </Card>
+          )}
+
+          {/* Pivot info card */}
+          {isPivotLoading ? (
+            <Card className="p-3 flex items-center justify-center">
+              <Loader2 size={16} className="animate-spin text-gray-400" />
+            </Card>
+          ) : pivotData && (
+            <Card className="p-3 flex flex-col gap-2">
+              <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">
+                Kundeninfo
+              </p>
+              {pivotData.alias && (
+                <div>
+                  <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-0.5">Alias</p>
+                  <p className="text-xs text-gray-100 leading-snug">{pivotData.alias}</p>
+                </div>
+              )}
+              {pivotData.note && (
+                <div>
+                  <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-0.5">Notiz</p>
+                  <p className="text-xs text-gray-300 leading-snug whitespace-pre-wrap">{pivotData.note}</p>
+                </div>
+              )}
+              {!pivotData.alias && !pivotData.note && (
+                <p className="text-xs text-gray-500">Keine Infos verfügbar.</p>
+              )}
+            </Card>
+          )}
+        </aside>
+      )}
     </div>
   );
 }

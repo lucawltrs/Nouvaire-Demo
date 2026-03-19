@@ -40,3 +40,19 @@ export interface InboxQueryParams {
   scope?: InboxScope;
   fourbased_id?: string;
 }
+
+export interface PredefinedText {
+  id: string | number;
+  message: string;
+}
+
+export interface PivotData {
+  _id?: string;
+  alias?: string;
+  note?: string;
+  interaction?: boolean;
+  last_interaction_at?: string;
+  auto_follow_message_sent?: boolean;
+  has_payed_chat_unlock_price?: boolean;
+  created_at?: string;
+}

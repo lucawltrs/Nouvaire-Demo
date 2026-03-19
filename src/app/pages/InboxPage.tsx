@@ -146,7 +146,7 @@ export function InboxPage() {
   const filteredChats = searchQuery.trim()
     ? chats.filter(
         (c) =>
-          c.customer_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          (c.customer_name ?? '').toLowerCase().includes(searchQuery.toLowerCase()) ||
           (c.last_message_preview ?? '').toLowerCase().includes(searchQuery.toLowerCase())
       )
     : chats;

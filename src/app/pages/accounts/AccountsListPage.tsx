@@ -109,8 +109,7 @@ export function AccountsListPage() {
                     <th className="text-left px-6 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">Status</th>
                     <th className="text-right px-6 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">Revenue</th>
                     <th className="text-right px-6 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">Followers</th>
-                    <th className="text-left px-6 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">Last Activity</th>
-                    <th className="px-6 py-3" />
+                    <th className="text-right px-6 py-3" />
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-700">
@@ -185,13 +184,8 @@ function AccountRow({ account, onClick }: AccountRowProps) {
         {account.followers != null ? (account.followers as number).toLocaleString() : '—'}
       </td>
 
-      {/* Last Activity */}
-      <td className="px-6 py-4 text-gray-400">
-        {account.last_activity ?? '—'}
-      </td>
-
       {/* Action */}
-      <td className="px-6 py-4">
+      <td className="px-6 py-4 text-right">
         <button
           onClick={(e) => { e.stopPropagation(); onClick(); }}
           className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-gray-300 hover:text-white bg-slate-700 hover:bg-slate-600 border border-slate-600 hover:border-slate-500 rounded-lg transition-all"
@@ -240,7 +234,7 @@ function TableSkeleton() {
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-slate-700 bg-slate-800/50">
-              {['Account', 'Identifier', 'Status', 'Revenue', 'Followers', 'Last Activity', ''].map((h) => (
+              {['Account', 'Identifier', 'Status', 'Revenue', 'Followers', ''].map((h) => (
                 <th key={h} className="px-6 py-3">
                   <div className="h-3 bg-slate-700 rounded w-20" />
                 </th>
@@ -260,8 +254,7 @@ function TableSkeleton() {
                 <td className="px-6 py-4"><div className="h-6 bg-slate-700 rounded-full w-16" /></td>
                 <td className="px-6 py-4"><div className="h-4 bg-slate-700 rounded w-20 ml-auto" /></td>
                 <td className="px-6 py-4"><div className="h-4 bg-slate-700 rounded w-16 ml-auto" /></td>
-                <td className="px-6 py-4"><div className="h-4 bg-slate-700 rounded w-16" /></td>
-                <td className="px-6 py-4"><div className="h-7 bg-slate-700 rounded w-16" /></td>
+                <td className="px-6 py-4 text-right"><div className="h-7 bg-slate-700 rounded w-16 ml-auto" /></td>
               </tr>
             ))}
           </tbody>
