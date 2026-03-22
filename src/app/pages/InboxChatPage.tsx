@@ -37,6 +37,10 @@ export function InboxChatPage() {
   const [predefinedTexts, setPredefinedTexts] = useState<PredefinedText[]>([]);
   const [pivotData, setPivotData] = useState<PivotData | null>(null);
   const [isPivotLoading, setIsPivotLoading] = useState(false);
+  const [isEditingPivot, setIsEditingPivot] = useState(false);
+  const [pivotEditAlias, setPivotEditAlias] = useState('');
+  const [pivotEditNote, setPivotEditNote] = useState('');
+  const [isSavingPivot, setIsSavingPivot] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const {
@@ -108,6 +112,12 @@ export function InboxChatPage() {
       .finally(() => setIsPivotLoading(false));
   }, [fourbased_id, customerId]);
 
+  useEffect(() => {
+    setPivotEditAlias(pivotData?.alias ?? '');
+    setPivotEditNote(pivotData?.note ?? '');
+    setIsEditingPivot(false);
+  }, [pivotData]);
+
   const handleSendMessage = async () => {
     if (!fourbased_id || !chat_id || !messageInput.trim() || isSending) return;
 
@@ -148,6 +158,24 @@ export function InboxChatPage() {
     if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
       e.preventDefault();
       handleSendMessage();
+    }
+  };
+
+  const handleSavePivot = async () => {
+    if (!fourbased_id || !customerId) return;
+    setIsSavingPivot(true);
+    try {
+      const updated = await inboxApi.updatePivot(fourbased_id, customerId, {
+        alias: pivotEditAlias.trim() || undefined,
+        note: pivotEditNote.trim() || undefined,
+      });
+      setPivotData(updated);
+      toast.success('Kundeninfo gespeichert.');
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Fehler beim Speichern.';
+      toast.error(message);
+    } finally {
+      setIsSavingPivot(false);
     }
   };
 
@@ -300,7 +328,7 @@ export function InboxChatPage() {
         )}
       </main>
       {/* Right panel: predefined texts + pivot info */}
-      {(predefinedTexts.length > 0 || isPivotLoading || pivotData) && (
+      {(predefinedTexts.length > 0 || isPivotLoading || pivotData || !!customerId) && (
         <aside className="w-56 shrink-0 flex flex-col gap-2 min-h-0">
           {predefinedTexts.length > 0 && (
             <Card className="max-h-[50vh] overflow-y-auto p-3 flex flex-col gap-2 shrink-0">
@@ -328,25 +356,75 @@ export function InboxChatPage() {
             <Card className="p-3 flex items-center justify-center">
               <Loader2 size={16} className="animate-spin text-gray-400" />
             </Card>
-          ) : pivotData && (
+          ) : customerId && (
             <Card className="p-3 flex flex-col gap-2">
-              <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">
-                Kundeninfo
-              </p>
-              {pivotData.alias && (
-                <div>
-                  <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-0.5">Alias</p>
-                  <p className="text-xs text-gray-100 leading-snug">{pivotData.alias}</p>
-                </div>
-              )}
-              {pivotData.note && (
-                <div>
-                  <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-0.5">Notiz</p>
-                  <p className="text-xs text-gray-300 leading-snug whitespace-pre-wrap">{pivotData.note}</p>
-                </div>
-              )}
-              {!pivotData.alias && !pivotData.note && (
-                <p className="text-xs text-gray-500">Keine Infos verfügbar.</p>
+              <div className="flex items-center justify-between">
+                <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">
+                  Kundeninfo
+                </p>
+                {!isEditingPivot ? (
+                  <button
+                    type="button"
+                    onClick={() => setIsEditingPivot(true)}
+                    className="text-[10px] text-[#ED4C27] hover:underline"
+                  >
+                    Bearbeiten
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setPivotEditAlias(pivotData?.alias ?? '');
+                      setPivotEditNote(pivotData?.note ?? '');
+                      setIsEditingPivot(false);
+                    }}
+                    className="text-[10px] text-gray-400 hover:underline"
+                  >
+                    Abbrechen
+                  </button>
+                )}
+              </div>
+              {isEditingPivot ? (
+                <>
+                  <div>
+                    <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-0.5">Alias</p>
+                    <Input
+                      value={pivotEditAlias}
+                      onChange={(e) => setPivotEditAlias(e.target.value)}
+                      placeholder="Alias eingeben…"
+                    />
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-0.5">Notiz</p>
+                    <Textarea
+                      value={pivotEditNote}
+                      onChange={(e) => setPivotEditNote(e.target.value)}
+                      placeholder="Notiz eingeben…"
+                      rows={3}
+                    />
+                  </div>
+                  <Button size="sm" onClick={handleSavePivot} disabled={isSavingPivot}>
+                    {isSavingPivot ? 'Speichert…' : 'Speichern'}
+                  </Button>
+                </>
+              ) : (
+                <>
+                  {pivotData?.alias && (
+                    <div>
+                      <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-0.5">Alias</p>
+                      <p className="text-xs text-gray-100 leading-snug">{pivotData.alias}</p>
+                    </div>
+                  )}
+                  {pivotData?.note && (
+                    <div>
+                      <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-0.5">Notiz</p>
+                      <p className="text-xs text-gray-300 leading-snug whitespace-pre-wrap">{pivotData.note}</p>
+                    </div>
+                  )}
+                  {!pivotData?.alias && !pivotData?.note && (
+                    <p className="text-xs text-gray-500">Keine Infos verfügbar.</p>
+                  )}
+                </>
               )}
             </Card>
           )}
