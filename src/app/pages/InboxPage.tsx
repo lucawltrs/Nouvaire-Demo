@@ -27,7 +27,7 @@ export function InboxPage() {
   const [accounts, setAccounts] = useState<InboxAccount[]>([]);
   const [accountsLoading, setAccountsLoading] = useState(true);
   const [accountsError, setAccountsError] = useState<string | null>(null);
-  const [activeTabId, setActiveTabId] = useState<string>('');
+  const [activeTabId, setActiveTabId] = useState<string>('__all__');
 
   // Chats for the active tab
   const [chats, setChats] = useState<ChatListItem[]>([]);
@@ -59,7 +59,6 @@ export function InboxPage() {
         setAccountsError(null);
         const data = await inboxApi.getAccounts();
         setAccounts(data);
-        if (data.length > 0) setActiveTabId(data[0].fourbased_id);
       } catch {
         setAccountsError('Failed to load accounts.');
       } finally {
@@ -76,13 +75,14 @@ export function InboxPage() {
         append ? setChatsLoadingMore(true) : setChatsLoading(true);
         setChatsError(null);
 
+        const isAll = fourbasedId === '__all__';
         const data = await inboxApi.getChats({
           days: 30,
           filter,
           limit: PAGE_SIZE,
           offset: newOffset,
-          scope: 'single',
-          fourbased_id: fourbasedId,
+          scope: isAll ? 'all' : 'single',
+          ...(isAll ? {} : { fourbased_id: fourbasedId }),
         });
 
         setChats((prev) => (append ? [...prev, ...data.data] : data.data));
@@ -100,7 +100,7 @@ export function InboxPage() {
 
   // Reload chats when tab or filter changes
   useEffect(() => {
-    if (!activeTabId) return;
+    if (!activeTabId) return; // should never be empty now, but guard anyway
     setChats([]);
     setSearchQuery('');
     fetchChats(activeTabId, 0, false);
@@ -171,6 +171,17 @@ export function InboxPage() {
         </div>
       ) : (
         <div className="flex gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
+          {/* All-accounts tab */}
+          <button
+            onClick={() => setActiveTabId('__all__')}
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium whitespace-nowrap transition-colors border shrink-0 ${
+              activeTabId === '__all__'
+                ? 'bg-[#ED4C27] border-[#ED4C27] text-white'
+                : 'bg-card border-slate-600 text-gray-300 hover:bg-slate-700'
+            }`}
+          >
+            All
+          </button>
           {accounts.map((acc) => (
             <button
               key={acc.fourbased_id}
@@ -189,7 +200,7 @@ export function InboxPage() {
       )}
 
       {/* Controls: search + reload + filter */}
-      {!accountsLoading && !accountsError && activeTabId && (
+      {!accountsLoading && !accountsError && (
         <div className="flex flex-wrap gap-3 items-center">
           <div className="relative flex-1 min-w-[180px] max-w-xs">
             <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
@@ -238,7 +249,7 @@ export function InboxPage() {
       )}
 
       {/* Chat list */}
-      {!accountsLoading && !accountsError && activeTabId && (
+      {!accountsLoading && !accountsError && (
         chatsLoading ? (
           <LoadingSkeleton />
         ) : chatsError ? (
