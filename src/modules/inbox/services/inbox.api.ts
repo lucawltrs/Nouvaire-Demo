@@ -77,4 +77,16 @@ export const inboxApi = {
     const raw = await response.json();
     return raw?.response ?? raw;
   },
+
+  async updatePivot(fourbasedId: string, customerId: string, data: { alias?: string; note?: string }): Promise<PivotData> {
+    const response = await fourbasedFetch(`${getApiUrl()}/4based/users/${fourbasedId}/pivot/${customerId}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) {
+      throw new Error(`Failed to update pivot: ${response.status}`);
+    }
+    const raw = await response.json();
+    return raw?.response ?? raw;
+  },
 };
