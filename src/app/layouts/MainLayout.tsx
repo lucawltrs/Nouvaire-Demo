@@ -17,7 +17,7 @@ interface NavItem {
 export function MainLayout({ children }: MainLayoutProps) {
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, logout } = useAuthStore();
+  const { user, team, logout } = useAuthStore();
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -26,13 +26,15 @@ export function MainLayout({ children }: MainLayoutProps) {
     navigate('/login');
   };
 
+  const isAdmin = team?.role === 'admin';
+
   const navItems: NavItem[] = [
     { path: '/', label: 'Dashboard', icon: LayoutDashboard },
     { path: '/accounts', label: 'Accounts', icon: Users },
     { path: '/inbox', label: 'Inbox', icon: MessagesSquare },
     { path: '/cloud', label: 'Cloud', icon: Cloud },
     { path: '/performance', label: 'Performance', icon: BarChart3 },
-    { path: '/settings', label: 'Settings', icon: Settings },
+    ...(isAdmin ? [{ path: '/settings', label: 'Settings', icon: Settings }] : []),
   ];
 
   return (

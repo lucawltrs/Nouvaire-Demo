@@ -3,6 +3,13 @@ import { getConfig } from '../../lib/config';
 
 const getApiUrl = () => getConfig().API_URL;
 
+const getTeamId = (): number => {
+  const match = document.cookie.match(/(?:^|; )auth_team=([^;]*)/);
+  if (!match) throw new Error('No team found in cookie');
+  const team = JSON.parse(decodeURIComponent(match[1]));
+  return team.team_id;
+};
+
 const fourbasedFetch = async (url: string, options: RequestInit = {}) => {
   const token = localStorage.getItem('auth_token');
 
@@ -17,27 +24,26 @@ const fourbasedFetch = async (url: string, options: RequestInit = {}) => {
 
 export const accountsApi = {
   async getAccounts(): Promise<Account[]> {
-    const response = await fourbasedFetch(`${getApiUrl()}/4based/users`);
+    const response = await fourbasedFetch(`${getApiUrl()}/teams/${getTeamId()}/fourbased-users`);
 
     if (!response.ok) {
       throw new Error('Failed to fetch accounts');
     }
 
     const raw = await response.json();
-    // Handle both { data: [...] } and a bare array response
-    return (Array.isArray(raw) ? raw : raw?.data) ?? [];
+    return raw?.data?.accounts ?? [];
   },
 
   async getAccount(fourbasedId: string): Promise<Account> {
     // Try a dedicated single-account endpoint first; fall back to finding in the list
-    const listResponse = await fourbasedFetch(`${getApiUrl()}/4based/users`);
+    const listResponse = await fourbasedFetch(`${getApiUrl()}/teams/${getTeamId()}/fourbased-users`);
 
     if (!listResponse.ok) {
       throw new Error('Failed to fetch accounts');
     }
 
     const raw = await listResponse.json();
-    const list: Account[] = (Array.isArray(raw) ? raw : raw?.data) ?? [];
+    const list: Account[] = raw?.data?.accounts ?? [];
     const account = list.find((a) => a.fourbased_id === fourbasedId);
 
     if (!account) {

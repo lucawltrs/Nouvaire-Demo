@@ -17,6 +17,8 @@ import CloudOverviewPage from './app/pages/cloud/CloudOverviewPage';
 import CloudUserAssetsPage from './app/pages/cloud/CloudUserAssetsPage';
 import { AccountsListPage } from './app/pages/accounts/AccountsListPage';
 import { AccountDetailPage } from './app/pages/accounts/AccountDetailPage';
+import { SettingsPage } from './app/pages/SettingsPage';
+import { TeamMembersPage } from './app/pages/settings/TeamMembersPage';
 
 function App() {
   const checkAuth = useAuthStore((state) => state.checkAuth);
@@ -164,6 +166,26 @@ function App() {
             }
           />
           <Route path="*" element={<Navigate to="/" replace />} />
+          <Route
+            path="/settings"
+            element={
+              <ProtectedRoute>
+                <MainLayout>
+                  <SettingsPage />
+                </MainLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/settings/members"
+            element={
+              <ProtectedRoute>
+                <MainLayout>
+                  <TeamMembersPage />
+                </MainLayout>
+              </ProtectedRoute>
+            }
+          />
       </Routes>
     </BrowserRouter>
   );
