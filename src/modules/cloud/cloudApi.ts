@@ -1,10 +1,17 @@
 import { getConfig } from '../../lib/config';
 import type { CloudUser, CloudAssetDetails, CloudAssetsResponse } from './types';
 
+const getTeamId = (): number => {
+  const match = document.cookie.match(/(?:^|; )auth_team=([^;]*)/);
+  if (!match) throw new Error('No team found in cookie');
+  const team = JSON.parse(decodeURIComponent(match[1]));
+  return team.team_id;
+};
+
 const apiFetch = async (path: string, options: RequestInit = {}) => {
   const { API_URL } = getConfig();
   const token = localStorage.getItem('auth_token');
-  const res = await fetch(`${API_URL}${path}`, {
+  return fetch(`${API_URL}${path}`, {
     ...options,
     headers: {
       'Content-Type': 'application/json',
@@ -12,23 +19,27 @@ const apiFetch = async (path: string, options: RequestInit = {}) => {
       ...options.headers,
     },
   });
-  if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
-  return res.json();
 };
 
 export const cloudApi = {
   /** List all connected creator accounts */
-  getUsers(): Promise<CloudUser[]> {
-    return apiFetch('/4based/users');
+  async getUsers(): Promise<CloudUser[]> {
+    const response = await apiFetch(`/teams/${getTeamId()}/fourbased-users`);
+    if (!response.ok) throw new Error(`Failed to fetch users: ${response.status}`);
+    const raw = await response.json();
+    return (raw?.data?.accounts ?? raw) as CloudUser[];
   },
 
   /** Single creator account */
-  getUser(fourbasedId: string): Promise<CloudUser> {
-    return apiFetch(`/4based/users/${fourbasedId}`);
+  async getUser(fourbasedId: string): Promise<CloudUser> {
+    const response = await apiFetch(`/teams/${getTeamId()}/fourbased-users/${fourbasedId}`);
+    if (!response.ok) throw new Error(`Failed to fetch user: ${response.status}`);
+    const raw = await response.json();
+    return (raw?.data?.account ?? raw) as CloudUser;
   },
 
   /** Paginated asset list for one creator */
-  getAssets(
+  async getAssets(
     fourbasedId: string,
     params: { fileStackType?: string; limit?: number; offset?: number } = {},
   ): Promise<CloudAssetsResponse> {
@@ -38,12 +49,16 @@ export const cloudApi = {
     q.set('offset', String(params.offset ?? 0));
     q.set('sort', JSON.stringify({ created_at: 'desc' }));
     q.set('with_source', 'true');
-    return apiFetch(`/4based/users/${fourbasedId}/vault?${q}`);
+    const response = await apiFetch(`/4based/users/${fourbasedId}/vault?${q}`);
+    if (!response.ok) throw new Error(`Failed to fetch assets: ${response.status}`);
+    return response.json() as Promise<CloudAssetsResponse>;
   },
 
   /** Single asset details */
-  getAsset(assetId: string): Promise<CloudAssetDetails> {
-    return apiFetch(`/cloud/assets/${assetId}`);
+  async getAsset(assetId: string): Promise<CloudAssetDetails> {
+    const response = await apiFetch(`/cloud/assets/${assetId}`);
+    if (!response.ok) throw new Error(`Failed to fetch asset: ${response.status}`);
+    return response.json() as Promise<CloudAssetDetails>;
   },
 };
 

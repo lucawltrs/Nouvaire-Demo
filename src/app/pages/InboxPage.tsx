@@ -32,10 +32,7 @@ export function InboxPage() {
   // Chats for the active tab
   const [chats, setChats] = useState<ChatListItem[]>([]);
   const [chatsLoading, setChatsLoading] = useState(false);
-  const [chatsLoadingMore, setChatsLoadingMore] = useState(false);
   const [chatsError, setChatsError] = useState<string | null>(null);
-  const [hasMore, setHasMore] = useState(false);
-  const [offset, setOffset] = useState(0);
 
   const [filter, setFilter] = useState<InboxFilter>('all');
   const [searchQuery, setSearchQuery] = useState('');
@@ -67,12 +64,12 @@ export function InboxPage() {
     })();
   }, []);
 
-  // Fetch chats for the active tab (reset or append)
+  // Fetch chats for the active tab
   const fetchChats = useCallback(
-    async (fourbasedId: string, newOffset: number, append = false) => {
+    async (fourbasedId: string) => {
       if (!fourbasedId) return;
       try {
-        append ? setChatsLoadingMore(true) : setChatsLoading(true);
+        setChatsLoading(true);
         setChatsError(null);
 
         const isAll = fourbasedId === '__all__';
@@ -80,19 +77,23 @@ export function InboxPage() {
           days: 30,
           filter,
           limit: PAGE_SIZE,
-          offset: newOffset,
+          offset: 0,
           scope: isAll ? 'all' : 'single',
           ...(isAll ? {} : { fourbased_id: fourbasedId }),
         });
 
-        setChats((prev) => (append ? [...prev, ...data.data] : data.data));
-        setHasMore(data.meta.has_more);
-        setOffset(newOffset);
+        const allChats = data.data.flatMap((entry) =>
+          entry.members.flatMap((m) =>
+            m.accounts
+              .filter((a) => isAll || a.fourbased_id === fourbasedId)
+              .flatMap((a) => a.chats)
+          )
+        );
+        setChats(allChats);
       } catch {
         setChatsError('Failed to load chats. Please try again.');
       } finally {
         setChatsLoading(false);
-        setChatsLoadingMore(false);
       }
     },
     [filter]
@@ -100,10 +101,10 @@ export function InboxPage() {
 
   // Reload chats when tab or filter changes
   useEffect(() => {
-    if (!activeTabId) return; // should never be empty now, but guard anyway
+    if (!activeTabId) return;
     setChats([]);
     setSearchQuery('');
-    fetchChats(activeTabId, 0, false);
+    fetchChats(activeTabId);
   }, [activeTabId, filter, fetchChats]);
 
   const handleMarkAsRead = useCallback(
@@ -136,12 +137,6 @@ export function InboxPage() {
     },
     [filter, rowLoading]
   );
-
-  const handleLoadMore = () => {
-    if (!chatsLoadingMore && hasMore) {
-      fetchChats(activeTabId, offset + PAGE_SIZE, true);
-    }
-  };
 
   const filteredChats = searchQuery.trim()
     ? chats.filter(
@@ -217,7 +212,7 @@ export function InboxPage() {
 
           {/* Reload */}
           <button
-            onClick={() => fetchChats(activeTabId, 0, false)}
+            onClick={() => fetchChats(activeTabId)}
             disabled={chatsLoading}
             title="Reload"
             className={`flex items-center justify-center px-3 py-2 bg-[#ED4C27] hover:bg-[#D8431F] border border-[#ED4C27] rounded-lg transition-colors shadow-sm ${
@@ -253,7 +248,7 @@ export function InboxPage() {
         chatsLoading ? (
           <LoadingSkeleton />
         ) : chatsError ? (
-          <ErrorState error={chatsError} onRetry={() => fetchChats(activeTabId, 0, false)} />
+          <ErrorState error={chatsError} onRetry={() => fetchChats(activeTabId)} />
         ) : filteredChats.length === 0 ? (
           <EmptyState filter={filter} />
         ) : (
@@ -271,25 +266,6 @@ export function InboxPage() {
                 );
               })}
             </Card>
-
-            {hasMore && !searchQuery.trim() && (
-              <div className="flex justify-center">
-                <button
-                  onClick={handleLoadMore}
-                  disabled={chatsLoadingMore}
-                  className="flex items-center gap-2 px-6 py-2.5 text-sm font-medium text-white bg-[#ED4C27] hover:bg-[#D8431F] rounded-lg transition-colors disabled:opacity-60 disabled:cursor-not-allowed shadow-sm hover:shadow-md"
-                >
-                  {chatsLoadingMore ? (
-                    <>
-                      <Loader2 size={16} className="animate-spin" />
-                      Loading…
-                    </>
-                  ) : (
-                    'Load more'
-                  )}
-                </button>
-              </div>
-            )}
           </>
         )
       )}
@@ -329,7 +305,7 @@ function ChatRow({ chat, isLoading, onMarkAsRead }: ChatRowProps) {
       style={{ textDecoration: 'none', color: 'inherit' }}
     >
       {/* Avatar */}
-      <AccountAvatar src={chat.customer_avatar_url} name={chat.customer_name} size="md" />
+      <AccountAvatar src={chat.customer_avatar_url ?? undefined} name={chat.customer_name} size="md" />
 
       {/* Main content */}
       <div className="flex-1 min-w-0">
