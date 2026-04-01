@@ -1,4 +1,10 @@
 import type { InboxAccount, InboxApiResponse, InboxQueryParams, PivotData, PredefinedText } from '../types';
+
+const getTeamId = (): number => {
+  const match = document.cookie.match(/(?:^|; )auth_team=([^;]*)/);
+  if (!match) throw new Error('No team found in cookie');
+  return JSON.parse(decodeURIComponent(match[1])).team_id;
+};
 import { getConfig } from '../../../lib/config';
 
 const getApiUrl = () => getConfig().API_URL;
@@ -43,11 +49,12 @@ export const inboxApi = {
   },
 
   async getAccounts(): Promise<InboxAccount[]> {
-    const response = await fourbasedFetch(`${getApiUrl()}/4based/users`);
+    const response = await fourbasedFetch(`${getApiUrl()}/teams/${getTeamId()}/fourbased-users`);
     if (!response.ok) {
       throw new Error(`Failed to fetch accounts: ${response.status}`);
     }
-    return response.json() as Promise<InboxAccount[]>;
+    const raw = await response.json();
+    return (raw?.data?.accounts ?? []) as InboxAccount[];
   },
 
   async markChatAsRead(fourbasedId: string, chatId: string): Promise<void> {

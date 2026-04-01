@@ -78,7 +78,14 @@ export function InboxChatPage() {
       setIsLoadingChats(true);
       setChatsError(null);
       const data = await inboxApi.getChats({ days: 30, filter: 'all', limit: 100, scope: 'single', fourbased_id });
-      setChats(data.data);
+      const flatChats = data.data.flatMap((entry) =>
+        entry.members.flatMap((m) =>
+          m.accounts
+            .filter((a) => a.fourbased_id === fourbased_id)
+            .flatMap((a) => a.chats)
+        )
+      );
+      setChats(flatChats);
     } catch {
       setChatsError('Chats konnten nicht geladen werden.');
     } finally {
@@ -239,7 +246,7 @@ export function InboxChatPage() {
                   to={`/inbox/${chat.fourbased_id}/chat/${chat.chat_id}`}
                   className={`flex items-center gap-3 px-4 py-3 transition-colors hover:bg-slate-700 ${isActive ? 'border-l-4 border-[#ED4C27] bg-orange-900/20' : ''}`}
                 >
-                  <AccountAvatar src={chat.customer_avatar_url} name={chat.customer_name} size="sm" />
+                  <AccountAvatar src={chat.customer_avatar_url ?? undefined} name={chat.customer_name} size="sm" />
                   <div className="flex-1 min-w-0">
                     <span className="font-semibold text-sm text-gray-100 truncate block">{chat.customer_name}</span>
                     <p className="text-xs text-gray-500 truncate">{chat.last_message_preview}</p>
@@ -270,7 +277,7 @@ export function InboxChatPage() {
             {/* Chat header */}
             {activeChat && (
               <div className="p-4 border-b border-slate-700 flex items-center gap-3 shrink-0">
-                <AccountAvatar src={activeChat.customer_avatar_url} name={activeChat.customer_name} size="md" />
+                <AccountAvatar src={activeChat.customer_avatar_url ?? undefined} name={activeChat.customer_name} size="md" />
                 <div className="min-w-0 flex-1">
                   <h1 className="text-lg font-bold text-gray-100 truncate">{activeChat.customer_name}</h1>
                   <div className="mt-1">

@@ -10,8 +10,16 @@ interface User {
   updated_at: string;
 }
 
+interface Team {
+  team_id: number;
+  team_name: string;
+  team_slug: string;
+  role?: string;
+}
+
 interface AuthStore {
   user: User | null;
+  team: Team | null;
   token: string | null;
   isAuthenticated: boolean;
   isCheckingAuth: boolean;
@@ -45,9 +53,30 @@ const clearToken = (): void => {
   localStorage.removeItem('auth_token_expiry');
 };
 
+const saveTeamCookie = (team: Team): void => {
+  const expiry = new Date();
+  expiry.setDate(expiry.getDate() + TOKEN_EXPIRY_DAYS);
+  document.cookie = `auth_team=${encodeURIComponent(JSON.stringify(team))}; expires=${expiry.toUTCString()}; path=/; SameSite=Strict`;
+};
+
+const getTeamCookie = (): Team | null => {
+  const match = document.cookie.match(/(?:^|; )auth_team=([^;]*)/);
+  if (!match) return null;
+  try {
+    return JSON.parse(decodeURIComponent(match[1]));
+  } catch {
+    return null;
+  }
+};
+
+const clearTeamCookie = (): void => {
+  document.cookie = 'auth_team=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; SameSite=Strict';
+};
+
 
 export const useAuthStore = create<AuthStore>((set) => ({
   user: null,
+  team: isTokenValid() ? getTeamCookie() : null,
   token: isTokenValid() ? localStorage.getItem('auth_token') : null,
   isAuthenticated: isTokenValid(),
   isCheckingAuth: false,
@@ -79,8 +108,11 @@ export const useAuthStore = create<AuthStore>((set) => ({
       const data = await response.json();
 
       if (data.status === 'success' && data.data?.user) {
+        const team = data.data.team ?? null;
+        if (team) saveTeamCookie(team);
         set({ 
-          user: data.data.user, 
+          user: data.data.user,
+          team,
           token, 
           isAuthenticated: true,
           isCheckingAuth: false 
@@ -112,11 +144,12 @@ export const useAuthStore = create<AuthStore>((set) => ({
       const data = await response.json();
 
       if (data.status === 'success' && data.data) {
-        const { token, user } = data.data;
+        const { token, user, team } = data.data;
         
         saveToken(token);
+        if (team) saveTeamCookie(team);
         
-        set({ user, token, isAuthenticated: true });
+        set({ user, team: team ?? null, token, isAuthenticated: true });
       } else {
         throw new Error(data.message || 'Login failed');
       }
@@ -128,6 +161,7 @@ export const useAuthStore = create<AuthStore>((set) => ({
 
   logout: () => {
     clearToken();
-    set({ user: null, token: null, isAuthenticated: false });
+    clearTeamCookie();
+    set({ user: null, team: null, token: null, isAuthenticated: false });
   },
 }));
