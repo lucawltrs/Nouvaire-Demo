@@ -113,7 +113,7 @@ export function ChatMessageList({
                   {typeof message.file_stack?.price === 'number' && (
                     <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                       <span className="bg-black/60 text-white text-sm font-bold px-3 py-1 rounded-full">
-                        ${(message.file_stack.price * (1 - 0.1736) / 100).toFixed(2)}
+                        ${(message.file_stack.price * (1 - 0.21) / 100).toFixed(2)}
                       </span>
                     </div>
                   )}
