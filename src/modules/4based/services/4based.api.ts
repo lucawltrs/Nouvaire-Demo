@@ -93,12 +93,18 @@ export interface FourBasedChatMessagesQuery {
   with_tip?: boolean;
 }
 
+export interface FourBasedFileStack {
+  price?: number;
+  [key: string]: unknown;
+}
+
 export interface FourBasedChatMessage {
   _id: string;
   chat_id: string;
   user_id: string;
   message?: string;
   img_preview_link?: string;
+  file_stack?: FourBasedFileStack;
   sender_status?: string;
   receiver_status?: Record<string, string>;
   created_at?: string;
