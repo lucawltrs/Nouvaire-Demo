@@ -104,12 +104,19 @@ export function ChatMessageList({
               }`}
             >
               {message.img_preview_link && (
-                <a href={message.img_preview_link} target="_blank" rel="noopener noreferrer" className="block mb-2">
+                <a href={message.img_preview_link} target="_blank" rel="noopener noreferrer" className="relative block mb-2">
                   <img
                     src={message.img_preview_link}
                     alt="Nachrichten-Vorschau"
                     className="max-h-56 rounded-lg border border-gray-700 object-cover"
                   />
+                  {typeof message.file_stack?.price === 'number' && (
+                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                      <span className="bg-black/60 text-white text-sm font-bold px-3 py-1 rounded-full">
+                        ${(message.file_stack.price * (1 - 0.1736) / 100).toFixed(2)}
+                      </span>
+                    </div>
+                  )}
                 </a>
               )}
               <p className="whitespace-pre-wrap break-words">{message.message || '-'}</p>
