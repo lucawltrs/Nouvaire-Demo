@@ -41,10 +41,11 @@ export const cloudApi = {
   /** Paginated asset list for one creator */
   async getAssets(
     fourbasedId: string,
-    params: { fileStackType?: string; limit?: number; offset?: number } = {},
+    params: { fileStackType?: string; limit?: number; offset?: number; belongs_to_folders?: string } = {},
   ): Promise<CloudAssetsResponse> {
     const q = new URLSearchParams();
     if (params.fileStackType) q.set('fileStackType', params.fileStackType);
+    if (params.belongs_to_folders) q.set('belongs_to_folders', params.belongs_to_folders);
     q.set('limit', String(params.limit ?? 60));
     q.set('offset', String(params.offset ?? 0));
     q.set('sort', JSON.stringify({ created_at: 'desc' }));

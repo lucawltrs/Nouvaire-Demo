@@ -167,7 +167,7 @@ export default function CloudUserAssetsPage() {
   const sentinelRef = useRef<HTMLDivElement | null>(null);
 
   const loadInitial = useCallback(
-    async (type: AssetType) => {
+    async (type: AssetType, folder: string | null) => {
       if (!fourbased_id) return;
       setLoading(true);
       setError(null);
@@ -177,7 +177,10 @@ export default function CloudUserAssetsPage() {
       try {
         const [userData, assetsData] = await Promise.all([
           cloudApi.getUser(fourbased_id).catch(() => null),
-          cloudApi.getAssets(fourbased_id, { fileStackType: type === 'all' ? undefined : type }),
+          cloudApi.getAssets(fourbased_id, {
+            fileStackType: type === 'all' ? undefined : type,
+            belongs_to_folders: folder ?? undefined,
+          }),
         ]);
         setUser(userData ?? { fourbased_id, name: fourbased_id });
         setAssets(assetsData.response);
@@ -193,21 +196,13 @@ export default function CloudUserAssetsPage() {
   );
 
   useEffect(() => {
-    loadInitial(filter);
-    setActiveFolder(null);
-  }, [loadInitial, filter]);
+    loadInitial(filter, activeFolder);
+  }, [loadInitial, filter, activeFolder]);
 
-  // Unique folders derived from all loaded assets
-  const allFolders = Array.from(
-    new Set(Array.isArray(assets)
-      ? assets.flatMap((a) => a.belongs_to_folders ?? [])
-      : []),
-  ).sort();
+  // Folders come from the user account object
+  const allFolders = user?.folders ?? [];
 
-  // Client-side folder filter applied on top of type filter
-  const visibleAssets = activeFolder
-    ? assets.filter((a) => (a.belongs_to_folders ?? []).includes(activeFolder))
-    : assets;
+  const visibleAssets = assets;
 
   const loadMore = useCallback(async () => {
     if (!fourbased_id || !hasMore || nextOffset === null || loadingMore) return;
@@ -215,6 +210,7 @@ export default function CloudUserAssetsPage() {
     try {
       const data = await cloudApi.getAssets(fourbased_id, {
         fileStackType: filter === 'all' ? undefined : filter,
+        belongs_to_folders: activeFolder ?? undefined,
         offset: nextOffset,
       });
       setAssets((prev) => [...prev, ...data.response]);
@@ -225,21 +221,24 @@ export default function CloudUserAssetsPage() {
     } finally {
       setLoadingMore(false);
     }
-  }, [fourbased_id, hasMore, nextOffset, loadingMore, filter]);
+  }, [fourbased_id, hasMore, nextOffset, loadingMore, filter, activeFolder]);
 
-  // Infinite scroll via IntersectionObserver
+  const loadMoreRef = useRef(loadMore);
+  useEffect(() => { loadMoreRef.current = loadMore; }, [loadMore]);
+
+  // Infinite scroll via IntersectionObserver – set up once, always uses latest loadMore via ref
   useEffect(() => {
     const sentinel = sentinelRef.current;
     if (!sentinel) return;
     const observer = new IntersectionObserver(
       (entries) => {
-        if (entries[0].isIntersecting) loadMore();
+        if (entries[0].isIntersecting) loadMoreRef.current();
       },
       { rootMargin: '200px' },
     );
     observer.observe(sentinel);
     return () => observer.disconnect();
-  }, [loadMore]);
+  }, []);
 
   return (
     <div className="space-y-5">
@@ -289,16 +288,16 @@ export default function CloudUserAssetsPage() {
 
       {/* Type filter chips */}
       <div className="flex items-center gap-2 flex-wrap">
-        <FilterChip label="Alle" active={filter === 'all'} onClick={() => setFilter('all')} />
+        <FilterChip label="Alle" active={filter === 'all'} onClick={() => { setFilter('all'); setActiveFolder(null); }} />
         <FilterChip
           label={<span className="flex items-center gap-1"><ImageIcon size={12} />Bilder</span>}
           active={filter === 'image'}
-          onClick={() => setFilter('image')}
+          onClick={() => { setFilter('image'); setActiveFolder(null); }}
         />
         <FilterChip
           label={<span className="flex items-center gap-1"><Film size={12} />Videos</span>}
           active={filter === 'video'}
-          onClick={() => setFilter('video')}
+          onClick={() => { setFilter('video'); setActiveFolder(null); }}
         />
       </div>
 
@@ -332,7 +331,7 @@ export default function CloudUserAssetsPage() {
           <p className="text-sm text-gray-500">{error}</p>
           <button
             type="button"
-            onClick={() => loadInitial(filter)}
+            onClick={() => loadInitial(filter, activeFolder)}
             className="flex items-center gap-2 mt-2 px-4 py-2 text-sm rounded-lg border border-slate-600 hover:bg-slate-700 transition-colors text-gray-300"
           >
             <RefreshCw size={14} /> Erneut versuchen
@@ -344,19 +343,17 @@ export default function CloudUserAssetsPage() {
           <p className="text-gray-500 font-medium">Keine Assets gefunden.</p>
         </div>
       ) : (
-        <>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
-            {visibleAssets.map((asset) => (
-              <AssetTile key={asset._id} asset={asset} />
-            ))}
-          </div>
-
-          {/* Infinite scroll sentinel */}
-          <div ref={sentinelRef} className="flex justify-center py-4">
-            {loadingMore && <Loader2 size={22} className="animate-spin text-gray-400" />}
-          </div>
-        </>
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
+          {visibleAssets.map((asset) => (
+            <AssetTile key={asset._id} asset={asset} />
+          ))}
+        </div>
       )}
+
+      {/* Infinite scroll sentinel – always in the DOM so the observer can attach */}
+      <div ref={sentinelRef} className="flex justify-center py-4">
+        {loadingMore && <Loader2 size={22} className="animate-spin text-gray-400" />}
+      </div>
     </div>
   );
 }

@@ -5,6 +5,7 @@ export interface CloudUser {
   img_url?: string | null;
   assets_count?: number;
   last_asset_at?: string | null;
+  folders?: string[];
 }
 
 /** Matches the real 4based vault API response item */
