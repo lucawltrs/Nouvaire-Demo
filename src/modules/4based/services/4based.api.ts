@@ -95,6 +95,7 @@ export interface FourBasedChatMessagesQuery {
 
 export interface FourBasedFileStack {
   price?: number;
+  user_paid?: string[];
   [key: string]: unknown;
 }
 
@@ -102,6 +103,7 @@ export interface FourBasedChatMessage {
   _id: string;
   chat_id: string;
   user_id: string;
+  receiver_user_id?: string;
   message?: string;
   img_preview_link?: string;
   file_stack?: FourBasedFileStack;
