@@ -1,4 +1,5 @@
-export type InboxFilter = 'all' | 'unread';
+export type InboxFilter = 'all' | 'unread' | 'online';
+export type InboxListNames = 'unread' | 'online';
 export type InboxScope = 'all' | 'single';
 
 export interface InboxAccountAssignedTo {
@@ -89,6 +90,23 @@ export interface InboxQueryParams {
   offset?: number;
   scope?: InboxScope;
   fourbased_id?: string;
+}
+
+export interface ChatSearchParams {
+  query?: string;
+  limit?: number;
+  offset?: number;
+  list_names?: InboxListNames;
+  fourbased_id?: string;
+}
+
+export interface ChatSearchResponse {
+  data: ChatListItem[];
+  pagination?: {
+    limit: number;
+    offset: number;
+    has_more: boolean;
+  };
 }
 
 export interface PredefinedText {

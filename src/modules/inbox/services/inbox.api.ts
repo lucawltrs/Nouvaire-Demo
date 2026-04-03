@@ -1,4 +1,4 @@
-import type { InboxAccount, InboxApiResponse, InboxQueryParams, PivotData, PredefinedText } from '../types';
+import type { InboxAccount, InboxApiResponse, InboxQueryParams, ChatSearchParams, ChatListItem, PivotData, PredefinedText } from '../types';
 
 const getTeamId = (): number => {
   const match = document.cookie.match(/(?:^|; )auth_team=([^;]*)/);
@@ -46,6 +46,25 @@ export const inboxApi = {
     }
 
     return response.json() as Promise<InboxApiResponse>;
+  },
+
+  async searchChats(params: ChatSearchParams = {}): Promise<ChatListItem[]> {
+    const { query, limit = 60, offset = 0, list_names, fourbased_id } = params;
+    const queryParams = new URLSearchParams({
+      limit: String(limit),
+      offset: String(offset),
+      ...(query ? { query } : {}),
+      ...(list_names ? { list_names } : {}),
+      ...(fourbased_id ? { fourbased_id } : {}),
+    });
+    const response = await fourbasedFetch(`${getApiUrl()}/4based/chats/search?${queryParams}`);
+    if (!response.ok) {
+      throw new Error(`Failed to search chats: ${response.status}`);
+    }
+    const raw = await response.json();
+    if (Array.isArray(raw)) return raw as ChatListItem[];
+    if (Array.isArray(raw?.data)) return raw.data as ChatListItem[];
+    return [];
   },
 
   async getAccounts(): Promise<InboxAccount[]> {
