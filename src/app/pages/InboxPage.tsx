@@ -107,6 +107,40 @@ export function InboxPage() {
     fetchChats(activeTabId);
   }, [activeTabId, filter, fetchChats]);
 
+  // Silent background refresh for the chat list (every 2 minutes)
+  const fetchChatsSilent = useCallback(
+    async (fourbasedId: string) => {
+      if (!fourbasedId) return;
+      try {
+        const isAll = fourbasedId === '__all__';
+        const data = await inboxApi.getChats({
+          days: 30,
+          filter,
+          limit: PAGE_SIZE,
+          offset: 0,
+          scope: isAll ? 'all' : 'single',
+          ...(isAll ? {} : { fourbased_id: fourbasedId }),
+        });
+        const allChats = data.data.flatMap((entry) =>
+          entry.members.flatMap((m) =>
+            m.accounts
+              .filter((a) => isAll || a.fourbased_id === fourbasedId)
+              .flatMap((a) => a.chats)
+          )
+        );
+        setChats(allChats);
+      } catch {
+      }
+    },
+    [filter]
+  );
+
+  useEffect(() => {
+    if (!activeTabId) return;
+    const interval = setInterval(() => fetchChatsSilent(activeTabId), 30 * 1000);
+    return () => clearInterval(interval);
+  }, [activeTabId, fetchChatsSilent]);
+
   const handleMarkAsRead = useCallback(
     async (chat: ChatListItem) => {
       const key = `${chat.fourbased_id}:${chat.chat_id}`;

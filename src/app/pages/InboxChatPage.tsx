@@ -71,6 +71,7 @@ export function InboxChatPage() {
     appendLocalMessage,
     removeLocalMessage,
     refresh,
+    refreshSilent,
   } = useChatMessages(fourbased_id, chat_id);
 
   // activeChat is derived — no need to re-fetch when only chat_id changes
@@ -113,6 +114,35 @@ export function InboxChatPage() {
   useEffect(() => {
     fetchChats();
   }, [fetchChats]);
+
+  // Silent background refresh for the chat list (every 2 minutes)
+  const fetchChatsSilent = useCallback(async () => {
+    if (!fourbased_id) return;
+    try {
+      const data = await inboxApi.getChats({ days: 30, filter: 'all', limit: 100, scope: 'single', fourbased_id });
+      const flatChats = data.data.flatMap((entry) =>
+        entry.members.flatMap((m) =>
+          m.accounts
+            .filter((a) => a.fourbased_id === fourbased_id)
+            .flatMap((a) => a.chats)
+        )
+      );
+      setChats(flatChats);
+    } catch {
+      // Silently ignore errors during background refresh
+    }
+  }, [fourbased_id]);
+
+  useEffect(() => {
+    const interval = setInterval(fetchChatsSilent, 30 * 1000);
+    return () => clearInterval(interval);
+  }, [fetchChatsSilent]);
+
+  // Silent background refresh for messages in the active chat (every 30 seconds)
+  useEffect(() => {
+    const interval = setInterval(refreshSilent, 30 * 1000);
+    return () => clearInterval(interval);
+  }, [refreshSilent]);
 
   useEffect(() => {
     if (!fourbased_id) return;
