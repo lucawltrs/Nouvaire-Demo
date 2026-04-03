@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router-dom';
 import { Button } from '../../../components/ui/Button';
 import { Card } from '../../../components/ui/Card';
 import { Badge } from '../../../components/ui/Badge';
+import { PageLoader } from '../../../components/ui/PageLoader';
 import {
   fetchUserByFourBasedId,
   fetchUserUnreadMessages,
@@ -55,9 +56,10 @@ export function FourBasedModelDetailPage() {
 
   if (isLoading) {
     return (
-      <div className="text-center py-12">
-        <p className="text-gray-400">Lade Account...</p>
-      </div>
+      <PageLoader
+        message="Lade Account..."
+        subtitle="Account-Daten und ungelesene Nachrichten werden geladen"
+      />
     );
   }
 

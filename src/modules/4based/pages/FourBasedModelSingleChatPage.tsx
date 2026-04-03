@@ -4,6 +4,7 @@ import { Button } from '../../../components/ui/Button';
 import { Card } from '../../../components/ui/Card';
 import { Badge } from '../../../components/ui/Badge';
 import { Textarea } from '../../../components/ui/Textarea';
+import { PageLoader } from '../../../components/ui/PageLoader';
 import {
   fetchUserByFourBasedId,
   fetchUserChats,
@@ -140,9 +141,10 @@ export function FourBasedModelSingleChatPage() {
 
   if (isInitialLoading) {
     return (
-      <div className="text-center py-12">
-        <p className="text-gray-400">Lade Chat...</p>
-      </div>
+      <PageLoader
+        message="Lade Chat..."
+        subtitle="Nachrichten werden aus dem Verlauf geladen"
+      />
     );
   }
 

@@ -2,25 +2,10 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Cloud, Search, User, ChevronRight, AlertCircle, RefreshCw } from 'lucide-react';
 import { Card } from '../../../components/ui/Card';
+import { PageLoader } from '../../../components/ui/PageLoader';
 import { Badge } from '../../../components/ui/Badge';
 import { cloudApi, relativeTime } from '../../../modules/cloud/cloudApi';
 import type { CloudUser } from '../../../modules/cloud/types';
-
-// ── Skeleton ─────────────────────────────────────────────────────────────────
-function SkeletonRow() {
-  return (
-    <div className="flex items-center gap-4 p-4 animate-pulse">
-      <div className="w-11 h-11 rounded-full bg-slate-700 shrink-0" />
-      <div className="flex-1 space-y-2">
-        <div className="h-4 w-40 bg-slate-700 rounded" />
-        <div className="h-3 w-56 bg-slate-700 rounded" />
-      </div>
-      <div className="h-6 w-16 bg-slate-700 rounded-full" />
-      <div className="h-6 w-20 bg-slate-700 rounded-full" />
-      <div className="h-8 w-20 bg-slate-700 rounded-lg" />
-    </div>
-  );
-}
 
 // ── Avatar ────────────────────────────────────────────────────────────────────
 function UserAvatar({ src, name }: { src?: string | null; name: string }) {
@@ -124,7 +109,7 @@ export default function CloudOverviewPage() {
       {/* Content */}
       <Card className="rounded-2xl overflow-hidden divide-y divide-slate-700">
         {loading ? (
-          Array.from({ length: 5 }).map((_, i) => <SkeletonRow key={i} />)
+          <PageLoader message="Lade Cloud-Nutzer..." subtitle="Nutzerdaten werden abgerufen" />
         ) : error ? (
           <div className="flex flex-col items-center justify-center gap-3 py-16 text-center px-4">
             <AlertCircle size={36} className="text-red-400" />
