@@ -154,6 +154,12 @@ export function InboxChatPage() {
     inboxApi.getPredefinedTexts(fourbased_id).then(setPredefinedTexts).catch(() => {});
   }, [fourbased_id]);
 
+  // Mark chat as read when opening a chat
+  useEffect(() => {
+    if (!fourbased_id || !chat_id) return;
+    inboxApi.markChatAsRead(fourbased_id, chat_id).catch(() => {});
+  }, [fourbased_id, chat_id]);
+
   const isOwnMessage = (message: FourBasedChatMessage) => message.user_id === fourbased_id;
 
   // Derive customer_id from messages (first message not sent by us)
