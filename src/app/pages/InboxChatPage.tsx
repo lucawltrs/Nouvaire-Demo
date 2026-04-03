@@ -82,8 +82,9 @@ export function InboxChatPage() {
   } = useChatMessages(fourbased_id, chat_id);
 
   // activeChat is derived — no need to re-fetch when only chat_id changes
+  // Use String() coercion to handle cases where API returns chat_id as number
   const activeChat = useMemo(
-    () => chats.find(c => c.chat_id === chat_id) ?? null,
+    () => chats.find(c => String(c.chat_id) === String(chat_id)) ?? null,
     [chats, chat_id],
   );
 
@@ -113,6 +114,20 @@ export function InboxChatPage() {
   useEffect(() => {
     fetchChats();
   }, [fetchChats]);
+
+  // If the active chat is not in the loaded list (e.g. older than 30 days or beyond limit),
+  // fetch it individually via search by chat_id and inject it into the list.
+  useEffect(() => {
+    if (!chat_id || !fourbased_id || isLoadingChats) return;
+    const alreadyPresent = chats.some(c => String(c.chat_id) === String(chat_id));
+    if (alreadyPresent) return;
+    inboxApi.searchChats({ query: chat_id, limit: 5, fourbased_id })
+      .then((results) => {
+        const found = results.find(r => String(r.chat_id) === String(chat_id));
+        if (found) setChats(prev => [...prev, found]);
+      })
+      .catch(() => {});
+  }, [chat_id, fourbased_id, isLoadingChats, chats]);
 
   // Debounced API search for chat sidebar
   useEffect(() => {
@@ -465,7 +480,7 @@ export function InboxChatPage() {
           </div>
         ) : messagesError ? (
           <div className="flex items-center justify-center flex-1 text-red-500">{messagesError}</div>
-        ) : !activeChat && !isLoadingChats ? (
+        ) : !activeChat && !isLoadingChats && messages.length === 0 ? (
           <div className="flex items-center justify-center flex-1 text-gray-400">Chat nicht gefunden.</div>
         ) : (
           <Card className="rounded-2xl flex flex-col flex-1 min-h-0">
