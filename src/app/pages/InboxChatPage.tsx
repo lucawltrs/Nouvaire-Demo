@@ -810,9 +810,22 @@ function VaultSendStep({
   const [priceInput, setPriceInput] = useState(
     typeof item.price === 'number' && item.price > 0 ? (item.price / 100).toFixed(2) : '',
   );
+
+  const VAT_RATE = 0.21;
+  const CREATOR_SHARE = 0.70;
+  const MIN_PRICE = 3.00;
+
+  const basePrice = parseFloat(priceInput || '0') || 0;
+  const vatAmount = basePrice * VAT_RATE;
+  const userPrice = basePrice + vatAmount;
+  const creatorAmount = basePrice * CREATOR_SHARE;
+  const isPriceInvalid = basePrice > 0 && basePrice < MIN_PRICE;
+
   const handleSend = () => {
-    const priceInCents = Math.round(parseFloat(priceInput || '0') * 100);
-    onSend(description, Number.isNaN(priceInCents) ? 0 : priceInCents);
+    if (isPriceInvalid) return;
+    const priceWithVat = Math.round(basePrice * (1 + VAT_RATE) * 100);
+    const priceInCents = Number.isNaN(priceWithVat) ? 0 : priceWithVat;
+    onSend(description, priceInCents);
   };
 
   return (
@@ -838,7 +851,9 @@ function VaultSendStep({
         <div className="flex flex-col gap-4 flex-1 min-w-0">
           {/* Description */}
           <div>
-            <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-1">Beschreibung</p>
+            <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-1">
+              Beschreibung <span className="text-red-400">*</span>
+            </p>
             <Textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
@@ -855,10 +870,32 @@ function VaultSendStep({
               <Input
                 value={priceInput}
                 onChange={(e) => setPriceInput(e.target.value.replace(/[^0-9.]/g, ''))}
-                placeholder="0.00"
-                className="pl-6"
+                placeholder="Preis in $"
+                className={`pl-6 ${isPriceInvalid ? 'border-red-500 focus:border-red-500' : ''}`}
               />
             </div>
+            {isPriceInvalid && (
+              <p className="text-[10px] text-red-400 mt-1">Mindestpreis: $3.00</p>
+            )}
+            {basePrice >= MIN_PRICE && (
+              <div className="mt-2 rounded-lg bg-slate-800/60 border border-slate-700 p-2.5 flex flex-col gap-1.5 text-[11px]">
+                <div>
+                  <span className="text-gray-500">Deine Provision:</span>
+                  <span className="text-gray-300 ml-1">
+                    ${basePrice.toFixed(2)} × 70% = <span className="text-green-400 font-semibold">${creatorAmount.toFixed(2)}</span>
+                  </span>
+                </div>
+                <div>
+                  <span className="text-gray-500">Preis für User:</span>
+                  <span className="text-gray-300 ml-1">
+                    ${basePrice.toFixed(2)} + ${vatAmount.toFixed(2)} <span className="text-gray-500">(MwSt.)</span> = <span className="text-[#ED4C27] font-semibold">${userPrice.toFixed(2)}</span>
+                  </span>
+                </div>
+                <p className="text-gray-600 leading-tight">
+                  Die MwSt. wird direkt abgeführt.
+                </p>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -872,7 +909,7 @@ function VaultSendStep({
         >
           <ArrowLeft size={15} /> Zurück
         </button>
-        <Button onClick={handleSend} disabled={isSending}>
+        <Button onClick={handleSend} disabled={isSending || isPriceInvalid || !description.trim()}>
           {isSending ? <Loader2 size={15} className="animate-spin" /> : 'Senden'}
         </Button>
       </div>
