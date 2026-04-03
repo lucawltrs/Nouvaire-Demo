@@ -212,6 +212,33 @@ export function useChatMessages(fourbasedId?: string, chatId?: string) {
     await loadInitial();
   }, [fourbasedId, chatId, loadInitial]);
 
+  // Silent background refresh – merges latest messages without any loading indicator.
+  const refreshSilent = useCallback(async () => {
+    if (!fourbasedId || !chatId) return;
+    try {
+      const result = await fetchUserChatMessages(fourbasedId, chatId, {
+        limit: PAGE_SIZE,
+        offset: 0,
+        sort: '{"created_at":"desc"}',
+        with_file_stack: true,
+        with_tip: true,
+      });
+      const ascending = [...(result.response ?? [])].reverse();
+      setMessages((prev) => {
+        const merged = mergeChronological(prev, ascending);
+        const cached = readCache(fourbasedId, chatId);
+        writeCache(fourbasedId, chatId, {
+          messages: merged,
+          nextOffset: cached?.nextOffset ?? nextOffsetRef.current,
+          hasMore: cached?.hasMore ?? false,
+        });
+        return merged;
+      });
+    } catch {
+      // Silently ignore errors during background refresh
+    }
+  }, [fourbasedId, chatId]);
+
   return {
     messages,
     isInitialLoading,
@@ -223,5 +250,6 @@ export function useChatMessages(fourbasedId?: string, chatId?: string) {
     appendLocalMessage,
     removeLocalMessage,
     refresh,
+    refreshSilent,
   };
 }

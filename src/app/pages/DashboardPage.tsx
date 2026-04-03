@@ -487,7 +487,7 @@ function LatestChatsSection({ chats, showAccountName, onChatMarkedAsRead }: Late
                 <div className="flex items-center gap-2 shrink-0">
                   {/* Reply Button */}
                   <Link
-                    to={`/4based/models/${chat.fourbased_id}/chats/${chat.chat_id}`}
+                    to={`/inbox/${chat.fourbased_id}/chat/${chat.chat_id}`}
                     className="inline-flex items-center justify-center gap-1.5 px-3 py-2 text-xs sm:text-sm font-medium text-gray-300 hover:text-white bg-slate-700 hover:bg-slate-600 border border-slate-600 hover:border-slate-500 rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-1"
                     title="Reply"
                   >
