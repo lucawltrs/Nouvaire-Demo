@@ -11,6 +11,7 @@ import {
   RotateCcw,
   MessageSquareOff,
   Search,
+  X,
 } from 'lucide-react';
 import { inboxApi } from '../../modules/inbox/services/inbox.api';
 import type { ChatListItem, InboxAccount, InboxFilter } from '../../modules/inbox/types';
@@ -21,7 +22,7 @@ import { formatRelativeTime } from '../../modules/dashboard';
 // InboxPage
 // ============================================================================
 
-const PAGE_SIZE = 30;
+const PAGE_SIZE = 60;
 
 export function InboxPage() {
   // Accounts (tabs)
@@ -37,6 +38,8 @@ export function InboxPage() {
 
   const [filter, setFilter] = useState<InboxFilter>('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<ChatListItem[] | null>(null);
+  const [searchLoading, setSearchLoading] = useState(false);
 
   // Per-row loading state (mark as read)
   const [rowLoading, setRowLoading] = useState<Set<string>>(new Set());
@@ -74,23 +77,34 @@ export function InboxPage() {
         setChatsError(null);
 
         const isAll = fourbasedId === '__all__';
-        const data = await inboxApi.getChats({
-          days: 30,
-          filter,
-          limit: PAGE_SIZE,
-          offset: 0,
-          scope: isAll ? 'all' : 'single',
-          ...(isAll ? {} : { fourbased_id: fourbasedId }),
-        });
 
-        const allChats = data.data.flatMap((entry) =>
-          entry.members.flatMap((m) =>
-            m.accounts
-              .filter((a) => isAll || a.fourbased_id === fourbasedId)
-              .flatMap((a) => a.chats)
-          )
-        );
-        setChats(allChats);
+        if (filter === 'all') {
+          const data = await inboxApi.getChats({
+            days: 30,
+            filter: 'all',
+            limit: PAGE_SIZE,
+            offset: 0,
+            scope: isAll ? 'all' : 'single',
+            ...(isAll ? {} : { fourbased_id: fourbasedId }),
+          });
+          const allChats = data.data.flatMap((entry) =>
+            entry.members.flatMap((m) =>
+              m.accounts
+                .filter((a) => isAll || a.fourbased_id === fourbasedId)
+                .flatMap((a) => a.chats)
+            )
+          );
+          setChats(allChats);
+        } else {
+          // 'online' | 'unread' — use search endpoint with list_names
+          const results = await inboxApi.searchChats({
+            list_names: filter,
+            limit: PAGE_SIZE,
+            offset: 0,
+            ...(isAll ? {} : { fourbased_id: fourbasedId }),
+          });
+          setChats(results);
+        }
       } catch {
         setChatsError('Failed to load chats. Please try again.');
       } finally {
@@ -105,31 +119,71 @@ export function InboxPage() {
     if (!activeTabId) return;
     setChats([]);
     setSearchQuery('');
+    setSearchResults(null);
     fetchChats(activeTabId);
   }, [activeTabId, filter, fetchChats]);
 
-  // Silent background refresh for the chat list (every 2 minutes)
+  // Debounced API search
+  useEffect(() => {
+    const q = searchQuery.trim();
+    if (q.length < 3) {
+      setSearchResults(null);
+      return;
+    }
+    setSearchLoading(true);
+    const timeoutId = setTimeout(async () => {
+      try {
+        const isAll = activeTabId === '__all__';
+        const results = await inboxApi.searchChats({
+          query: q,
+          limit: PAGE_SIZE,
+          ...(isAll ? {} : { fourbased_id: activeTabId }),
+        });
+        setSearchResults(results);
+      } catch {
+        setSearchResults([]);
+      } finally {
+        setSearchLoading(false);
+      }
+    }, 400);
+    return () => {
+      clearTimeout(timeoutId);
+      setSearchLoading(false);
+    };
+  }, [searchQuery, activeTabId]);
+
+  // Silent background refresh for the chat list (every 30 seconds)
   const fetchChatsSilent = useCallback(
     async (fourbasedId: string) => {
       if (!fourbasedId) return;
       try {
         const isAll = fourbasedId === '__all__';
-        const data = await inboxApi.getChats({
-          days: 30,
-          filter,
-          limit: PAGE_SIZE,
-          offset: 0,
-          scope: isAll ? 'all' : 'single',
-          ...(isAll ? {} : { fourbased_id: fourbasedId }),
-        });
-        const allChats = data.data.flatMap((entry) =>
-          entry.members.flatMap((m) =>
-            m.accounts
-              .filter((a) => isAll || a.fourbased_id === fourbasedId)
-              .flatMap((a) => a.chats)
-          )
-        );
-        setChats(allChats);
+        if (filter === 'all') {
+          const data = await inboxApi.getChats({
+            days: 30,
+            filter: 'all',
+            limit: PAGE_SIZE,
+            offset: 0,
+            scope: isAll ? 'all' : 'single',
+            ...(isAll ? {} : { fourbased_id: fourbasedId }),
+          });
+          const allChats = data.data.flatMap((entry) =>
+            entry.members.flatMap((m) =>
+              m.accounts
+                .filter((a) => isAll || a.fourbased_id === fourbasedId)
+                .flatMap((a) => a.chats)
+            )
+          );
+          setChats(allChats);
+        } else {
+          const results = await inboxApi.searchChats({
+            list_names: filter,
+            limit: PAGE_SIZE,
+            offset: 0,
+            ...(isAll ? {} : { fourbased_id: fourbasedId }),
+          });
+          setChats(results);
+        }
       } catch {
       }
     },
@@ -173,13 +227,8 @@ export function InboxPage() {
     [filter, rowLoading]
   );
 
-  const filteredChats = searchQuery.trim()
-    ? chats.filter(
-        (c) =>
-          (c.customer_name ?? '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-          (c.last_message_preview ?? '').toLowerCase().includes(searchQuery.toLowerCase())
-      )
-    : chats;
+  const displayedChats = searchQuery.trim().length >= 3 ? (searchResults ?? []) : chats;
+  const isDisplayLoading = chatsLoading || (searchQuery.trim().length >= 3 && searchLoading);
 
   return (
     <div className="space-y-6">
@@ -232,16 +281,27 @@ export function InboxPage() {
       {/* Controls: search + reload + filter */}
       {!accountsLoading && !accountsError && (
         <div className="flex flex-wrap gap-3 items-center">
-          <div className="relative flex-1 min-w-[180px] max-w-xs">
-            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search chats…"
-              className="w-full pl-8 pr-3 py-2 text-sm bg-slate-800 border border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ED4C27]/40 focus:border-[#ED4C27] text-gray-100 placeholder-gray-500 transition-colors"
-            />
-          </div>
+          {activeTabId !== '__all__' && (
+            <div className="relative flex-1 min-w-[180px] max-w-xs">
+              <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search chats…"
+                className="w-full pl-8 pr-8 py-2 text-sm bg-slate-800 border border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ED4C27]/40 focus:border-[#ED4C27] text-gray-100 placeholder-gray-500 transition-colors"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-100 transition-colors"
+                  aria-label="Clear search"
+                >
+                  <X size={14} />
+                </button>
+              )}
+            </div>
+          )}
 
           <div className="flex-1" />
 
@@ -261,17 +321,17 @@ export function InboxPage() {
             />
           </button>
 
-          {/* Filter: All / Unread */}
+          {/* Filter: All / Online / Unread */}
           <div className="flex rounded-lg border border-slate-600 bg-card overflow-hidden">
-            {(['all', 'unread'] as InboxFilter[]).map((f) => (
+            {([['all', 'All'], ['online', 'Online'], ['unread', 'Unread']] as [InboxFilter, string][]).map(([f, label]) => (
               <button
                 key={f}
                 onClick={() => setFilter(f)}
-                className={`px-4 py-2 text-xs sm:text-sm font-medium transition-colors capitalize ${
+                className={`px-4 py-2 text-xs sm:text-sm font-medium transition-colors ${
                   filter === f ? 'bg-[#ED4C27] text-white' : 'text-gray-300 hover:bg-slate-700'
                 }`}
               >
-                {f === 'all' ? 'All' : 'Unread'}
+                {label}
               </button>
             ))}
           </div>
@@ -280,16 +340,16 @@ export function InboxPage() {
 
       {/* Chat list */}
       {!accountsLoading && !accountsError && (
-        chatsLoading ? (
+        isDisplayLoading ? (
           <PageLoader message="Lade Chats..." subtitle="Nachrichten der letzten 30 Tage werden abgerufen" />
         ) : chatsError ? (
           <ErrorState error={chatsError} onRetry={() => fetchChats(activeTabId)} />
-        ) : filteredChats.length === 0 ? (
+        ) : displayedChats.length === 0 ? (
           <EmptyState filter={filter} />
         ) : (
           <>
             <Card className="divide-y divide-slate-700 border border-slate-600 overflow-hidden">
-              {filteredChats.map((chat) => {
+              {displayedChats.map((chat) => {
                 const key = `${chat.fourbased_id}:${chat.chat_id}`;
                 return (
                   <ChatRow

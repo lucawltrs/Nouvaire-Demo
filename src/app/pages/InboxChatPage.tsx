@@ -6,7 +6,7 @@ import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
 import { Textarea } from '../../components/ui/Textarea';
 import { Input } from '../../components/ui/Input';
-import { Loader2, User, ArrowLeft, Search, Camera, Film, CheckCircle, Smile } from 'lucide-react';
+import { Loader2, User, ArrowLeft, Search, Camera, Film, CheckCircle, Smile, X } from 'lucide-react';
 import Picker from '@emoji-mart/react';
 import data from '@emoji-mart/data';
 import { Modal } from '../../components/ui/Modal';
@@ -38,6 +38,8 @@ export function InboxChatPage() {
   const [isLoadingChats, setIsLoadingChats] = useState(true);
   const [chatsError, setChatsError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<ChatListItem[] | null>(null);
+  const [searchLoading, setSearchLoading] = useState(false);
   const [messageInput, setMessageInput] = useState('');
   const [isSending, setIsSending] = useState(false);
   const [predefinedTexts, setPredefinedTexts] = useState<PredefinedText[]>([]);
@@ -85,15 +87,7 @@ export function InboxChatPage() {
     [chats, chat_id],
   );
 
-  const filteredChats = useMemo(() => {
-    const q = searchQuery.trim().toLowerCase();
-    if (!q) return chats;
-    return chats.filter(
-      c =>
-        c.customer_name.toLowerCase().includes(q) ||
-        (c.last_message_preview ?? '').toLowerCase().includes(q),
-    );
-  }, [chats, searchQuery]);
+  const filteredChats = searchQuery.trim().length >= 3 ? (searchResults ?? []) : chats;
 
   const fetchChats = useCallback(async () => {
     if (!fourbased_id) return;
@@ -119,6 +113,34 @@ export function InboxChatPage() {
   useEffect(() => {
     fetchChats();
   }, [fetchChats]);
+
+  // Debounced API search for chat sidebar
+  useEffect(() => {
+    const q = searchQuery.trim();
+    if (q.length < 3) {
+      setSearchResults(null);
+      return;
+    }
+    setSearchLoading(true);
+    const timeoutId = setTimeout(async () => {
+      try {
+        const results = await inboxApi.searchChats({
+          query: q,
+          limit: 60,
+          fourbased_id,
+        });
+        setSearchResults(results);
+      } catch {
+        setSearchResults([]);
+      } finally {
+        setSearchLoading(false);
+      }
+    }, 400);
+    return () => {
+      clearTimeout(timeoutId);
+      setSearchLoading(false);
+    };
+  }, [searchQuery, fourbased_id]);
 
   // Silent background refresh for the chat list (every 2 minutes)
   const fetchChatsSilent = useCallback(async () => {
@@ -381,8 +403,17 @@ export function InboxChatPage() {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Chats durchsuchen…"
-            className="pl-8 text-sm"
+            className="pl-8 pr-8 text-sm"
           />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery('')}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-100 transition-colors"
+              aria-label="Clear search"
+            >
+              <X size={12} />
+            </button>
+          )}
         </div>
 
         {/* Chat list */}
@@ -393,6 +424,10 @@ export function InboxChatPage() {
             </div>
           ) : chatsError ? (
             <p className="text-red-500 text-sm p-4">{chatsError}</p>
+          ) : searchLoading ? (
+            <div className="flex items-center justify-center h-32">
+              <Loader2 size={20} className="animate-spin text-gray-400" />
+            </div>
           ) : filteredChats.length === 0 ? (
             <p className="text-gray-400 text-sm p-4">
               {searchQuery.trim() ? 'Keine Treffer.' : 'Keine Chats gefunden.'}
