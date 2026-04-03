@@ -206,15 +206,47 @@ export const fetchUserDashboard = async (fourbasedId: string) => {
   return parseJson(response) as Promise<FourBasedDashboardResult>;
 };
 
+export interface FileStackCreateBody {
+  id: string;
+  description: string;
+  price: number;
+}
+
+export interface FileStackCreateResult {
+  fourbased_id: string;
+  url: string;
+  status: number;
+  payload: Record<string, unknown>;
+  response: {
+    _id: string;
+    [key: string]: unknown;
+  };
+}
+
+export const createFileStack = async (
+  fourbasedId: string,
+  body: FileStackCreateBody,
+): Promise<FileStackCreateResult> => {
+  const response = await fetch(`${API_BASE}/users/${fourbasedId}/file-stack`, {
+    method: "POST",
+    headers: getAuthHeaders(),
+    body: JSON.stringify(body),
+  });
+
+  return parseJson(response) as Promise<FileStackCreateResult>;
+};
+
 export const sendChatMessage = async (
   fourbasedId: string,
   chatId: string,
-  message: string
+  message: string,
+  messagePrice = 0,
+  fileStackId: string | null = null,
 ) => {
   const response = await fetch(`${API_BASE}/users/${fourbasedId}/chats/${chatId}/message`, {
     method: "POST",
     headers: getAuthHeaders(),
-    body: JSON.stringify({ message, message_price: 0, file_stack_id: null }),
+    body: JSON.stringify({ message, message_price: messagePrice, file_stack_id: fileStackId }),
   });
 
   return parseJson(response);

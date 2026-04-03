@@ -41,15 +41,28 @@ export const cloudApi = {
   /** Paginated asset list for one creator */
   async getAssets(
     fourbasedId: string,
-    params: { fileStackType?: string; limit?: number; offset?: number; belongs_to_folders?: string } = {},
+    params: {
+      fileStackType?: string;
+      limit?: number;
+      offset?: number;
+      belongs_to_folders?: string;
+      file_type?: string;
+      sold?: boolean;
+      sent?: boolean;
+      buyer_user_id?: string;
+    } = {},
   ): Promise<CloudAssetsResponse> {
     const q = new URLSearchParams();
-    if (params.fileStackType) q.set('fileStackType', params.fileStackType);
-    if (params.belongs_to_folders) q.set('belongs_to_folders', params.belongs_to_folders);
     q.set('limit', String(params.limit ?? 60));
     q.set('offset', String(params.offset ?? 0));
     q.set('sort', JSON.stringify({ created_at: 'desc' }));
     q.set('with_source', 'true');
+    if (params.fileStackType) q.set('fileStackType', params.fileStackType);
+    if (params.belongs_to_folders) q.set('belongs_to_folders', params.belongs_to_folders);
+    if (params.file_type) q.set('file_type', params.file_type);
+    if (params.sold !== undefined) q.set('sold', String(params.sold));
+    if (params.sent !== undefined) q.set('sent', String(params.sent));
+    if (params.buyer_user_id) q.set('buyer_user_id', params.buyer_user_id);
     const response = await apiFetch(`/4based/users/${fourbasedId}/vault?${q}`);
     if (!response.ok) throw new Error(`Failed to fetch assets: ${response.status}`);
     return response.json() as Promise<CloudAssetsResponse>;
