@@ -101,14 +101,14 @@ export function ChatMessageList({
                 ownMessage
                   ? 'bg-[#ED4C27] border-[#ED4C27]/70 text-white'
                   : 'bg-gray-800 border-gray-700 text-gray-100'
-              }`}
+              } ${message.img_preview_link ? 'w-64' : ''}`}
             >
               {message.img_preview_link && (
                 <a href={message.img_preview_link} target="_blank" rel="noopener noreferrer" className="relative block mb-2">
                   <img
                     src={message.img_preview_link}
                     alt="Nachrichten-Vorschau"
-                    className="max-h-56 rounded-lg border border-gray-700 object-cover"
+                    className="w-full max-h-56 rounded-lg border border-gray-700 object-cover"
                   />
                   {typeof message.file_stack?.price === 'number' && (() => {
                     const isPurchased = !!(message.receiver_user_id && message.file_stack?.user_paid?.includes(message.receiver_user_id));
