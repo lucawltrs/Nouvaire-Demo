@@ -1,11 +1,14 @@
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useEffect, useState, useCallback, useMemo, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { Card } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
 import { Textarea } from '../../components/ui/Textarea';
 import { Input } from '../../components/ui/Input';
-import { Loader2, User, ArrowLeft, Search, Camera, Film, CheckCircle } from 'lucide-react';
+import { Loader2, User, ArrowLeft, Search, Camera, Film, CheckCircle, Smile } from 'lucide-react';
+import Picker from '@emoji-mart/react';
+import data from '@emoji-mart/data';
 import { Modal } from '../../components/ui/Modal';
 import { cloudApi, unblurUrl } from '../../modules/cloud/cloudApi';
 import type { CloudAsset } from '../../modules/cloud/types';
@@ -59,6 +62,8 @@ export function InboxChatPage() {
   const [selectedVaultItem, setSelectedVaultItem] = useState<CloudAsset | null>(null);
   const [vaultStep, setVaultStep] = useState<1 | 2>(1);
   const [isSendingVault, setIsSendingVault] = useState(false);
+  const [isEmojiPickerOpen, setIsEmojiPickerOpen] = useState(false);
+  const emojiPickerRef = useRef<HTMLDivElement>(null);
 
   const {
     messages,
@@ -280,6 +285,36 @@ export function InboxChatPage() {
     }
   };
 
+  const handleEmojiSelect = (emoji: { native: string }) => {
+    const textarea = textareaRef.current;
+    if (textarea) {
+      const start = textarea.selectionStart ?? messageInput.length;
+      const end = textarea.selectionEnd ?? messageInput.length;
+      const newValue = messageInput.slice(0, start) + emoji.native + messageInput.slice(end);
+      setMessageInput(newValue);
+      requestAnimationFrame(() => {
+        textarea.focus();
+        const pos = start + emoji.native.length;
+        textarea.setSelectionRange(pos, pos);
+      });
+    } else {
+      setMessageInput(prev => prev + emoji.native);
+    }
+    setIsEmojiPickerOpen(false);
+  };
+
+  // Close emoji picker when clicking outside
+  useEffect(() => {
+    if (!isEmojiPickerOpen) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (emojiPickerRef.current && !emojiPickerRef.current.contains(e.target as Node)) {
+        setIsEmojiPickerOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isEmojiPickerOpen]);
+
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
       e.preventDefault();
@@ -446,14 +481,38 @@ export function InboxChatPage() {
                   rows={3}
                 />
                 <div className="flex flex-col items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={handleOpenVault}
-                    className="flex items-center justify-center w-10 h-10 rounded-lg border border-slate-600 bg-slate-700 text-gray-400 hover:text-[#ED4C27] hover:border-[#ED4C27] transition-colors"
-                    title="Vault öffnen"
-                  >
-                    <Camera size={18} />
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <div className="relative" ref={emojiPickerRef}>
+                      <button
+                        type="button"
+                        onClick={() => setIsEmojiPickerOpen(prev => !prev)}
+                        className="flex items-center justify-center w-10 h-10 rounded-lg border border-slate-600 bg-slate-700 text-gray-400 hover:text-[#ED4C27] hover:border-[#ED4C27] transition-colors"
+                        title="Emoji einfügen"
+                      >
+                        <Smile size={18} />
+                      </button>
+                      {isEmojiPickerOpen && (
+                        <div className="absolute bottom-12 right-0 z-50">
+                          <Picker
+                            data={data}
+                            onEmojiSelect={handleEmojiSelect}
+                            theme="dark"
+                            locale="de"
+                            previewPosition="none"
+                            skinTonePosition="search"
+                          />
+                        </div>
+                      )}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleOpenVault}
+                      className="flex items-center justify-center w-10 h-10 rounded-lg border border-slate-600 bg-slate-700 text-gray-400 hover:text-[#ED4C27] hover:border-[#ED4C27] transition-colors"
+                      title="Vault öffnen"
+                    >
+                      <Camera size={18} />
+                    </button>
+                  </div>
                   <Button onClick={handleSendMessage} disabled={!messageInput.trim() || isSending}>
                     {isSending ? 'Sendet...' : 'Senden'}
                   </Button>
@@ -810,6 +869,49 @@ function VaultSendStep({
   const [priceInput, setPriceInput] = useState(
     typeof item.price === 'number' && item.price > 0 ? (item.price / 100).toFixed(2) : '',
   );
+  const [isEmojiPickerOpen, setIsEmojiPickerOpen] = useState(false);
+  const [pickerPos, setPickerPos] = useState({ top: 0, left: 0 });
+  const descTextareaRef = useRef<HTMLTextAreaElement>(null);
+  const emojiBtnRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    if (!isEmojiPickerOpen) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as Node;
+      if (emojiBtnRef.current && emojiBtnRef.current.contains(target)) return;
+      const pickerEl = document.getElementById('vault-emoji-picker-portal');
+      if (pickerEl && pickerEl.contains(target)) return;
+      setIsEmojiPickerOpen(false);
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isEmojiPickerOpen]);
+
+  const handleEmojiBtnClick = () => {
+    if (!isEmojiPickerOpen && emojiBtnRef.current) {
+      const rect = emojiBtnRef.current.getBoundingClientRect();
+      setPickerPos({ top: rect.top - 440, left: rect.right - 352 });
+    }
+    setIsEmojiPickerOpen(prev => !prev);
+  };
+
+  const handleEmojiSelect = (emoji: { native: string }) => {
+    const textarea = descTextareaRef.current;
+    if (textarea) {
+      const start = textarea.selectionStart ?? description.length;
+      const end = textarea.selectionEnd ?? description.length;
+      const newValue = description.slice(0, start) + emoji.native + description.slice(end);
+      setDescription(newValue);
+      requestAnimationFrame(() => {
+        textarea.focus();
+        const pos = start + emoji.native.length;
+        textarea.setSelectionRange(pos, pos);
+      });
+    } else {
+      setDescription(prev => prev + emoji.native);
+    }
+    setIsEmojiPickerOpen(false);
+  };
 
   const VAT_RATE = 0.21;
   const CREATOR_SHARE = 0.70;
@@ -855,11 +957,39 @@ function VaultSendStep({
               Beschreibung <span className="text-red-400">*</span>
             </p>
             <Textarea
+              ref={descTextareaRef}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Beschreibung eingeben…"
               rows={4}
             />
+            <div className="flex justify-end mt-1">
+              <button
+                ref={emojiBtnRef}
+                type="button"
+                onClick={handleEmojiBtnClick}
+                className="flex items-center justify-center w-8 h-8 rounded-lg border border-slate-600 bg-slate-700 text-gray-400 hover:text-[#ED4C27] hover:border-[#ED4C27] transition-colors"
+                title="Emoji einfügen"
+              >
+                <Smile size={15} />
+              </button>
+              {isEmojiPickerOpen && createPortal(
+                <div
+                  id="vault-emoji-picker-portal"
+                  style={{ position: 'fixed', top: pickerPos.top, left: pickerPos.left, zIndex: 9999 }}
+                >
+                  <Picker
+                    data={data}
+                    onEmojiSelect={handleEmojiSelect}
+                    theme="dark"
+                    locale="de"
+                    previewPosition="none"
+                    skinTonePosition="search"
+                  />
+                </div>,
+                document.body,
+              )}
+            </div>
           </div>
 
           {/* Price */}
