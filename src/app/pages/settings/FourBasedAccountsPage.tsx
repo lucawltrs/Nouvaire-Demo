@@ -13,6 +13,7 @@ import {
   RefreshCw,
 } from 'lucide-react';
 import { Card } from '../../../components/ui/Card';
+import { PageLoader } from '../../../components/ui/PageLoader';
 import { Modal } from '../../../components/ui/Modal';
 import { Input } from '../../../components/ui/Input';
 import { Select } from '../../../components/ui/Select';
@@ -165,7 +166,7 @@ export function FourBasedAccountsPage() {
       </div>
 
       {isLoading ? (
-        <AccountsSkeleton />
+        <PageLoader message="Lade Accounts..." subtitle="4Based Accounts und Berechtigungen werden abgerufen" />
       ) : error ? (
         <ErrorState error={error} onRetry={fetchData} />
       ) : accounts.length === 0 ? (
@@ -730,46 +731,7 @@ function AddAccountModal({ isOpen, onClose, onSubmit }: AddAccountModalProps) {
   );
 }
 
-// ─── Skeleton / Empty / Error ─────────────────────────────────────────────────
-
-function AccountsSkeleton() {
-  return (
-    <Card className="overflow-hidden border border-slate-600 animate-pulse">
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-slate-700 bg-slate-800/50">
-              {['Account', 'Revenue', 'Followers', 'Assigned To', ''].map((h) => (
-                <th key={h} className="px-6 py-3">
-                  <div className="h-3 bg-slate-700 rounded w-20" />
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-700">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <tr key={i}>
-                <td className="px-6 py-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-slate-700 shrink-0" />
-                    <div className="space-y-1.5">
-                      <div className="h-4 bg-slate-700 rounded w-28" />
-                      <div className="h-3 bg-slate-700 rounded w-20" />
-                    </div>
-                  </div>
-                </td>
-                <td className="px-6 py-4"><div className="h-4 bg-slate-700 rounded w-20" /></td>
-                <td className="px-6 py-4"><div className="h-4 bg-slate-700 rounded w-12" /></td>
-                <td className="px-6 py-4"><div className="h-4 bg-slate-700 rounded w-28" /></td>
-                <td className="px-6 py-4"><div className="h-7 bg-slate-700 rounded w-8 ml-auto" /></td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </Card>
-  );
-}
+// ─── Empty / Error ────────────────────────────────────────────────────────────
 
 function EmptyState() {
   return (

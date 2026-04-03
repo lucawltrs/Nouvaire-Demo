@@ -7,6 +7,7 @@ import { Modal } from "../../components/ui/Modal";
 import { Input } from "../../components/ui/Input";
 import { Badge } from "../../components/ui/Badge";
 import { Card } from "../../components/ui/Card";
+import { PageLoader } from "../../components/ui/PageLoader";
 
 const FourBasedModelsPage: React.FC = () => {
   const { users, unreadByUser, loading, error, loadUsers, addCredentials, syncUsers } = useFourBasedModels();
@@ -71,7 +72,6 @@ const FourBasedModelsPage: React.FC = () => {
           <Button onClick={syncUsers} variant="secondary">Sync</Button>
         </div>
       </div>
-      {loading && <div>Lädt...</div>}
       {error && <div className="text-red-500">{error}</div>}
       <div className="mt-4">
         <Input
@@ -81,12 +81,19 @@ const FourBasedModelsPage: React.FC = () => {
           placeholder="Name, Identifier oder 4Based ID"
         />
       </div>
-      {!loading && users.length === 0 && (
+      {loading ? (
+        <PageLoader
+          message="Lade 4Based Accounts..."
+          subtitle="Accounts und ungelesene Nachrichten werden abgerufen"
+        />
+      ) : (
+        <>
+      {users.length === 0 && (
         <Card className="p-4 mt-4">
           <p className="text-gray-300">Keine 4Based Accounts gefunden.</p>
         </Card>
       )}
-      {!loading && users.length > 0 && filteredUsers.length === 0 && (
+      {users.length > 0 && filteredUsers.length === 0 && (
         <Card className="p-4 mt-4">
           <p className="text-gray-300">Keine Treffer für deine Suche.</p>
         </Card>
@@ -143,6 +150,8 @@ const FourBasedModelsPage: React.FC = () => {
           </Card>
         ))}
       </div>
+        </>
+      )}
       <Modal isOpen={showModal} onClose={() => setShowModal(false)} title="Zugangsdaten hinzufügen">
         <div className="flex flex-col gap-4">
           <Input

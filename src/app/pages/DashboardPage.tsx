@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { Card } from '../../components/ui/Card';
+import { PageLoader } from '../../components/ui/PageLoader';
 import { Receipt, Inbox, MessageSquareText, Heart, Users, Circle, Clock, ChevronDown, AlertCircle, User, CheckCheck, CornerUpLeft, Loader2, RotateCcw } from 'lucide-react';
 import { 
   dashboardApi, 
@@ -128,7 +129,10 @@ export function DashboardPage() {
           onReload={fetchDashboard}
           isLoading={isLoading}
         />
-        <LoadingSkeleton />
+        <PageLoader
+          message="Lade Performance Daten..."
+          subtitle="KPIs, Umsatz und Chats werden geladen"
+        />
       </div>
     );
   }
@@ -517,36 +521,6 @@ function LatestChatsSection({ chats, showAccountName, onChatMarkedAsRead }: Late
           );
         })}
       </Card>
-    </div>
-  );
-}
-
-// ============================================================================
-// Loading Skeleton
-// ============================================================================
-
-function LoadingSkeleton() {
-  return (
-    <div className="space-y-8 animate-pulse">
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
-        {Array.from({ length: 6 }).map((_, i) => (
-          <div key={i} className="bg-card border border-slate-700 rounded-2xl p-6">
-            <div className="h-4 bg-slate-700 rounded w-20 mb-4"></div>
-            <div className="h-8 bg-slate-700 rounded w-24 mb-2"></div>
-            <div className="h-3 bg-slate-700 rounded w-16"></div>
-          </div>
-        ))}
-      </div>
-      <div className="bg-card border border-slate-700 rounded-2xl p-6">
-          <div className="h-6 bg-slate-700 rounded w-40 mb-4"></div>
-        {Array.from({ length: 3 }).map((_, i) => (
-          <div key={i} className="mb-4">
-            <div className="h-4 bg-slate-700 rounded w-32 mb-2"></div>
-            <div className="h-3 bg-slate-700 rounded w-full mb-1"></div>
-            <div className="h-3 bg-slate-700 rounded w-24"></div>
-          </div>
-        ))}
-      </div>
     </div>
   );
 }

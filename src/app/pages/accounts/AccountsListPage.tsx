@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Users, ChevronRight, AlertCircle, Circle } from 'lucide-react';
 import { Card } from '../../../components/ui/Card';
+import { PageLoader } from '../../../components/ui/PageLoader';
 import { accountsApi } from '../../../modules/accounts/accountsApi';
 import type { Account } from '../../../modules/accounts/types';
 
@@ -39,7 +40,7 @@ export function AccountsListPage() {
 
       {/* Content */}
       {isLoading ? (
-        <TableSkeleton />
+        <PageLoader message="Lade Accounts..." subtitle="Account-Daten werden abgerufen" />
       ) : error ? (
         <ErrorState error={error} onRetry={fetchAccounts} />
       ) : accounts.length === 0 ? (
@@ -178,46 +179,8 @@ function AccountAvatar({ src, alt }: { src?: string; alt: string }) {
 }
 
 // ============================================================================
-// Skeletons / States
+// States
 // ============================================================================
-
-function TableSkeleton() {
-  return (
-    <Card className="overflow-hidden border border-slate-600 animate-pulse">
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-slate-700 bg-slate-800/50">
-              {['Account', 'Identifier', 'Status', 'Revenue', 'Followers', 'Last Activity', ''].map((h) => (
-                <th key={h} className="px-6 py-3">
-                  <div className="h-3 bg-slate-700 rounded w-20" />
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-700">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <tr key={i}>
-                <td className="px-6 py-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-slate-700" />
-                    <div className="h-4 bg-slate-700 rounded w-28" />
-                  </div>
-                </td>
-                <td className="px-6 py-4"><div className="h-4 bg-slate-700 rounded w-40" /></td>
-                <td className="px-6 py-4"><div className="h-6 bg-slate-700 rounded-full w-16" /></td>
-                <td className="px-6 py-4"><div className="h-4 bg-slate-700 rounded w-20 ml-auto" /></td>
-                <td className="px-6 py-4"><div className="h-4 bg-slate-700 rounded w-16 ml-auto" /></td>
-                <td className="px-6 py-4"><div className="h-4 bg-slate-700 rounded w-16" /></td>
-                <td className="px-6 py-4"><div className="h-7 bg-slate-700 rounded w-16" /></td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </Card>
-  );
-}
 
 function EmptyState() {
   return (

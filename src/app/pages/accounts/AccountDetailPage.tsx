@@ -22,6 +22,7 @@ import {
   Loader2,
 } from 'lucide-react';
 import { Card } from '../../../components/ui/Card';
+import { PageLoader } from '../../../components/ui/PageLoader';
 import { getConfig } from '../../../lib/config';
 import { accountsApi } from '../../../modules/accounts/accountsApi';
 import type { Account } from '../../../modules/accounts/types';
@@ -62,7 +63,7 @@ export function AccountDetailPage() {
   }, [fetchAccount]);
 
   if (isLoading) {
-    return <DetailSkeleton />;
+    return <PageLoader message="Lade Account..." subtitle="Account-Details und Statistiken werden geladen" />;
   }
 
   if (error || !account) {
@@ -622,34 +623,3 @@ function AccountAvatar({ src, alt }: { src?: string; alt: string }) {
 // Detail Skeleton
 // ============================================================================
 
-function DetailSkeleton() {
-  return (
-    <div className="space-y-6 animate-pulse">
-      <div className="h-5 w-32 bg-slate-700 rounded" />
-      <Card className="p-6 border border-slate-600">
-        <div className="flex items-center gap-4">
-          <div className="w-16 h-16 rounded-full bg-slate-700 shrink-0" />
-          <div className="flex-1 space-y-2">
-            <div className="h-6 bg-slate-700 rounded w-40" />
-            <div className="h-4 bg-slate-700 rounded w-48" />
-            <div className="h-3 bg-slate-700 rounded w-24" />
-          </div>
-        </div>
-      </Card>
-      <div className="flex gap-1 border-b border-slate-700 pb-0">
-        {[1, 2, 3].map((i) => (
-          <div key={i} className="h-10 w-20 bg-slate-700 rounded-t" />
-        ))}
-      </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {Array.from({ length: 6 }).map((_, i) => (
-          <div key={i} className="bg-card border border-slate-700 rounded-2xl p-5">
-            <div className="h-4 bg-slate-700 rounded w-20 mb-3" />
-            <div className="h-8 bg-slate-700 rounded w-28 mb-1" />
-            <div className="h-3 bg-slate-700 rounded w-16" />
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}

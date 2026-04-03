@@ -4,6 +4,7 @@ import { Button } from '../../../components/ui/Button';
 import { Card } from '../../../components/ui/Card';
 import { Input } from '../../../components/ui/Input';
 import { Badge } from '../../../components/ui/Badge';
+import { PageLoader } from '../../../components/ui/PageLoader';
 import {
   fetchUserByFourBasedId,
   fetchUserStatistics,
@@ -162,9 +163,10 @@ export function FourBasedModelStatisticsPage() {
 
   if (isLoading && !statistics && !account) {
     return (
-      <div className="text-center py-12">
-        <p className="text-gray-400">Lade Statistik...</p>
-      </div>
+      <PageLoader
+        message="Lade Performance Daten..."
+        subtitle="Statistiken und Umsatzdaten werden verarbeitet"
+      />
     );
   }
 

@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Users, Shield, AlertCircle, MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
 import { Card } from '../../../components/ui/Card';
+import { PageLoader } from '../../../components/ui/PageLoader';
 import { useAuthStore } from '../../../lib/auth/useAuthStore';
 import { teamApi, type TeamMember } from '../../../modules/shared/services/teamApi';
 
@@ -55,7 +56,7 @@ export function TeamMembersPage() {
       </div>
 
       {isLoading ? (
-        <MembersSkeleton />
+        <PageLoader message="Lade Team-Mitglieder..." subtitle="Nutzer und Rollen werden abgerufen" />
       ) : error ? (
         <ErrorState error={error} onRetry={fetchMembers} />
       ) : members.length === 0 ? (
@@ -180,41 +181,6 @@ function ActionsMenu() {
         document.body,
       )}
     </div>
-  );
-}
-
-function MembersSkeleton() {
-  return (
-    <Card className="overflow-hidden border border-slate-600 animate-pulse">
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-slate-700 bg-slate-800/50">
-              {['Name', 'Email', 'Role', ''].map((h) => (
-                <th key={h} className="px-6 py-3">
-                  <div className="h-3 bg-slate-700 rounded w-20" />
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-700">
-            {Array.from({ length: 4 }).map((_, i) => (
-              <tr key={i}>
-                <td className="px-6 py-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-slate-700 shrink-0" />
-                    <div className="h-4 bg-slate-700 rounded w-28" />
-                  </div>
-                </td>
-                <td className="px-6 py-4"><div className="h-4 bg-slate-700 rounded w-44" /></td>
-                <td className="px-6 py-4"><div className="h-6 bg-slate-700 rounded-full w-16" /></td>
-                <td className="px-6 py-4"><div className="h-7 bg-slate-700 rounded w-8 ml-auto" /></td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </Card>
   );
 }
 

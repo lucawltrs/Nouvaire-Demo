@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { Card } from "../../components/ui/Card";
 import { Badge } from "../../components/ui/Badge";
 import { Button } from "../../components/ui/Button";
+import { PageLoader } from "../../components/ui/PageLoader";
 import { fetchUsers, fetchUserDashboard, FourBasedAccount, FourBasedDashboardResult } from "../../modules/4based/services/4based.api";
 
 interface AccountDashboard {
@@ -77,7 +78,10 @@ const FourBasedPage: React.FC = () => {
   if (loading) {
     return (
       <div className="p-8">
-        <p className="text-gray-400">Lade Dashboard...</p>
+        <PageLoader
+          message="Lade Dashboard Daten..."
+          subtitle="Performance-Daten aller Accounts werden geladen"
+        />
       </div>
     );
   }

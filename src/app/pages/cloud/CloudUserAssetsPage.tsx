@@ -13,16 +13,10 @@ import {
   User,
 } from 'lucide-react';
 import { cloudApi, relativeTime, unblurUrl } from '../../../modules/cloud/cloudApi';
+import { PageLoader } from '../../../components/ui/PageLoader';
 import { toast } from '../../../lib/toast';
 import { ToastContainer } from '../../../lib/toast';
 import type { CloudAsset, CloudUser } from '../../../modules/cloud/types';
-
-// ── Skeleton tile ─────────────────────────────────────────────────────────────
-function SkeletonTile() {
-  return (
-    <div className="rounded-xl bg-slate-700 animate-pulse aspect-square" />
-  );
-}
 
 // ── Filter chip ───────────────────────────────────────────────────────────────
 type AssetType = 'all' | 'image' | 'video';
@@ -319,11 +313,7 @@ export default function CloudUserAssetsPage() {
 
       {/* Grid */}
       {loading ? (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
-          {Array.from({ length: 18 }).map((_, i) => (
-            <SkeletonTile key={i} />
-          ))}
-        </div>
+        <PageLoader message="Lade Assets..." subtitle="Mediendateien werden geladen" />
       ) : error ? (
         <div className="flex flex-col items-center justify-center gap-3 py-20 text-center">
           <AlertCircle size={36} className="text-red-400" />

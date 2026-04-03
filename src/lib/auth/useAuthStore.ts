@@ -150,6 +150,31 @@ export const useAuthStore = create<AuthStore>((set) => ({
         if (team) saveTeamCookie(team);
         
         set({ user, team: team ?? null, token, isAuthenticated: true });
+
+        // Rolle des Nutzers nach dem Login ermitteln
+        try {
+          const checkResponse = await fetch(`${getConfig().API_URL}/auth/check`, {
+            method: 'GET',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json',
+            },
+          });
+
+          if (checkResponse.ok) {
+            const checkData = await checkResponse.json();
+            if (checkData.status === 'success' && checkData.data?.user) {
+              const resolvedTeam = checkData.data.team ?? null;
+              if (resolvedTeam) saveTeamCookie(resolvedTeam);
+              set({
+                user: checkData.data.user,
+                team: resolvedTeam,
+              });
+            }
+          }
+        } catch (checkError) {
+          console.warn('Role check after login failed:', checkError);
+        }
       } else {
         throw new Error(data.message || 'Login failed');
       }

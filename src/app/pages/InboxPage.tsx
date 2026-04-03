@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { Card } from '../../components/ui/Card';
+import { PageLoader } from '../../components/ui/PageLoader';
 import {
   CheckCheck,
   MessageSquare,
@@ -192,7 +193,7 @@ export function InboxPage() {
 
       {/* Account tabs */}
       {accountsLoading ? (
-        <AccountTabsSkeleton />
+        <PageLoader message="Lade Inbox..." subtitle="Accounts werden abgerufen" />
       ) : accountsError ? (
         <div className="flex items-center gap-2 px-4 py-3 bg-red-900/20 border border-red-700/40 rounded-lg text-sm text-red-400">
           <AlertCircle size={16} className="shrink-0" />
@@ -280,7 +281,7 @@ export function InboxPage() {
       {/* Chat list */}
       {!accountsLoading && !accountsError && (
         chatsLoading ? (
-          <LoadingSkeleton />
+          <PageLoader message="Lade Chats..." subtitle="Nachrichten der letzten 30 Tage werden abgerufen" />
         ) : chatsError ? (
           <ErrorState error={chatsError} onRetry={() => fetchChats(activeTabId)} />
         ) : filteredChats.length === 0 ? (
@@ -303,20 +304,6 @@ export function InboxPage() {
           </>
         )
       )}
-    </div>
-  );
-}
-
-// ============================================================================
-// Account Tabs Skeleton
-// ============================================================================
-
-function AccountTabsSkeleton() {
-  return (
-    <div className="flex gap-2 overflow-x-hidden animate-pulse">
-      {Array.from({ length: 4 }).map((_, i) => (
-        <div key={i} className="h-10 w-36 rounded-lg bg-slate-700 shrink-0" />
-      ))}
     </div>
   );
 }
@@ -446,27 +433,6 @@ function AccountAvatar({ src, name, size = 'md' }: AccountAvatarProps) {
         e.currentTarget.style.display = 'none';
       }}
     />
-  );
-}
-
-// ============================================================================
-// Loading Skeleton
-// ============================================================================
-
-function LoadingSkeleton() {
-  return (
-    <Card className="divide-y divide-slate-700 border border-slate-600 overflow-hidden animate-pulse">
-      {Array.from({ length: 6 }).map((_, i) => (
-        <div key={i} className="flex items-center gap-4 px-6 py-4">
-          <div className="w-9 h-9 rounded-full bg-slate-700 shrink-0" />
-          <div className="flex-1 space-y-2">
-            <div className="h-3.5 bg-slate-700 rounded w-32" />
-            <div className="h-3 bg-slate-700 rounded w-48" />
-          </div>
-          <div className="h-3 bg-slate-700 rounded w-12" />
-        </div>
-      ))}
-    </Card>
   );
 }
 
