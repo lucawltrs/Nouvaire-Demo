@@ -87,9 +87,13 @@ export function TeamMembersPage() {
 }
 
 function MemberRow({ member }: { member: TeamMember }) {
+  const navigate = useNavigate();
   const isAdmin = member.role === 'admin';
   return (
-    <tr className="hover:bg-slate-700/30 transition-colors">
+    <tr
+      className="hover:bg-slate-700/30 transition-colors cursor-pointer"
+      onClick={() => navigate(`/settings/members/${member.user_id}`)}
+    >
       <td className="px-6 py-4">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center shrink-0">
@@ -113,7 +117,7 @@ function MemberRow({ member }: { member: TeamMember }) {
           {member.role}
         </span>
       </td>
-      <td className="px-6 py-4">
+      <td className="px-6 py-4" onClick={(e) => e.stopPropagation()}>
         <ActionsMenu />
       </td>
     </tr>
