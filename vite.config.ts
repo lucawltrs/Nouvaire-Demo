@@ -13,4 +13,16 @@ export default defineConfig({
   optimizeDeps: {
     exclude: ['lucide-react'],
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
+          'vendor-emoji': ['@emoji-mart/react', '@emoji-mart/data'],
+          'vendor-ui': ['lucide-react', '@headlessui/react'],
+          'vendor-misc': ['zustand', 'react-markdown'],
+        },
+      },
+    },
+  },
 });
