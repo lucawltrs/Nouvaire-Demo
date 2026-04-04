@@ -1,7 +1,10 @@
-import { ReactNode, useState } from 'react';
+import { ReactNode, useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../lib/auth/useAuthStore';
 import { LayoutDashboard, LogOut, ChevronDown, MessagesSquare, BarChart3, Users, Settings, Menu, X, Cloud } from 'lucide-react';
+import { useWorkSessionStore } from '../../modules/work-sessions/store/useWorkSessionStore';
+import { WorkSessionModal } from '../../modules/work-sessions/components/WorkSessionModal';
+import { WorkSessionTimer } from '../../modules/work-sessions/components/WorkSessionTimer';
 
 interface MainLayoutProps {
   children: ReactNode;
@@ -18,8 +21,13 @@ export function MainLayout({ children }: MainLayoutProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, team, logout } = useAuthStore();
+  const { init: initWorkSession } = useWorkSessionStore();
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  useEffect(() => {
+    initWorkSession();
+  }, [initWorkSession]);
 
   const handleLogout = () => {
     logout();
@@ -125,6 +133,7 @@ export function MainLayout({ children }: MainLayoutProps) {
 
             {/* Desktop User Info */}
             <div className="hidden lg:flex items-center gap-4 shrink-0">
+              <WorkSessionTimer />
               <div className="text-right">
                 <p className="text-sm text-gray-400">Signed in as</p>
                 <p className="text-sm font-medium text-gray-100">{user?.email}</p>
@@ -139,12 +148,15 @@ export function MainLayout({ children }: MainLayoutProps) {
             </div>
 
             {/* Mobile Menu Button */}
-            <button
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="lg:hidden p-2 rounded-lg text-gray-400 hover:text-gray-100 hover:bg-slate-700 transition-all"
-            >
-              {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
-            </button>
+            <div className="lg:hidden flex items-center gap-2">
+              <WorkSessionTimer />
+              <button
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                className="p-2 rounded-lg text-gray-400 hover:text-gray-100 hover:bg-slate-700 transition-all"
+              >
+                {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+              </button>
+            </div>
           </div>
 
           {/* Mobile Menu */}
@@ -242,6 +254,8 @@ export function MainLayout({ children }: MainLayoutProps) {
           )}
         </div>
       </nav>
+
+      <WorkSessionModal />
 
       <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8 w-full">
         {children}

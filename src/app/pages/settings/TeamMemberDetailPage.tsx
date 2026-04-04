@@ -1,0 +1,220 @@
+import { useState, useEffect, useCallback } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { ArrowLeft, Clock, AlertCircle, Calendar, Timer } from 'lucide-react';
+import { Card } from '../../../components/ui/Card';
+import { PageLoader } from '../../../components/ui/PageLoader';
+import { teamApi, type TeamMember } from '../../../modules/shared/services/teamApi';
+import { getWorkSessionsForUser, type WorkSession } from '../../../modules/work-sessions/services/workSession.api';
+
+function formatDateTime(iso: string | null): string {
+  if (!iso) return '—';
+  return new Intl.DateTimeFormat('de-DE', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(new Date(iso));
+}
+
+function formatDuration(minutes: number | null): string {
+  if (minutes === null || minutes === undefined) return '—';
+  if (minutes < 60) return `${minutes}m`;
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  return m === 0 ? `${h}h` : `${h}h ${m}m`;
+}
+
+export function TeamMemberDetailPage() {
+  const { memberId } = useParams<{ memberId: string }>();
+  const navigate = useNavigate();
+
+  const [member, setMember] = useState<TeamMember | null>(null);
+  const [sessions, setSessions] = useState<WorkSession[]>([]);
+  const [isLoadingMember, setIsLoadingMember] = useState(true);
+  const [isLoadingSessions, setIsLoadingSessions] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchData = useCallback(async () => {
+    if (!memberId) return;
+    const id = Number(memberId);
+
+    setIsLoadingMember(true);
+    setIsLoadingSessions(true);
+    setError(null);
+
+    try {
+      const members = await teamApi.getMembers();
+      const found = members.find((m) => m.user_id === id || m.id === id);
+      setMember(found ?? null);
+    } catch {
+      setError('Mitglied konnte nicht geladen werden.');
+    } finally {
+      setIsLoadingMember(false);
+    }
+
+    try {
+      const data = await getWorkSessionsForUser(id);
+      setSessions(data);
+    } catch {
+      // sessions error is non-fatal, show empty
+      setSessions([]);
+    } finally {
+      setIsLoadingSessions(false);
+    }
+  }, [memberId]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  if (isLoadingMember) {
+    return <PageLoader message="Lade Mitglied..." subtitle="Profil und Arbeitszeiten werden abgerufen" />;
+  }
+
+  if (error || !member) {
+    return (
+      <Card className="p-12 border border-slate-600 max-w-lg mx-auto mt-12">
+        <div className="text-center">
+          <div className="w-16 h-16 rounded-full bg-red-900/30 flex items-center justify-center mx-auto mb-4">
+            <AlertCircle className="w-8 h-8 text-red-500" />
+          </div>
+          <h3 className="text-lg font-semibold text-gray-100 mb-2">Fehler beim Laden</h3>
+          <p className="text-gray-400 mb-6">{error ?? 'Mitglied nicht gefunden'}</p>
+          <div className="flex justify-center gap-3">
+            <button
+              onClick={() => navigate('/settings/members')}
+              className="px-4 py-2 text-sm text-gray-300 border border-slate-600 rounded-lg hover:bg-slate-700 transition-colors"
+            >
+              Zurück zur Übersicht
+            </button>
+            <button
+              onClick={fetchData}
+              className="px-4 py-2 text-sm bg-[#ED4C27] hover:bg-[#D8431F] text-white font-medium rounded-lg transition-colors"
+            >
+              Erneut versuchen
+            </button>
+          </div>
+        </div>
+      </Card>
+    );
+  }
+
+  const totalMinutes = sessions.reduce((acc, s) => acc + (s.duration ?? 0), 0);
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center gap-4">
+        <button
+          onClick={() => navigate('/settings/members')}
+          className="p-2 rounded-lg text-gray-400 hover:text-gray-100 hover:bg-slate-700 transition-all"
+        >
+          <ArrowLeft size={18} />
+        </button>
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center shrink-0">
+            <span className="text-sm font-semibold text-gray-300">
+              {member.user.name.charAt(0).toUpperCase()}
+            </span>
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-100">{member.user.name}</h1>
+            <p className="text-sm text-gray-400">{member.user.email}</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Stats */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <Card className="p-4 border border-slate-600">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-brand-primary/10 rounded-lg">
+              <Clock size={18} className="text-brand-primary" />
+            </div>
+            <div>
+              <p className="text-xs text-gray-400">Gesamtschichten</p>
+              <p className="text-xl font-bold text-gray-100">{sessions.length}</p>
+            </div>
+          </div>
+        </Card>
+        <Card className="p-4 border border-slate-600">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-brand-primary/10 rounded-lg">
+              <Timer size={18} className="text-brand-primary" />
+            </div>
+            <div>
+              <p className="text-xs text-gray-400">Gesamtarbeitszeit</p>
+              <p className="text-xl font-bold text-gray-100">{formatDuration(totalMinutes)}</p>
+            </div>
+          </div>
+        </Card>
+        <Card className="p-4 border border-slate-600">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-brand-primary/10 rounded-lg">
+              <Calendar size={18} className="text-brand-primary" />
+            </div>
+            <div>
+              <p className="text-xs text-gray-400">Rolle</p>
+              <p className="text-base font-semibold text-gray-100 capitalize">{member.role}</p>
+            </div>
+          </div>
+        </Card>
+      </div>
+
+      {/* Work Sessions Table */}
+      <Card className="overflow-hidden border border-slate-600">
+        <div className="px-6 py-4 border-b border-slate-700">
+          <h2 className="text-base font-semibold text-gray-100">Arbeitszeiten</h2>
+        </div>
+
+        {isLoadingSessions ? (
+          <div className="flex items-center justify-center py-16">
+            <span className="w-6 h-6 border-2 border-slate-600 border-t-brand-primary rounded-full animate-spin" />
+          </div>
+        ) : sessions.length === 0 ? (
+          <div className="text-center py-16">
+            <Clock className="w-10 h-10 mx-auto mb-3 text-gray-600" />
+            <p className="text-gray-400">Keine Arbeitszeiten gefunden</p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="bg-slate-800/50">
+                  <th className="text-left px-6 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">#</th>
+                  <th className="text-left px-6 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">Start</th>
+                  <th className="text-left px-6 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">Ende</th>
+                  <th className="text-left px-6 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">Dauer</th>
+                  <th className="text-left px-6 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-700">
+                {sessions.map((session, index) => (
+                  <tr key={session.id} className="hover:bg-slate-700/30 transition-colors">
+                    <td className="px-6 py-4 text-gray-500 text-xs">{index + 1}</td>
+                    <td className="px-6 py-4 text-gray-300">{formatDateTime(session.started_at)}</td>
+                    <td className="px-6 py-4 text-gray-300">{formatDateTime(session.ended_at)}</td>
+                    <td className="px-6 py-4 text-gray-300">{formatDuration(session.duration)}</td>
+                    <td className="px-6 py-4">
+                      {session.ended_at ? (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-900/30 text-green-400 border border-green-800/40">
+                          Beendet
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-brand-primary/10 text-brand-primary border border-brand-primary/20">
+                          <span className="w-1.5 h-1.5 rounded-full bg-brand-primary animate-pulse" />
+                          Aktiv
+                        </span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </Card>
+    </div>
+  );
+}

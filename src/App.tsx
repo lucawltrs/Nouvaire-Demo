@@ -19,6 +19,7 @@ import { AccountsListPage } from './app/pages/accounts/AccountsListPage';
 import { AccountDetailPage } from './app/pages/accounts/AccountDetailPage';
 import { SettingsPage } from './app/pages/SettingsPage';
 import { TeamMembersPage } from './app/pages/settings/TeamMembersPage';
+import { TeamMemberDetailPage } from './app/pages/settings/TeamMemberDetailPage';
 import { FourBasedAccountsPage } from './app/pages/settings/FourBasedAccountsPage';
 
 function App() {
@@ -183,6 +184,16 @@ function App() {
               <ProtectedRoute>
                 <MainLayout>
                   <TeamMembersPage />
+                </MainLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/settings/members/:memberId"
+            element={
+              <ProtectedRoute>
+                <MainLayout>
+                  <TeamMemberDetailPage />
                 </MainLayout>
               </ProtectedRoute>
             }
