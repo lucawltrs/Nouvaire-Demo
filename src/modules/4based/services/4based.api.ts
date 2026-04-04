@@ -207,7 +207,7 @@ export const fetchUserDashboard = async (fourbasedId: string) => {
 };
 
 export interface FileStackCreateBody {
-  id: string;
+  ids: string[];
   description: string;
   price: number;
 }

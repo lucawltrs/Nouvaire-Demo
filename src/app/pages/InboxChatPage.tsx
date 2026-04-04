@@ -63,7 +63,7 @@ export function InboxChatPage() {
   const [vaultFileType, setVaultFileType] = useState<string | null>(null);
   const [vaultSold, setVaultSold] = useState<boolean | null>(null);
   const [vaultSent, setVaultSent] = useState<boolean | null>(null);
-  const [selectedVaultItem, setSelectedVaultItem] = useState<CloudAsset | null>(null);
+  const [selectedVaultItems, setSelectedVaultItems] = useState<CloudAsset[]>([]);
   const [vaultStep, setVaultStep] = useState<1 | 2>(1);
   const [isSendingVault, setIsSendingVault] = useState(false);
   const [isEmojiPickerOpen, setIsEmojiPickerOpen] = useState(false);
@@ -256,7 +256,7 @@ export function InboxChatPage() {
     setVaultFileType(null);
     setVaultSold(null);
     setVaultSent(null);
-    setSelectedVaultItem(null);
+    setSelectedVaultItems([]);
     setVaultStep(1);
     cloudApi.getUser(fourbased_id!)
       .then(u => {
@@ -283,11 +283,11 @@ export function InboxChatPage() {
   }, [pivotData]);
 
   const handleSendVaultItem = async (description: string, priceInCents: number) => {
-    if (!fourbased_id || !chat_id || !selectedVaultItem || isSendingVault) return;
+    if (!fourbased_id || !chat_id || selectedVaultItems.length === 0 || isSendingVault) return;
     setIsSendingVault(true);
     try {
       const fileStackResponse = await createFileStack(fourbased_id, {
-        id: selectedVaultItem._id,
+        ids: selectedVaultItems.map(i => i._id),
         description,
         price: priceInCents,
       });
@@ -633,9 +633,9 @@ export function InboxChatPage() {
         title={vaultStep === 1 ? 'Vault' : 'Bild/Video senden'}
         size="xl"
       >
-        {vaultStep === 2 && selectedVaultItem ? (
+        {vaultStep === 2 && selectedVaultItems.length > 0 ? (
           <VaultSendStep
-            item={selectedVaultItem}
+            items={selectedVaultItems}
             onBack={() => setVaultStep(1)}
             onSend={handleSendVaultItem}
             isSending={isSendingVault}
@@ -723,8 +723,12 @@ export function InboxChatPage() {
                 <VaultThumbnail
                   key={item._id}
                   item={item}
-                  isSelected={selectedVaultItem?._id === item._id}
-                  onSelect={(i) => setSelectedVaultItem(prev => prev?._id === i._id ? null : i)}
+                  isSelected={selectedVaultItems.some(s => s._id === item._id)}
+                  onSelect={(i) => setSelectedVaultItems(prev =>
+                    prev.some(s => s._id === i._id)
+                      ? prev.filter(s => s._id !== i._id)
+                      : [...prev, i]
+                  )}
                 />
               ))}
             </div>
@@ -743,23 +747,29 @@ export function InboxChatPage() {
           </>
         )}
 
-        {/* Sticky footer for step 1 when item is selected */}
-        {vaultStep === 1 && selectedVaultItem && (
-          <div className="sticky bottom-0 left-0 right-0 mt-4 pt-3 border-t border-slate-700 bg-card flex items-center justify-between gap-3">
-            <div className="flex items-center gap-3 min-w-0">
-              <img
-                src={unblurUrl(selectedVaultItem.img_url)}
-                alt=""
-                className="w-10 h-10 rounded-lg object-cover shrink-0 border border-slate-600"
-              />
-              <span className="text-sm text-gray-200 truncate">
-                {selectedVaultItem.description || (selectedVaultItem.fileStackType === 'video' ? 'Video' : 'Bild')}
+        {/* Sticky footer for step 1 when items are selected */}
+        {vaultStep === 1 && selectedVaultItems.length > 0 && (
+          <div className="sticky bottom-0 left-0 right-0 mt-4 pt-4 border-t border-slate-700 bg-card flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3 min-w-0 flex-1 overflow-x-auto pb-1">
+              {selectedVaultItems.map(item => (
+                <div key={item._id} className="relative shrink-0">
+                  <img
+                    src={unblurUrl(item.img_url)}
+                    alt=""
+                    className="w-16 h-16 rounded-xl object-cover border border-slate-600"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setSelectedVaultItems(prev => prev.filter(s => s._id !== item._id))}
+                    className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-slate-900 border border-slate-600 flex items-center justify-center text-gray-400 hover:text-red-400 transition-colors"
+                  >
+                    <X size={11} />
+                  </button>
+                </div>
+              ))}
+              <span className="text-sm text-gray-400 shrink-0 ml-1">
+                {selectedVaultItems.length} ausgewählt
               </span>
-              {typeof selectedVaultItem.price === 'number' && selectedVaultItem.price > 0 && (
-                <span className="text-xs font-semibold text-[#ED4C27] shrink-0">
-                  ${(selectedVaultItem.price / 100).toFixed(2)}
-                </span>
-              )}
             </div>
             <Button onClick={() => setVaultStep(2)}>Weiter →</Button>
           </div>
@@ -1057,20 +1067,21 @@ function VaultThumbnail({
 
 // Vault step 2 — send confirmation
 function VaultSendStep({
-  item,
+  items,
   onBack,
   onSend,
   isSending = false,
 }: {
-  item: CloudAsset;
+  items: CloudAsset[];
   onBack: () => void;
   onSend: (description: string, priceInCents: number) => void;
   isSending?: boolean;
 }) {
-  const isVideo = item.fileStackType === 'video';
+  const firstItem = items[0];
+  const isVideo = firstItem.fileStackType === 'video';
   const [description, setDescription] = useState('');
   const [priceInput, setPriceInput] = useState(
-    typeof item.price === 'number' && item.price > 0 ? (item.price / 100).toFixed(2) : '',
+    typeof firstItem.price === 'number' && firstItem.price > 0 ? (firstItem.price / 100).toFixed(2) : '',
   );
   const [isEmojiPickerOpen, setIsEmojiPickerOpen] = useState(false);
   const [pickerPos, setPickerPos] = useState({ top: 0, left: 0 });
@@ -1139,8 +1150,8 @@ function VaultSendStep({
         {/* Preview */}
         <div className="relative w-48 shrink-0 rounded-xl overflow-hidden bg-slate-800 border border-slate-700 aspect-square">
           <img
-            src={unblurUrl(item.img_url)}
-            alt={item.description ?? item._id}
+            src={unblurUrl(firstItem.img_url)}
+            alt={firstItem.description ?? firstItem._id}
             className="w-full h-full object-cover"
           />
           {isVideo && (
@@ -1148,6 +1159,11 @@ function VaultSendStep({
               <div className="w-12 h-12 rounded-full bg-black/60 flex items-center justify-center">
                 <Film size={22} className="text-white" />
               </div>
+            </div>
+          )}
+          {items.length > 1 && (
+            <div className="absolute bottom-2 right-2 bg-black/70 rounded-full px-2 py-0.5 text-xs text-white font-semibold">
+              +{items.length - 1}
             </div>
           )}
         </div>
