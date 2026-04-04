@@ -6,7 +6,7 @@ import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
 import { Textarea } from '../../components/ui/Textarea';
 import { Input } from '../../components/ui/Input';
-import { Loader2, User, ArrowLeft, Search, Camera, Film, CheckCircle, Smile, X } from 'lucide-react';
+import { Loader2, User, ArrowLeft, Search, Camera, Film, CheckCircle, Smile, X, ChevronDown, SlidersHorizontal } from 'lucide-react';
 import Picker from '@emoji-mart/react';
 import data from '@emoji-mart/data';
 import { Modal } from '../../components/ui/Modal';
@@ -34,6 +34,8 @@ const formatChatTimestamp = (value?: string) => {
 export function InboxChatPage() {
   const { fourbased_id, chat_id } = useParams();
   const navigate = useNavigate();
+  const [mobileView, setMobileView] = useState<'sidebar' | 'chat'>('chat');
+  const [mobileInfoOpen, setMobileInfoOpen] = useState(false);
   const [chats, setChats] = useState<ChatListItem[]>([]);
   const [isLoadingChats, setIsLoadingChats] = useState(true);
   const [chatsError, setChatsError] = useState<string | null>(null);
@@ -196,6 +198,8 @@ export function InboxChatPage() {
   // Reset sending state when switching chats
   useEffect(() => {
     setIsSending(false);
+    setMobileView('chat');
+    setMobileInfoOpen(false);
   }, [chat_id]);
 
   // Mark chat as read when opening a chat
@@ -402,9 +406,9 @@ export function InboxChatPage() {
   const accountImgUrl = activeChat?.account_img_url ?? chats[0]?.account_img_url;
 
   return (
-    <div className="h-[calc(100vh-10rem)] flex gap-6 overflow-hidden">
+    <div className="h-[calc(100vh-10rem)] flex flex-col md:flex-row gap-0 md:gap-6 overflow-hidden">
       {/* Sidebar */}
-      <aside className="w-80 shrink-0 flex flex-col gap-3 min-h-0">
+      <aside className={`md:w-80 w-full shrink-0 flex-col gap-3 min-h-0 ${mobileView === 'sidebar' ? 'flex' : 'hidden'} md:flex`}>
         {/* Back button + Account indicator */}
         <div className="flex items-center gap-2 shrink-0">
           <button
@@ -469,6 +473,7 @@ export function InboxChatPage() {
                 <Link
                   key={chat.chat_id}
                   to={`/inbox/${chat.fourbased_id}/chat/${chat.chat_id}`}
+                  onClick={() => setMobileView('chat')}
                   className={`flex items-center gap-3 px-4 py-3 transition-colors hover:bg-slate-700 ${isActive ? 'border-l-4 border-[#ED4C27] bg-orange-900/20' : ''}`}
                 >
                   <AccountAvatar src={chat.customer_avatar_url ?? undefined} name={chat.customer_name} size="sm" />
@@ -476,9 +481,19 @@ export function InboxChatPage() {
                     <span className="font-semibold text-sm text-gray-100 truncate block">{chat.customer_name}</span>
                     <p className="text-xs text-gray-500 truncate">{chat.last_message_preview}</p>
                   </div>
-                  {chat.is_unread && (
-                    <span className="w-2 h-2 rounded-full bg-[#ED4C27] shrink-0" />
-                  )}
+                  <div className="flex flex-col items-end gap-1 shrink-0">
+                    {typeof chat.sales_volume === 'number' && (
+                      <span
+                        className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold"
+                        style={{ background: 'rgba(237,76,39,0.12)', color: '#ED4C27' }}
+                      >
+                        ${(chat.sales_volume / 100).toFixed(2)}
+                      </span>
+                    )}
+                    {chat.is_unread && (
+                      <span className="w-2 h-2 rounded-full bg-[#ED4C27]" />
+                    )}
+                  </div>
                 </Link>
               );
             })
@@ -487,7 +502,7 @@ export function InboxChatPage() {
       </aside>
 
       {/* Main chat area */}
-      <main className="flex-1 min-h-0 flex flex-col" style={{ minWidth: 0 }}>
+      <main className={`flex-1 min-h-0 flex-col ${mobileView === 'chat' ? 'flex' : 'hidden'} md:flex`} style={{ minWidth: 0 }}>
         <ToastContainer />
         {isInitialLoading ? (
           <div className="flex items-center justify-center flex-1">
@@ -502,6 +517,24 @@ export function InboxChatPage() {
             {/* Chat header */}
             {activeChat && (
               <div className="p-4 border-b border-slate-700 flex items-center gap-3 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setMobileView('sidebar')}
+                  className="md:hidden flex items-center justify-center w-8 h-8 rounded-lg border border-slate-600 bg-slate-700 text-gray-400 hover:text-gray-100 transition-colors shrink-0"
+                  aria-label="Zurück zur Chat-Liste"
+                >
+                  <ArrowLeft size={16} />
+                </button>
+                {(predefinedTexts.length > 0 || pivotData || !!customerId) && (
+                  <button
+                    type="button"
+                    onClick={() => setMobileInfoOpen(true)}
+                    className="md:hidden flex items-center justify-center w-8 h-8 rounded-lg border border-slate-600 bg-slate-700 text-gray-400 hover:text-[#ED4C27] hover:border-[#ED4C27] transition-colors shrink-0"
+                    aria-label="Infos & Texte öffnen"
+                  >
+                    <SlidersHorizontal size={16} />
+                  </button>
+                )}
                 <AccountAvatar src={activeChat.customer_avatar_url ?? undefined} name={activeChat.customer_name} size="md" />
                 <div className="min-w-0 flex-1">
                   <h1 className="text-lg font-bold text-gray-100 truncate">{activeChat.customer_name}</h1>
@@ -733,9 +766,108 @@ export function InboxChatPage() {
         )}
       </Modal>
 
+      {/* Mobile bottom sheet: predefined texts + pivot info */}
+      {mobileInfoOpen && (predefinedTexts.length > 0 || isPivotLoading || pivotData || !!customerId) && createPortal(
+        <div className="md:hidden fixed inset-0 z-50 flex flex-col justify-end">
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0 bg-black/60"
+            onClick={() => setMobileInfoOpen(false)}
+          />
+          {/* Sheet */}
+          <div className="relative bg-[#0F172A] border-t border-slate-700 rounded-t-2xl max-h-[75vh] flex flex-col overflow-hidden">
+            {/* Handle + close */}
+            <div className="flex items-center justify-between px-4 py-3 border-b border-slate-700 shrink-0">
+              <h2 className="text-sm font-semibold text-gray-100">Infos &amp; Texte</h2>
+              <button
+                type="button"
+                onClick={() => setMobileInfoOpen(false)}
+                className="flex items-center justify-center w-8 h-8 rounded-lg text-gray-400 hover:text-gray-100 transition-colors"
+                aria-label="Schließen"
+              >
+                <ChevronDown size={18} />
+              </button>
+            </div>
+            <div className="overflow-y-auto flex-1 p-4 flex flex-col gap-4">
+              {predefinedTexts.length > 0 && (
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">Vordefinierte Texte</p>
+                  <div className="flex flex-col gap-2">
+                    {predefinedTexts.map((pt) => (
+                      <button
+                        key={pt.id}
+                        type="button"
+                        onClick={() => {
+                          setMessageInput(pt.message);
+                          setMobileInfoOpen(false);
+                          textareaRef.current?.focus();
+                        }}
+                        className="w-full text-left rounded-lg px-3 py-2 text-xs text-gray-200 bg-slate-700/60 hover:bg-slate-600 border border-slate-600 hover:border-[#ED4C27] transition-colors"
+                      >
+                        <span className="block text-gray-400 line-clamp-3">{pt.message}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {isPivotLoading ? (
+                <div className="flex items-center justify-center py-4">
+                  <Loader2 size={16} className="animate-spin text-gray-400" />
+                </div>
+              ) : customerId && (
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">Kundeninfo</p>
+                    {!isEditingPivot ? (
+                      <button type="button" onClick={() => setIsEditingPivot(true)} className="text-[10px] text-[#ED4C27] hover:underline">Bearbeiten</button>
+                    ) : (
+                      <button type="button" onClick={() => { setPivotEditAlias(pivotData?.alias ?? ''); setPivotEditNote(pivotData?.note ?? ''); setIsEditingPivot(false); }} className="text-[10px] text-gray-400 hover:underline">Abbrechen</button>
+                    )}
+                  </div>
+                  {isEditingPivot ? (
+                    <div className="flex flex-col gap-2">
+                      <div>
+                        <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-0.5">Alias</p>
+                        <Input value={pivotEditAlias} onChange={(e) => setPivotEditAlias(e.target.value)} placeholder="Alias eingeben…" />
+                      </div>
+                      <div>
+                        <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-0.5">Notiz</p>
+                        <Textarea value={pivotEditNote} onChange={(e) => setPivotEditNote(e.target.value)} placeholder="Notiz eingeben…" rows={3} />
+                      </div>
+                      <Button size="sm" onClick={handleSavePivot} disabled={isSavingPivot}>
+                        {isSavingPivot ? 'Speichert…' : 'Speichern'}
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col gap-2">
+                      {pivotData?.alias && (
+                        <div>
+                          <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-0.5">Alias</p>
+                          <p className="text-xs text-gray-100 leading-snug">{pivotData.alias}</p>
+                        </div>
+                      )}
+                      {pivotData?.note && (
+                        <div>
+                          <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-0.5">Notiz</p>
+                          <p className="text-xs text-gray-300 leading-snug whitespace-pre-wrap">{pivotData.note}</p>
+                        </div>
+                      )}
+                      {!pivotData?.alias && !pivotData?.note && (
+                        <p className="text-xs text-gray-500">Keine Infos verfügbar.</p>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+
       {/* Right panel: predefined texts + pivot info */}
       {(predefinedTexts.length > 0 || isPivotLoading || pivotData || !!customerId) && (
-        <aside className="w-56 shrink-0 flex flex-col gap-2 min-h-0">
+        <aside className="hidden md:flex w-56 shrink-0 flex-col gap-2 min-h-0">
           {predefinedTexts.length > 0 && (
             <Card className="max-h-[50vh] overflow-y-auto p-3 flex flex-col gap-2 shrink-0">
               <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 shrink-0">
