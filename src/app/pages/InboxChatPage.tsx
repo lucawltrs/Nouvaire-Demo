@@ -66,6 +66,8 @@ export function InboxChatPage() {
   const [isSendingVault, setIsSendingVault] = useState(false);
   const [isEmojiPickerOpen, setIsEmojiPickerOpen] = useState(false);
   const emojiPickerRef = useRef<HTMLDivElement>(null);
+  const currentChatIdRef = useRef(chat_id);
+  useEffect(() => { currentChatIdRef.current = chat_id; }, [chat_id]);
 
   const {
     messages,
@@ -191,6 +193,11 @@ export function InboxChatPage() {
     inboxApi.getPredefinedTexts(fourbased_id).then(setPredefinedTexts).catch(() => {});
   }, [fourbased_id]);
 
+  // Reset sending state when switching chats
+  useEffect(() => {
+    setIsSending(false);
+  }, [chat_id]);
+
   // Mark chat as read when opening a chat
   useEffect(() => {
     if (!fourbased_id || !chat_id) return;
@@ -314,17 +321,25 @@ export function InboxChatPage() {
     setMessageInput('');
     setIsSending(true);
 
+    const sentForChatId = chat_id;
+
     try {
-      await sendChatMessage(fourbased_id, chat_id, trimmed);
-      await refresh();
+      await sendChatMessage(fourbased_id, sentForChatId, trimmed);
+      if (currentChatIdRef.current === sentForChatId) {
+        await refresh();
+      }
     } catch (err) {
-      removeLocalMessage(tempId);
-      setMessageInput(trimmed);
+      if (currentChatIdRef.current === sentForChatId) {
+        removeLocalMessage(tempId);
+        setMessageInput(trimmed);
+      }
       const message = err instanceof Error ? err.message : 'Nachricht konnte nicht gesendet werden';
       toast.error(message);
     } finally {
-      setIsSending(false);
-      textareaRef.current?.focus();
+      if (currentChatIdRef.current === sentForChatId) {
+        setIsSending(false);
+        textareaRef.current?.focus();
+      }
     }
   };
 
