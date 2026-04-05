@@ -38,11 +38,29 @@ const getTeamId = (): number => {
   return JSON.parse(decodeURIComponent(match[1])).team_id;
 };
 
+export interface RegisterMemberPayload {
+  name: string;
+  email: string;
+  password: string;
+  password_confirmation: string;
+}
+
 export const teamApi = {
   async getMembers(): Promise<TeamMember[]> {
     const response = await teamFetch(`${getApiUrl()}/teams/${getTeamId()}/members`);
     if (!response.ok) throw new Error('Failed to fetch team members');
     const raw = await response.json();
     return raw?.members ?? [];
+  },
+
+  async registerMember(payload: RegisterMemberPayload): Promise<void> {
+    const response = await teamFetch(
+      `${getApiUrl()}/teams/${getTeamId()}/members/register`,
+      { method: 'POST', body: JSON.stringify(payload) },
+    );
+    const json = await response.json().catch(() => null);
+    if (!response.ok || json?.status === 'error') {
+      throw new Error(json?.message ?? 'Failed to register member');
+    }
   },
 };
