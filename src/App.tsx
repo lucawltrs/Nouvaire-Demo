@@ -21,6 +21,7 @@ import { SettingsPage } from './app/pages/SettingsPage';
 import { TeamMembersPage } from './app/pages/settings/TeamMembersPage';
 import { TeamMemberDetailPage } from './app/pages/settings/TeamMemberDetailPage';
 import { FourBasedAccountsPage } from './app/pages/settings/FourBasedAccountsPage';
+import { GroupsPage } from './app/pages/settings/GroupsPage';
 
 function App() {
   const checkAuth = useAuthStore((state) => state.checkAuth);
@@ -204,6 +205,16 @@ function App() {
               <ProtectedRoute>
                 <MainLayout>
                   <FourBasedAccountsPage />
+                </MainLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/settings/groups"
+            element={
+              <ProtectedRoute>
+                <MainLayout>
+                  <GroupsPage />
                 </MainLayout>
               </ProtectedRoute>
             }
