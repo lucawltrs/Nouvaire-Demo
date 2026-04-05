@@ -1,8 +1,8 @@
 import { getConfig } from '../../../lib/config';
 
 export interface FourBasedUserAssignedTo {
-  team_user_id: number;
-  user_name: string;
+  team_group_id: number;
+  team_group_name: string;
 }
 
 export interface FourBasedUser {
@@ -26,7 +26,7 @@ export interface UpdateFourBasedUserPayload {
 
 export interface AssignFourBasedUserPayload {
   fourbased_user_id: string;
-  team_user_id: number;
+  team_group_id: number;
 }
 
 const getApiUrl = () => getConfig().API_URL;

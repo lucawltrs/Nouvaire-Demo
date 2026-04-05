@@ -1,4 +1,20 @@
 Options -MultiViews
+
+# MIME types for ES modules and other assets
+<IfModule mod_mime.c>
+    AddType application/javascript .js .mjs
+    AddType text/css .css
+    AddType image/svg+xml .svg
+    AddType application/json .json
+</IfModule>
+
+# Caching for static assets
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType application/javascript "access plus 1 year"
+    ExpiresByType text/css "access plus 1 year"
+</IfModule>
+
 RewriteEngine On
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d

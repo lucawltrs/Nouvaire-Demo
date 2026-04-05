@@ -24,7 +24,7 @@ import {
   type FourBasedUser,
   type UpdateFourBasedUserPayload,
 } from '../../../modules/shared/services/fourbasedUsersApi';
-import { teamApi, type TeamMember } from '../../../modules/shared/services/teamApi';
+import { groupsApi, type Group } from '../../../modules/shared/services/groupsApi';
 import { accountsApi } from '../../../modules/accounts/accountsApi';
 
 // ─── Page ────────────────────────────────────────────────────────────────────
@@ -33,7 +33,6 @@ export function FourBasedAccountsPage() {
   const navigate = useNavigate();
   const { team } = useAuthStore();
   const [accounts, setAccounts] = useState<FourBasedUser[]>([]);
-  const [members, setMembers] = useState<TeamMember[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSyncing, setIsSyncing] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -49,12 +48,8 @@ export function FourBasedAccountsPage() {
     try {
       setIsLoading(true);
       setError(null);
-      const [accountsData, membersData] = await Promise.all([
-        fourbasedUsersApi.list(),
-        teamApi.getMembers(),
-      ]);
+      const accountsData = await fourbasedUsersApi.list();
       setAccounts(accountsData);
-      setMembers(membersData);
     } catch (err) {
       console.error('Failed to fetch accounts:', err);
       setError('Failed to load accounts. Please try again.');
@@ -94,8 +89,8 @@ export function FourBasedAccountsPage() {
     toast.success('Credentials updated successfully');
   };
 
-  const handleAssignSave = async (fourbasedId: string, teamUserId: number) => {
-    await fourbasedUsersApi.assign({ fourbased_user_id: fourbasedId, team_user_id: teamUserId });
+  const handleAssignSave = async (fourbasedId: string, teamGroupId: number) => {
+    await fourbasedUsersApi.assign({ fourbased_user_id: fourbasedId, team_group_id: teamGroupId });
     setAssignTarget(null);
     fetchData();
   };
@@ -211,7 +206,6 @@ export function FourBasedAccountsPage() {
       {/* Assign Modal */}
       <AssignModal
         account={assignTarget}
-        members={members}
         onClose={() => setAssignTarget(null)}
         onSave={handleAssignSave}
       />
@@ -220,7 +214,7 @@ export function FourBasedAccountsPage() {
       <ConfirmModal
         isOpen={!!unassignTarget}
         title="Remove Assignment"
-        message={`Remove "${unassignTarget?.assigned_to?.user_name}" from "${unassignTarget?.name}"? The account will remain in the team.`}
+        message={`Remove "${unassignTarget?.assigned_to?.team_group_name}" from "${unassignTarget?.name}"? The account will remain in the team.`}
         confirmLabel="Remove"
         danger={false}
         onClose={() => setUnassignTarget(null)}
@@ -292,10 +286,10 @@ function AccountRow({ account, onEdit, onAssign, onUnassign, onDelete }: Account
           <div className="flex items-center gap-1.5">
             <div className="w-5 h-5 rounded-full bg-brand-primary/20 flex items-center justify-center shrink-0">
               <span className="text-[10px] font-semibold text-brand-primary">
-                {account.assigned_to.user_name.charAt(0).toUpperCase()}
+                {(account.assigned_to.team_group_name ?? '?').charAt(0).toUpperCase()}
               </span>
             </div>
-            <span className="text-sm text-gray-300">{account.assigned_to.user_name}</span>
+            <span className="text-sm text-gray-300">{account.assigned_to.team_group_name ?? '—'}</span>
           </div>
         ) : (
           <span className="text-xs text-gray-500 italic">Unassigned</span>
@@ -381,7 +375,7 @@ function ActionsMenu({ account, onEdit, onAssign, onUnassign, onDelete }: Accoun
               onClick={() => action(onAssign)}
             >
               <UserPlus size={14} />
-              Assign to Member
+              Assign to Group
             </button>
           )}
 
@@ -501,38 +495,43 @@ function EditCredentialsModal({ account, onClose, onSave }: EditCredentialsModal
 
 interface AssignModalProps {
   account: FourBasedUser | null;
-  members: TeamMember[];
   onClose: () => void;
-  onSave: (fourbasedId: string, teamUserId: number) => Promise<void>;
+  onSave: (fourbasedId: string, teamGroupId: number) => Promise<void>;
 }
 
-function AssignModal({ account, members, onClose, onSave }: AssignModalProps) {
-  const [selectedMemberId, setSelectedMemberId] = useState('');
+function AssignModal({ account, onClose, onSave }: AssignModalProps) {
+  const [selectedGroupId, setSelectedGroupId] = useState('');
+  const [groups, setGroups] = useState<Group[]>([]);
+  const [isLoadingGroups, setIsLoadingGroups] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (account) {
-      setSelectedMemberId('');
-      setError(null);
-    }
+    if (!account) return;
+    setSelectedGroupId('');
+    setError(null);
+    setIsLoadingGroups(true);
+    groupsApi.list()
+      .then(setGroups)
+      .catch(() => setError('Failed to load groups.'))
+      .finally(() => setIsLoadingGroups(false));
   }, [account]);
 
-  const memberOptions = members.map((m) => ({
-    value: String(m.id),
-    label: m.user.name,
+  const groupOptions = groups.map((g) => ({
+    value: String(g.id),
+    label: g.name,
   }));
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!account || !selectedMemberId) {
-      setError('Please select a team member.');
+    if (!account || !selectedGroupId) {
+      setError('Please select a group.');
       return;
     }
     try {
       setIsSaving(true);
       setError(null);
-      await onSave(account.fourbased_id, Number(selectedMemberId));
+      await onSave(account.fourbased_id, Number(selectedGroupId));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to assign account.');
     } finally {
@@ -541,18 +540,19 @@ function AssignModal({ account, members, onClose, onSave }: AssignModalProps) {
   };
 
   return (
-    <Modal isOpen={!!account} onClose={onClose} title="Assign to Member" size="sm">
+    <Modal isOpen={!!account} onClose={onClose} title="Assign to Group" size="sm">
       <form onSubmit={handleSubmit} className="space-y-4">
         <p className="text-sm text-gray-400">
-          Assign <span className="text-gray-200 font-medium">{account?.name}</span> to a team member.
-          Each account can only be assigned to one member.
+          Assign <span className="text-gray-200 font-medium">{account?.name}</span> to a group.
+          Each account can only be assigned to one group.
         </p>
 
         <Select
-          label="Team Member"
-          options={[{ value: '', label: 'Select a member…' }, ...memberOptions]}
-          value={selectedMemberId}
-          onChange={(e) => setSelectedMemberId(e.target.value)}
+          label="Group"
+          options={isLoadingGroups ? [{ value: '', label: 'Loading…' }] : [{ value: '', label: 'Select a group…' }, ...groupOptions]}
+          value={selectedGroupId}
+          onChange={(e) => setSelectedGroupId(e.target.value)}
+          disabled={isLoadingGroups}
         />
 
         {error && (
@@ -571,7 +571,7 @@ function AssignModal({ account, members, onClose, onSave }: AssignModalProps) {
           </button>
           <button
             type="submit"
-            disabled={isSaving || !selectedMemberId}
+            disabled={isSaving || !selectedGroupId}
             className="px-5 py-2 bg-[#ED4C27] hover:bg-[#D8431F] disabled:opacity-60 text-white text-sm font-medium rounded-lg transition-colors"
           >
             {isSaving ? 'Assigning…' : 'Assign'}

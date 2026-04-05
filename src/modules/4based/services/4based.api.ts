@@ -93,10 +93,25 @@ export interface FourBasedChatMessagesQuery {
   with_tip?: boolean;
 }
 
-export interface FourBasedFileStack {
+export interface FourBasedFileStackItem {
+  _id: string;
+  code: string;
+  type: string;
+  extension: string;
+  fileStackType: string;
+  width?: number;
+  height?: number;
+  dominantColor?: [number, number, number];
   price?: number;
-  user_paid?: string[];
+  own?: boolean;
+  collection_id?: string;
   [key: string]: unknown;
+}
+
+export interface FourBasedFileStack extends FourBasedFileStackItem {
+  user_paid?: string[];
+  collection?: FourBasedFileStackItem[];
+  status_controlled?: string;
 }
 
 export interface FourBasedChatMessage {
@@ -207,7 +222,7 @@ export const fetchUserDashboard = async (fourbasedId: string) => {
 };
 
 export interface FileStackCreateBody {
-  id: string;
+  ids: string[];
   description: string;
   price: number;
 }

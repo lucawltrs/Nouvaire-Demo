@@ -1,5 +1,5 @@
 import { UIEvent, useEffect, useRef } from 'react';
-import { FourBasedChatMessage } from '../services/4based.api';
+import { FourBasedChatMessage, FourBasedFileStackItem } from '../services/4based.api';
 
 interface ChatMessageListProps {
   messages: FourBasedChatMessage[];
@@ -12,6 +12,11 @@ interface ChatMessageListProps {
 }
 
 const TOP_THRESHOLD = 80;
+
+function isVideoItem(item: FourBasedFileStackItem): boolean {
+  return item.fileStackType === 'video' || (item.type?.startsWith('video/') ?? false);
+}
+
 
 const getOwnMessageStatus = (message: FourBasedChatMessage) => {
   const receiverStates = Object.values(message.receiver_status ?? {});
@@ -103,32 +108,48 @@ export function ChatMessageList({
                   : 'bg-gray-800 border-gray-700 text-gray-100'
               } ${message.img_preview_link ? 'w-64' : ''}`}
             >
-              {message.img_preview_link && (
-                <a href={message.img_preview_link} target="_blank" rel="noopener noreferrer" className="relative block mb-2">
-                  <img
-                    src={message.img_preview_link}
-                    alt="Nachrichten-Vorschau"
-                    className="w-full max-h-56 rounded-lg border border-gray-700 object-cover"
-                  />
-                  {typeof message.file_stack?.price === 'number' && (() => {
-                    const isPurchased = !!(message.receiver_user_id && message.file_stack?.user_paid?.includes(message.receiver_user_id));
-                    return (
-                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                        <span className={`text-sm font-bold px-3 py-1 rounded-full flex items-center gap-1 ${
+              {message.img_preview_link && (() => {
+                const fs = message.file_stack;
+                const collection = fs?.collection ?? [];
+                const allItems: FourBasedFileStackItem[] = fs
+                  ? [fs as FourBasedFileStackItem, ...collection]
+                  : [];
+                const totalCount = allItems.length;
+                const imageCount = allItems.filter(i => !isVideoItem(i)).length;
+                const videoCount = allItems.filter(i => isVideoItem(i)).length;
+                const isPurchased = !!(message.receiver_user_id && fs?.user_paid?.includes(message.receiver_user_id));
+                const price = fs?.price ?? 0;
+
+                return (
+                  <a href={message.img_preview_link} target="_blank" rel="noopener noreferrer" className="relative block mb-2">
+                    <img
+                      src={message.img_preview_link}
+                      alt="Nachrichten-Vorschau"
+                      className="w-full max-h-56 rounded-lg border border-gray-700 object-cover"
+                    />
+                    <div className="absolute inset-0 flex items-end justify-between p-2 pointer-events-none rounded-lg">
+                      {typeof price === 'number' && (
+                        <span className={`text-xs font-bold px-2 py-0.5 rounded-full flex items-center gap-1 ${
                           isPurchased ? 'bg-green-600/80 text-white' : 'bg-black/60 text-white'
                         }`}>
                           {isPurchased && (
-                            <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="w-3 h-3" viewBox="0 0 20 20" fill="currentColor">
                               <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                             </svg>
                           )}
-                          ${(message.file_stack.price * (1 - 0.21) / 100).toFixed(2)}
+                          ${(price * (1 - 0.21) / 100).toFixed(2)}
                         </span>
-                      </div>
-                    );
-                  })()}
-                </a>
-              )}
+                      )}
+                      {totalCount > 1 && (
+                        <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-black/60 text-white flex items-center gap-1 ml-auto">
+                          {imageCount > 0 && <span>🖼 {imageCount}</span>}
+                          {videoCount > 0 && <span>🎬 {videoCount}</span>}
+                        </span>
+                      )}
+                    </div>
+                  </a>
+                );
+              })()}
               <p className="whitespace-pre-wrap break-words">{message.message || '-'}</p>
               <div className={`mt-1 flex items-center justify-end gap-1 text-[11px] ${ownMessage ? 'text-white/70' : 'text-gray-400'}`}>
                 <span>{formatChatTimestamp(message.created_at ?? message.updated_at)}</span>
