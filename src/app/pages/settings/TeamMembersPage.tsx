@@ -1,9 +1,11 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Users, Shield, AlertCircle, MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
+import { ArrowLeft, Users, Shield, AlertCircle, MoreHorizontal, Pencil, Trash2, UserPlus } from 'lucide-react';
 import { Card } from '../../../components/ui/Card';
 import { PageLoader } from '../../../components/ui/PageLoader';
+import { Modal } from '../../../components/ui/Modal';
+import { Input } from '../../../components/ui/Input';
 import { useAuthStore } from '../../../lib/auth/useAuthStore';
 import { teamApi, type TeamMember } from '../../../modules/shared/services/teamApi';
 
@@ -13,6 +15,7 @@ export function TeamMembersPage() {
   const [members, setMembers] = useState<TeamMember[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showAddModal, setShowAddModal] = useState(false);
 
   const fetchMembers = useCallback(async () => {
     try {
@@ -42,7 +45,7 @@ export function TeamMembersPage() {
         >
           <ArrowLeft size={18} />
         </button>
-        <div>
+        <div className="flex-1">
           <div className="flex items-center gap-2">
             <h1 className="text-2xl sm:text-3xl font-bold text-gray-100">User Management</h1>
             {team?.team_name && (
@@ -53,7 +56,20 @@ export function TeamMembersPage() {
           </div>
           <p className="mt-0.5 text-sm text-gray-400">{members.length} member{members.length !== 1 ? 's' : ''} in this team</p>
         </div>
+        <button
+          onClick={() => setShowAddModal(true)}
+          className="flex items-center gap-2 px-4 py-2 rounded-lg bg-brand-primary hover:bg-brand-hover text-white text-sm font-medium transition-all"
+        >
+          <UserPlus size={16} />
+          Mitglied hinzufügen
+        </button>
       </div>
+
+      <AddMemberModal
+        isOpen={showAddModal}
+        onClose={() => setShowAddModal(false)}
+        onSuccess={() => { setShowAddModal(false); fetchMembers(); }}
+      />
 
       {isLoading ? (
         <PageLoader message="Lade Team-Mitglieder..." subtitle="Nutzer und Rollen werden abgerufen" />
@@ -216,5 +232,74 @@ function ErrorState({ error, onRetry }: { error: string; onRetry: () => void }) 
         </button>
       </div>
     </Card>
+  );
+}
+
+function AddMemberModal({ isOpen, onClose, onSuccess }: { isOpen: boolean; onClose: () => void; onSuccess: () => void }) {
+  const [form, setForm] = useState({ name: '', email: '', password: '', password_confirmation: '' });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (form.password !== form.password_confirmation) {
+      setError('Passwörter stimmen nicht überein.');
+      return;
+    }
+    setLoading(true);
+    setError(null);
+    try {
+      await teamApi.registerMember(form);
+      setForm({ name: '', email: '', password: '', password_confirmation: '' });
+      onSuccess();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Fehler beim Hinzufügen des Mitglieds.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleClose = () => {
+    setForm({ name: '', email: '', password: '', password_confirmation: '' });
+    setError(null);
+    onClose();
+  };
+
+  return (
+    <Modal isOpen={isOpen} onClose={handleClose} title="Mitglied hinzufügen" size="sm">
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <Input label="Name" name="name" value={form.name} onChange={handleChange} placeholder="Max Mustermann" required />
+        <Input label="E-Mail" name="email" type="email" value={form.email} onChange={handleChange} placeholder="max@example.com" required />
+        <Input label="Passwort" name="password" type="password" value={form.password} onChange={handleChange} placeholder="••••••••" required />
+        <Input label="Passwort bestätigen" name="password_confirmation" type="password" value={form.password_confirmation} onChange={handleChange} placeholder="••••••••" required />
+
+        {error && (
+          <p className="text-xs text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2">{error}</p>
+        )}
+
+        <div className="flex gap-2 pt-1">
+          <button
+            type="button"
+            onClick={handleClose}
+            disabled={loading}
+            className="flex-1 px-4 py-2 rounded-lg border border-border text-gray-400 hover:text-gray-100 hover:bg-slate-700 text-sm font-medium transition-all disabled:opacity-60"
+          >
+            Abbrechen
+          </button>
+          <button
+            type="submit"
+            disabled={loading}
+            className="flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-brand-primary hover:bg-brand-hover text-white text-sm font-medium transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+          >
+            {loading ? <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <UserPlus size={15} />}
+            Hinzufügen
+          </button>
+        </div>
+      </form>
+    </Modal>
   );
 }
