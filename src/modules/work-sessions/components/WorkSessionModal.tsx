@@ -9,6 +9,7 @@ export function WorkSessionModal() {
   const { token } = useAuthStore();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [blocked, setBlocked] = useState(false);
 
   if (!showModal) return null;
 
@@ -25,8 +26,10 @@ export function WorkSessionModal() {
       } else {
         startSession(startedAt, 0);
       }
-    } catch {
-      setError('Schicht konnte nicht gestartet werden. Bitte versuche es erneut.');
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Schicht konnte nicht gestartet werden. Bitte versuche es erneut.';
+      setError(message);
+      setBlocked(true);
     } finally {
       setLoading(false);
     }
@@ -68,7 +71,7 @@ export function WorkSessionModal() {
         <div className="px-6 pb-6 flex flex-col gap-2">
           <button
             onClick={handleStart}
-            disabled={loading}
+            disabled={loading || blocked}
             className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-brand-primary hover:bg-brand-hover text-white font-medium text-sm transition-all disabled:opacity-60 disabled:cursor-not-allowed"
           >
             {loading ? (

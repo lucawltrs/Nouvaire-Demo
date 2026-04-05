@@ -50,11 +50,12 @@ export async function postStartWorkSession(startedAt: string, token: string): Pr
     body: JSON.stringify({ started_at: startedAt }),
   });
 
-  if (!response.ok) {
-    throw new Error('Failed to start work session');
+  const json = await response.json();
+
+  if (!response.ok || json?.status === 'error') {
+    throw new Error(json?.message ?? 'Failed to start work session');
   }
 
-  const json = await response.json();
   return {
     started_at: json.message?.started_at ?? startedAt,
     id: json.message?.id ?? 0,
