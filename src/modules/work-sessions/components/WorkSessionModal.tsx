@@ -16,7 +16,13 @@ export function WorkSessionModal() {
   const handleStart = async () => {
     setLoading(true);
     setError(null);
-    const localStartedAt = new Date().toISOString();
+    const now = new Date();
+    const tzOffsetMin = now.getTimezoneOffset();
+    const localDate = new Date(now.getTime() - tzOffsetMin * 60000);
+    const sign = tzOffsetMin <= 0 ? '+' : '-';
+    const absMin = Math.abs(tzOffsetMin);
+    const tzStr = `${sign}${String(Math.floor(absMin / 60)).padStart(2, '0')}:${String(absMin % 60).padStart(2, '0')}`;
+    const localStartedAt = localDate.toISOString().slice(0, 23) + tzStr;
     try {
       let startedAt = localStartedAt;
       if (token) {
