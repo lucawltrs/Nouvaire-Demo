@@ -319,6 +319,7 @@ export function InboxChatPage() {
       message: trimmed,
       created_at: createdAt,
       updated_at: createdAt,
+      type: ''
     };
 
     appendLocalMessage(tempMessage);
