@@ -76,3 +76,24 @@ export async function putEndWorkSession(id: number, endedAt: string, token: stri
     throw new Error('Failed to end work session');
   }
 }
+
+export async function postAdminEndWorkSession(
+  id: number,
+  adminNote: string,
+  endedAt: string,
+  token: string,
+): Promise<void> {
+  const response = await fetch(`${getConfig().API_URL}/work-sessions/${id}/admin-end`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ admin_note: adminNote, ended_at: endedAt }),
+  });
+
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(`API error ${response.status}: ${text}`);
+  }
+}
