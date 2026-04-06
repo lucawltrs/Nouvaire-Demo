@@ -115,6 +115,7 @@ export interface FourBasedFileStack extends FourBasedFileStackItem {
 }
 
 export interface FourBasedChatMessage {
+  type: string;
   _id: string;
   chat_id: string;
   user_id: string;
