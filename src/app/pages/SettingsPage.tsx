@@ -1,4 +1,4 @@
-import { Settings, Users, Shield, Building2, ChevronRight, Layers } from 'lucide-react';
+import { Settings, Users, Shield, Building2, ChevronRight, Layers, Bell } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Card } from '../../components/ui/Card';
 import { useAuthStore } from '../../lib/auth/useAuthStore';
@@ -79,6 +79,24 @@ export function SettingsPage() {
                 <div>
                   <p className="text-sm font-medium text-gray-100">Groups</p>
                   <p className="text-xs text-gray-400">View and manage team groups</p>
+                </div>
+              </div>
+              <ChevronRight size={16} className="text-gray-500 group-hover:text-brand-primary transition-colors" />
+            </Link>
+          </div>
+
+          <div className="mt-4 pt-4 border-t border-slate-700">
+            <Link
+              to="/settings/notifications"
+              className="group flex items-center justify-between p-3 rounded-lg border border-slate-700 hover:border-brand-primary/50 hover:bg-slate-700/50 transition-all"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-lg bg-brand-primary/10 flex items-center justify-center shrink-0 group-hover:bg-brand-primary/20 transition-colors">
+                  <Bell size={16} className="text-brand-primary" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-100">Notifications</p>
+                  <p className="text-xs text-gray-400">Configure Discord webhook notifications</p>
                 </div>
               </div>
               <ChevronRight size={16} className="text-gray-500 group-hover:text-brand-primary transition-colors" />

@@ -1,10 +1,11 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Clock, AlertCircle, Calendar, Timer } from 'lucide-react';
+import { ArrowLeft, Clock, AlertCircle, Calendar, Timer, StopCircle, X } from 'lucide-react';
 import { Card } from '../../../components/ui/Card';
 import { PageLoader } from '../../../components/ui/PageLoader';
 import { teamApi, type TeamMember } from '../../../modules/shared/services/teamApi';
-import { getWorkSessionsForUser, type WorkSession } from '../../../modules/work-sessions/services/workSession.api';
+import { getWorkSessionsForUser, postAdminEndWorkSession, type WorkSession } from '../../../modules/work-sessions/services/workSession.api';
+import { useAuthStore } from '../../../lib/auth/useAuthStore';
 
 function formatDateTime(iso: string | null): string {
   if (!iso) return '—';
@@ -29,11 +30,53 @@ export function TeamMemberDetailPage() {
   const { memberId } = useParams<{ memberId: string }>();
   const navigate = useNavigate();
 
+  const { token } = useAuthStore();
   const [member, setMember] = useState<TeamMember | null>(null);
   const [sessions, setSessions] = useState<WorkSession[]>([]);
   const [isLoadingMember, setIsLoadingMember] = useState(true);
   const [isLoadingSessions, setIsLoadingSessions] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Admin-end modal state
+  const [adminEndSession, setAdminEndSession] = useState<WorkSession | null>(null);
+  const [adminNote, setAdminNote] = useState('');
+  const [adminEndedAt, setAdminEndedAt] = useState('');
+  const [adminEndLoading, setAdminEndLoading] = useState(false);
+  const [adminEndError, setAdminEndError] = useState<string | null>(null);
+
+  const openAdminEndModal = (session: WorkSession) => {
+    const now = new Date();
+    const pad = (n: number) => String(n).padStart(2, '0');
+    const local = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
+    setAdminEndSession(session);
+    setAdminNote('');
+    setAdminEndedAt(local);
+    setAdminEndError(null);
+  };
+
+  const closeAdminEndModal = () => {
+    setAdminEndSession(null);
+    setAdminNote('');
+    setAdminEndedAt('');
+    setAdminEndError(null);
+  };
+
+  const handleAdminEnd = async () => {
+    if (!adminEndSession || !token) return;
+    setAdminEndLoading(true);
+    setAdminEndError(null);
+    try {
+      const endedAtIso = new Date(adminEndedAt).toISOString().slice(0, 19);
+      await postAdminEndWorkSession(adminEndSession.id, adminNote, endedAtIso, token);
+      closeAdminEndModal();
+      const data = await getWorkSessionsForUser(Number(memberId));
+      setSessions(data);
+    } catch (err) {
+      setAdminEndError(err instanceof Error ? err.message : 'Fehler beim Beenden der Schicht.');
+    } finally {
+      setAdminEndLoading(false);
+    }
+  };
 
   const fetchData = useCallback(async () => {
     if (!memberId) return;
@@ -187,6 +230,7 @@ export function TeamMemberDetailPage() {
                   <th className="text-left px-6 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">Ende</th>
                   <th className="text-left px-6 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">Dauer</th>
                   <th className="text-left px-6 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">Status</th>
+                  <th className="px-6 py-3" />
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-700">
@@ -208,6 +252,17 @@ export function TeamMemberDetailPage() {
                         </span>
                       )}
                     </td>
+                    <td className="px-6 py-4 text-right">
+                      {!session.ended_at && (
+                        <button
+                          onClick={() => openAdminEndModal(session)}
+                          className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium text-red-400 border border-red-800/40 hover:bg-red-900/20 transition-colors"
+                        >
+                          <StopCircle size={13} />
+                          Admin-Beenden
+                        </button>
+                      )}
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -215,6 +270,83 @@ export function TeamMemberDetailPage() {
           </div>
         )}
       </Card>
+      {/* Admin-End Modal */}
+      {adminEndSession && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="bg-card border border-border rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden">
+            {/* Header */}
+            <div className="bg-slate-800 px-6 py-4 border-b border-border flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="flex items-center justify-center w-9 h-9 rounded-full bg-red-500/10">
+                  <StopCircle size={18} className="text-red-400" />
+                </div>
+                <div>
+                  <h2 className="text-sm font-semibold text-gray-100">Schicht admin-seitig beenden</h2>
+                  <p className="text-xs text-gray-400 mt-0.5">Session #{adminEndSession.id}</p>
+                </div>
+              </div>
+              <button
+                onClick={closeAdminEndModal}
+                className="p-1.5 rounded-lg text-gray-400 hover:text-gray-100 hover:bg-slate-700 transition-all"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            {/* Body */}
+            <div className="px-6 py-5 space-y-4">
+              <div>
+                <label className="block text-xs font-medium text-gray-400 mb-1.5">Endzeitpunkt</label>
+                <input
+                  type="datetime-local"
+                  value={adminEndedAt}
+                  onChange={(e) => setAdminEndedAt(e.target.value)}
+                  className="w-full px-3 py-2 rounded-lg bg-slate-800 border border-slate-600 text-gray-100 text-sm focus:outline-none focus:border-brand-primary transition-colors"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-400 mb-1.5">Admin-Notiz</label>
+                <textarea
+                  value={adminNote}
+                  onChange={(e) => setAdminNote(e.target.value)}
+                  placeholder="z. B. Vom Admin beendet wegen Inaktivität."
+                  rows={3}
+                  className="w-full px-3 py-2 rounded-lg bg-slate-800 border border-slate-600 text-gray-100 text-sm placeholder-gray-500 focus:outline-none focus:border-brand-primary transition-colors resize-none"
+                />
+              </div>
+
+              {adminEndError && (
+                <p className="text-xs text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2">
+                  {adminEndError}
+                </p>
+              )}
+            </div>
+
+            {/* Actions */}
+            <div className="px-6 pb-5 flex justify-end gap-2">
+              <button
+                onClick={closeAdminEndModal}
+                disabled={adminEndLoading}
+                className="px-4 py-2 rounded-lg text-sm text-gray-300 border border-slate-600 hover:bg-slate-700 transition-colors disabled:opacity-60"
+              >
+                Abbrechen
+              </button>
+              <button
+                onClick={handleAdminEnd}
+                disabled={adminEndLoading || !adminEndedAt}
+                className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-red-600 hover:bg-red-700 text-white transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                {adminEndLoading ? (
+                  <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                ) : (
+                  <StopCircle size={15} />
+                )}
+                Schicht beenden
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
