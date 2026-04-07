@@ -121,11 +121,15 @@ export function useChatMessages(fourbasedId?: string, chatId?: string) {
   }, [chatId, fourbasedId]);
 
   useEffect(() => {
+    // Clear cache when switching chats so fresh messages are always fetched.
+    if (fourbasedId && chatId) {
+      _cache.delete(cacheKey(fourbasedId, chatId));
+    }
     setMessages([]);
     nextOffsetRef.current = 0;
     setHasMore(false);
     loadInitial();
-  }, [loadInitial]);
+  }, [loadInitial]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const loadOlder = useCallback(async () => {
     if (!fourbasedId || !chatId || !hasMore || loadingOlderRef.current) {

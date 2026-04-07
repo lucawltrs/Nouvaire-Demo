@@ -46,20 +46,29 @@ export function ChatMessageList({
   formatChatTimestamp,
 }: ChatMessageListProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
-  const autoScrolledRef = useRef(false);
+  const initialScrollDoneRef = useRef(false);
+  const isAtBottomRef = useRef(true);
 
+  // Scroll to bottom on initial load and whenever new messages arrive while user is at the bottom.
   useEffect(() => {
-    if (!containerRef.current || autoScrolledRef.current || messages.length === 0) {
+    if (!containerRef.current || messages.length === 0) {
       return;
     }
 
-    // Initial jump to the newest message at the bottom.
-    containerRef.current.scrollTop = containerRef.current.scrollHeight;
-    autoScrolledRef.current = true;
+    if (!initialScrollDoneRef.current || isAtBottomRef.current) {
+      containerRef.current.scrollTop = containerRef.current.scrollHeight;
+      initialScrollDoneRef.current = true;
+    }
   }, [messages.length]);
+
+  const BOTTOM_THRESHOLD = 120;
 
   const handleScroll = async (event: UIEvent<HTMLDivElement>) => {
     const container = event.currentTarget;
+
+    // Track whether the user is near the bottom.
+    const distanceFromBottom = container.scrollHeight - container.scrollTop - container.clientHeight;
+    isAtBottomRef.current = distanceFromBottom <= BOTTOM_THRESHOLD;
 
     if (container.scrollTop > TOP_THRESHOLD || !hasMore || loadingOlder) {
       return;

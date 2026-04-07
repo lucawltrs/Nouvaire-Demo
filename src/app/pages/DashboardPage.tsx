@@ -15,6 +15,7 @@ import {
   formatRelativeTime,
 } from '../../modules/dashboard';
 import { ToastContainer, toast } from '../../lib/toast';
+import { unreadCountStore } from '../../lib/unreadCountStore';
 
 type RangeDays = 7 | 30 | 90;
 
@@ -26,12 +27,18 @@ export function DashboardPage() {
   const [selectedAccountId, setSelectedAccountId] = useState<string>('all');
   const [removedChatIds, setRemovedChatIds] = useState<Set<string>>(new Set());
 
+  const syncUnreadCount = (data: DashboardApiResponse) => {
+    const total = data.data.reduce((sum, acc) => sum + (acc.kpis.unread_chats ?? 0), 0);
+    unreadCountStore.set(total);
+  };
+
   const fetchDashboard = useCallback(async () => {
     try {
       setIsLoading(true);
       setError(null);
       const data = await dashboardApi.getDashboard(rangeDays);
       setResponse(data);
+      syncUnreadCount(data);
       setRemovedChatIds(new Set()); // Reset removed chats on new data
     } catch (err) {
       console.error('Failed to fetch dashboard data:', err);
@@ -41,9 +48,24 @@ export function DashboardPage() {
     }
   }, [rangeDays]);
 
+  const fetchDashboardSilent = useCallback(async () => {
+    try {
+      const data = await dashboardApi.getDashboard(rangeDays);
+      setResponse(data);
+      syncUnreadCount(data);
+    } catch {
+      // Silently ignore errors during background refresh
+    }
+  }, [rangeDays]);
+
   useEffect(() => {
     fetchDashboard();
   }, [fetchDashboard]);
+
+  useEffect(() => {
+    const interval = setInterval(fetchDashboardSilent, 5 * 1000);
+    return () => clearInterval(interval);
+  }, [fetchDashboardSilent]);
 
   // Handler to update KPIs after marking a chat as read
   const handleChatMarkedAsRead = useCallback((chatKey: string, unreadCount: number) => {

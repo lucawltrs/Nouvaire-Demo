@@ -180,13 +180,13 @@ export function InboxChatPage() {
   }, [fourbased_id]);
 
   useEffect(() => {
-    const interval = setInterval(fetchChatsSilent, 30 * 1000);
+    const interval = setInterval(fetchChatsSilent, 5 * 1000);
     return () => clearInterval(interval);
   }, [fetchChatsSilent]);
 
   // Silent background refresh for messages in the active chat (every 30 seconds)
   useEffect(() => {
-    const interval = setInterval(refreshSilent, 30 * 1000);
+    const interval = setInterval(refreshSilent, 5 * 1000);
     return () => clearInterval(interval);
   }, [refreshSilent]);
 
@@ -565,6 +565,7 @@ export function InboxChatPage() {
             )}
 
             <ChatMessageList
+              key={chat_id}
               messages={messages}
               isOwnMessage={isOwnMessage}
               loadingOlder={loadingOlder}
