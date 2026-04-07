@@ -1,10 +1,42 @@
-import { ReactNode, useEffect, useState } from 'react';
+import { ReactNode, useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../lib/auth/useAuthStore';
 import { LayoutDashboard, LogOut, ChevronDown, MessagesSquare, BarChart3, Users, Settings, Menu, X, Cloud } from 'lucide-react';
 import { useWorkSessionStore } from '../../modules/work-sessions/store/useWorkSessionStore';
 import { WorkSessionModal } from '../../modules/work-sessions/components/WorkSessionModal';
 import { WorkSessionTimer } from '../../modules/work-sessions/components/WorkSessionTimer';
+import { unreadCountStore } from '../../lib/unreadCountStore';
+import { dashboardApi } from '../../modules/dashboard/services/dashboard.api';
+
+const APP_TITLE = 'Nouvaire';
+
+const playNotificationSound = () => {
+  try {
+    const ctx = new AudioContext();
+
+    const playTone = (freq: number, startAt: number, duration: number, peakGain: number) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, startAt);
+      gain.gain.setValueAtTime(0, startAt);
+      gain.gain.linearRampToValueAtTime(peakGain, startAt + 0.01);
+      gain.gain.exponentialRampToValueAtTime(0.001, startAt + duration);
+      osc.start(startAt);
+      osc.stop(startAt + duration);
+    };
+
+    // Two ascending chime notes (like a chat notification)
+    playTone(880, ctx.currentTime, 0.35, 0.28);        // A5
+    playTone(1175, ctx.currentTime + 0.18, 0.45, 0.22); // D6
+
+    setTimeout(() => ctx.close(), 800);
+  } catch {
+    // AudioContext not available
+  }
+};
 
 interface MainLayoutProps {
   children: ReactNode;
@@ -24,6 +56,36 @@ export function MainLayout({ children }: MainLayoutProps) {
   const { init: initWorkSession } = useWorkSessionStore();
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  // ── Global unread-chat badge in browser tab title ──────────────────────────
+  const unreadChats = useSyncExternalStore(unreadCountStore.subscribe, unreadCountStore.get);
+  const prevUnreadRef = useRef<number | null>(null);
+
+  // Background fallback poll (30 s) so the title stays current on every page.
+  useEffect(() => {
+    const poll = async () => {
+      try {
+        const data = await dashboardApi.getDashboard(30);
+        const total = data.data.reduce((sum, acc) => sum + (acc.kpis.unread_chats ?? 0), 0);
+        unreadCountStore.set(total);
+      } catch {
+        // ignore
+      }
+    };
+    poll();
+    const id = setInterval(poll, 30_000);
+    return () => clearInterval(id);
+  }, []);
+
+  // Update document.title and play sound when count changes.
+  useEffect(() => {
+    if (prevUnreadRef.current !== null && unreadChats > prevUnreadRef.current) {
+      playNotificationSound();
+    }
+    prevUnreadRef.current = unreadChats;
+    document.title = unreadChats > 0 ? `(${unreadChats}) | ${APP_TITLE}` : APP_TITLE;
+  }, [unreadChats]);
+  // ────────────────────────────────────────────────────────────────────────────
 
   useEffect(() => {
     initWorkSession();
