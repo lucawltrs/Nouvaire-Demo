@@ -33,6 +33,7 @@ export interface ChatListItem {
   unread_count: number;
   is_unread: boolean;
   sales_volume?: number | null;
+  customer_is_online?: boolean;
 }
 
 export interface InboxTeam {

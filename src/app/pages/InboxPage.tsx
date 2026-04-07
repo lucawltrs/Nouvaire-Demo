@@ -386,7 +386,7 @@ function ChatRow({ chat, isLoading, onMarkAsRead }: ChatRowProps) {
       style={{ textDecoration: 'none', color: 'inherit' }}
     >
       {/* Avatar */}
-      <AccountAvatar src={chat.customer_avatar_url ?? undefined} name={chat.customer_name} size="md" />
+      <AccountAvatar src={chat.customer_avatar_url ?? undefined} name={chat.customer_name} size="md" isOnline={chat.customer_is_online} />
 
       {/* Main content */}
       <div className="flex-1 min-w-0">
@@ -461,30 +461,22 @@ interface AccountAvatarProps {
   src?: string;
   name: string;
   size?: 'xs' | 'sm' | 'md';
+  isOnline?: boolean;
 }
 
-function AccountAvatar({ src, name, size = 'md' }: AccountAvatarProps) {
+function AccountAvatar({ src, name, size = 'md', isOnline }: AccountAvatarProps) {
   const sizeClass = { xs: 'w-4 h-4', sm: 'w-6 h-6', md: 'w-9 h-9' }[size];
   const iconSize = { xs: 10, sm: 12, md: 16 }[size];
   const textClass = { xs: 'text-[8px]', sm: 'text-[10px]', md: 'text-sm' }[size];
+  const dotClass = { xs: 'w-1.5 h-1.5', sm: 'w-2 h-2', md: 'w-2.5 h-2.5' }[size];
 
-  if (!src) {
-    const initials = (name ?? '')
-      .split(' ')
-      .slice(0, 2)
-      .map((w) => w[0]?.toUpperCase() ?? '')
-      .join('');
-
-    return (
-      <div
-        className={`${sizeClass} rounded-full bg-slate-700 border border-slate-600 flex items-center justify-center shrink-0 text-gray-400 font-semibold ${textClass}`}
-      >
-        {initials || <User size={iconSize} />}
-      </div>
-    );
-  }
-
-  return (
+  const avatar = !src ? (
+    <div
+      className={`${sizeClass} rounded-full bg-slate-700 border border-slate-600 flex items-center justify-center shrink-0 text-gray-400 font-semibold ${textClass}`}
+    >
+      {(name ?? '').split(' ').slice(0, 2).map((w) => w[0]?.toUpperCase() ?? '').join('') || <User size={iconSize} />}
+    </div>
+  ) : (
     <img
       src={src}
       alt={name}
@@ -493,6 +485,17 @@ function AccountAvatar({ src, name, size = 'md' }: AccountAvatarProps) {
         e.currentTarget.style.display = 'none';
       }}
     />
+  );
+
+  if (!isOnline) return avatar;
+
+  return (
+    <div className="relative shrink-0">
+      {avatar}
+      <span
+        className={`absolute bottom-0 right-0 ${dotClass} rounded-full bg-green-500 ring-2 ring-[#0F172A]`}
+      />
+    </div>
   );
 }
 
