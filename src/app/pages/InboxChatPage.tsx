@@ -477,7 +477,7 @@ export function InboxChatPage() {
                   onClick={() => setMobileView('chat')}
                   className={`flex items-center gap-3 px-4 py-3 transition-colors hover:bg-slate-700 ${isActive ? 'border-l-4 border-[#ED4C27] bg-orange-900/20' : ''}`}
                 >
-                  <AccountAvatar src={chat.customer_avatar_url ?? undefined} name={chat.customer_name} size="sm" />
+                  <AccountAvatar src={chat.customer_avatar_url ?? undefined} name={chat.customer_name} size="sm" isOnline={chat.customer_is_online} />
                   <div className="flex-1 min-w-0">
                     <span className="font-semibold text-sm text-gray-100 truncate block">{chat.customer_name}</span>
                     <p className="text-xs text-gray-500 truncate">{chat.last_message_preview}</p>
@@ -536,7 +536,7 @@ export function InboxChatPage() {
                     <SlidersHorizontal size={16} />
                   </button>
                 )}
-                <AccountAvatar src={activeChat.customer_avatar_url ?? undefined} name={activeChat.customer_name} size="md" />
+                <AccountAvatar src={activeChat.customer_avatar_url ?? undefined} name={activeChat.customer_name} size="md" isOnline={activeChat.customer_is_online} />
                 <div className="min-w-0 flex-1">
                   <h1 className="text-lg font-bold text-gray-100 truncate">{activeChat.customer_name}</h1>
                   <div className="mt-1">
@@ -984,18 +984,27 @@ export function InboxChatPage() {
 }
 
 // Avatar helper
-function AccountAvatar({ src, name, size = 'md' }: { src?: string; name: string; size?: 'sm' | 'md' }) {
+function AccountAvatar({ src, name, size = 'md', isOnline }: { src?: string; name: string; size?: 'sm' | 'md'; isOnline?: boolean }) {
   const sizeClass = { sm: 'w-8 h-8', md: 'w-10 h-10' }[size];
   const iconSize = { sm: 14, md: 20 }[size];
-  if (!src) {
-    const initials = (name ?? '').split(' ').slice(0, 2).map((w) => w[0]?.toUpperCase() ?? '').join('');
-    return (
-      <div className={`${sizeClass} rounded-full bg-slate-700 border border-slate-600 flex items-center justify-center shrink-0 text-gray-400 font-semibold text-xs`}>
-        {initials || <User size={iconSize} />}
-      </div>
-    );
-  }
-  return <img src={src} alt={name} className={`${sizeClass} rounded-full object-cover shrink-0`} onError={e => { e.currentTarget.style.display = 'none'; }} />;
+  const dotClass = { sm: 'w-2 h-2', md: 'w-2.5 h-2.5' }[size];
+
+  const avatar = !src ? (
+    <div className={`${sizeClass} rounded-full bg-slate-700 border border-slate-600 flex items-center justify-center shrink-0 text-gray-400 font-semibold text-xs`}>
+      {(name ?? '').split(' ').slice(0, 2).map((w) => w[0]?.toUpperCase() ?? '').join('') || <User size={iconSize} />}
+    </div>
+  ) : (
+    <img src={src} alt={name} className={`${sizeClass} rounded-full object-cover shrink-0`} onError={e => { e.currentTarget.style.display = 'none'; }} />
+  );
+
+  if (!isOnline) return avatar;
+
+  return (
+    <div className="relative shrink-0">
+      {avatar}
+      <span className={`absolute bottom-0 right-0 ${dotClass} rounded-full bg-green-500 ring-2 ring-[#0F172A]`} />
+    </div>
+  );
 }
 
 // Vault folder chip
