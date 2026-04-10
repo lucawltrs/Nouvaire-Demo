@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { getActiveWorkSession } from '../services/workSession.api';
 
 const COOKIE_NAME = 'work_session';
 const SNOOZE_KEY = 'work_session_snooze_until';
@@ -16,6 +17,7 @@ interface WorkSessionStore {
   sessionId: number | null;
   showModal: boolean;
   init: () => void;
+  syncWithServer: () => Promise<void>;
   startSession: (startedAt: string, id: number) => void;
   endSession: () => void;
   snooze: () => void;
@@ -74,16 +76,28 @@ export const useWorkSessionStore = create<WorkSessionStore>((set) => ({
     const session = readCookie();
 
     if (session?.active && session.started_at) {
-      // Active session already running
+      // Active session in cookie – restore immediately, no server wait needed
       set({ active: true, startedAt: session.started_at, sessionId: session.id ?? null, showModal: false });
       return;
     }
 
-    // No active session – show modal unless snoozed
-    if (!isSnoozed()) {
-      set({ active: false, startedAt: null, sessionId: null, showModal: true });
-    } else {
-      set({ active: false, startedAt: null, sessionId: null, showModal: false });
+    // No cookie – don't show modal yet, syncWithServer decides after server responds
+    set({ active: false, startedAt: null, sessionId: null, showModal: false });
+  },
+
+  syncWithServer: async () => {
+    try {
+      const session = await getActiveWorkSession();
+      if (session) {
+        writeCookie({ active: true, started_at: session.started_at, id: session.id });
+        clearSnooze();
+        set({ active: true, startedAt: session.started_at, sessionId: session.id, showModal: false });
+      } else {
+        deleteCookie();
+        set({ active: false, startedAt: null, sessionId: null, showModal: !isSnoozed() });
+      }
+    } catch {
+      // Network error – keep current state
     }
   },
 

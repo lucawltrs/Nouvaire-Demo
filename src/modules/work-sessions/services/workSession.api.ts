@@ -15,6 +15,17 @@ export interface WorkSession {
   updated_at: string;
 }
 
+export interface ActiveWorkSession {
+  id: number;
+  team_user_id: number;
+  started_at: string;
+  ended_at: null;
+  duration: null;
+  ended_by_admin: boolean;
+  admin_note: string | null;
+  team_user: Record<string, unknown>;
+}
+
 const apiFetch = async (url: string, options: RequestInit = {}) => {
   const token = localStorage.getItem('auth_token');
   const response = await fetch(url, {
@@ -31,6 +42,12 @@ const apiFetch = async (url: string, options: RequestInit = {}) => {
   }
   return response;
 };
+
+export async function getActiveWorkSession(): Promise<ActiveWorkSession | null> {
+  const res = await apiFetch(`${getConfig().API_URL}/work-sessions/active`);
+  const raw = await res.json();
+  return raw?.message ?? null;
+}
 
 export async function getWorkSessionsForUser(userId: number): Promise<WorkSession[]> {
   const res = await apiFetch(

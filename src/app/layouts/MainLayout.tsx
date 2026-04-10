@@ -53,7 +53,7 @@ export function MainLayout({ children }: MainLayoutProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, team, logout } = useAuthStore();
-  const { init: initWorkSession } = useWorkSessionStore();
+  const { init: initWorkSession, syncWithServer } = useWorkSessionStore();
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -89,7 +89,10 @@ export function MainLayout({ children }: MainLayoutProps) {
 
   useEffect(() => {
     initWorkSession();
-  }, [initWorkSession]);
+    syncWithServer();
+    const id = setInterval(syncWithServer, 5 * 60 * 1000);
+    return () => clearInterval(id);
+  }, [initWorkSession, syncWithServer]);
 
   const handleLogout = () => {
     logout();
