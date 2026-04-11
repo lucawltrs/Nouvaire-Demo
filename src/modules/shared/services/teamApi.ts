@@ -5,6 +5,7 @@ export interface TeamMember {
   user_id: number;
   team_id: number;
   role: string;
+  active_shift: boolean;
   user: {
     id: number;
     name: string;
