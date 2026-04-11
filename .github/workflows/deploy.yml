@@ -18,6 +18,20 @@ jobs:
 
       - run: npm ci
       - run: npm run build
+      - name: Test SSH directly
+        env:
+          SSH_PRIVATE_KEY_B64: ${{ secrets.IONOS_SSH_KEY_B64 }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "$SSH_PRIVATE_KEY_B64" | base64 -d > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh -i ~/.ssh/deploy_key \
+            -p ${{ secrets.IONOS_PORT }} \
+            -o StrictHostKeyChecking=no \
+            -o UserKnownHostsFile=/dev/null \
+            -v \
+            ${{ secrets.IONOS_USER }}@${{ secrets.IONOS_HOST }} \
+            "echo success" 2>&1 | grep -E "(Offering|Authentications|denied|success|accepted|key)"
 
       - name: Debug SSH Key
         env:
