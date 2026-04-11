@@ -35,8 +35,8 @@ jobs:
           mkdir -p ~/.ssh
           echo "$SSH_PRIVATE_KEY_B64" | base64 -d > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
-          ssh-keyscan -p ${{ secrets.IONOS_PORT }} ${{ secrets.IONOS_HOST }} >> ~/.ssh/known_hosts
+          ssh-keyscan -t ed25519 -p ${{ secrets.IONOS_PORT }} ${{ secrets.IONOS_HOST }} >> ~/.ssh/known_hosts
           rsync -avzr --delete \
-            -e "ssh -i ~/.ssh/deploy_key -p ${{ secrets.IONOS_PORT }} -o StrictHostKeyChecking=no" \
+            -e "ssh -i ~/.ssh/deploy_key -p ${{ secrets.IONOS_PORT }} -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" \
             dist/ \
             ${{ secrets.IONOS_USER }}@${{ secrets.IONOS_HOST }}:/public/dashboard
