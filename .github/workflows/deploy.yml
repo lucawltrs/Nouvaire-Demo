@@ -1,0 +1,32 @@
+name: Deploy dist to IONOS
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+      - run: npm run build
+
+      - name: Upload dist
+        uses: wlixcc/SFTP-Deploy-Action@v1.2.6
+        with:
+          server: ${{ secrets.IONOS_HOST }}
+          username: ${{ secrets.IONOS_USER }}
+          password: ${{ secrets.IONOS_PASSWORD }}
+          port: ${{ secrets.IONOS_PORT }}
+          local_path: "./dist/*"
+          remote_path: "/public/dashboard"
+          sftp_only: true
+          delete_remote_files: true
