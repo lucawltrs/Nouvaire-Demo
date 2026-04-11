@@ -25,6 +25,6 @@ jobs:
         run: |
           sudo apt-get install -y sshpass
           sshpass -e rsync -avzr --delete \
-            -e "ssh -p ${{ secrets.IONOS_PORT }} -o StrictHostKeyChecking=no" \
+            -e "ssh -p ${{ secrets.IONOS_PORT }} -o StrictHostKeyChecking=no -o PubkeyAuthentication=no -o PreferredAuthentications=password" \
             dist/ \
             ${{ secrets.IONOS_USER }}@${{ secrets.IONOS_HOST }}:/public/dashboard
