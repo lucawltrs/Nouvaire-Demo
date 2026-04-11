@@ -19,13 +19,15 @@ jobs:
       - run: npm ci
       - run: npm run build
 
-      - name: Deploy via SSH (rsync)
-        uses: burnett01/rsync-deployments@7.0.1
-        with:
-          switches: -avzr --delete
-          path: dist/
-          remote_path: /public/dashboard
-          remote_host: ${{ secrets.IONOS_HOST }}
-          remote_port: ${{ secrets.IONOS_PORT }}
-          remote_user: ${{ secrets.IONOS_USER }}
-          remote_key: ${{ secrets.IONOS_SSH_KEY }}
+      - name: Deploy via rsync over SSH
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.IONOS_SSH_KEY }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "$SSH_PRIVATE_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -p ${{ secrets.IONOS_PORT }} ${{ secrets.IONOS_HOST }} >> ~/.ssh/known_hosts
+          rsync -avzr --delete \
+            -e "ssh -i ~/.ssh/deploy_key -p ${{ secrets.IONOS_PORT }} -o StrictHostKeyChecking=no" \
+            dist/ \
+            ${{ secrets.IONOS_USER }}@${{ secrets.IONOS_HOST }}:/public/dashboard
