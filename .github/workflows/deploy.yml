@@ -18,8 +18,8 @@ jobs:
 
       - run: npm ci
       - run: npm run build
-  
-     - name: Deploy via rsync over SSH
+
+      - name: Deploy via rsync over SSH
         env:
           SSHPASS: ${{ secrets.IONOS_PASSWORD }}
         run: |
