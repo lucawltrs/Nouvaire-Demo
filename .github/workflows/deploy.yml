@@ -18,6 +18,20 @@ jobs:
 
       - run: npm ci
       - run: npm run build
+      
+      - name: Test password login
+        env:
+          SSHPASS: ${{ secrets.IONOS_PASSWORD }}
+        run: |
+          sudo apt-get install -y sshpass
+          sshpass -e ssh \
+            -p ${{ secrets.IONOS_PORT }} \
+            -o StrictHostKeyChecking=no \
+            -o PubkeyAuthentication=no \
+            -o PreferredAuthentications=password \
+            -v \
+            ${{ secrets.IONOS_USER }}@${{ secrets.IONOS_HOST }} \
+            "echo success" 2>&1
 
       - name: Deploy via rsync over SSH
         env:
