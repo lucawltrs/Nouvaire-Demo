@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Users, Shield, AlertCircle, MoreHorizontal, Pencil, Trash2, UserPlus } from 'lucide-react';
+import { ArrowLeft, Users, Shield, AlertCircle, MoreHorizontal, Pencil, Trash2, UserPlus, Clock, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import { Card } from '../../../components/ui/Card';
 import { PageLoader } from '../../../components/ui/PageLoader';
 import { Modal } from '../../../components/ui/Modal';
@@ -16,6 +16,7 @@ export function TeamMembersPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [shiftSort, setShiftSort] = useState<'none' | 'asc' | 'desc'>('none');
 
   const fetchMembers = useCallback(async () => {
     try {
@@ -33,6 +34,21 @@ export function TeamMembersPage() {
 
   useEffect(() => {
     fetchMembers();
+
+    const POLL_INTERVAL = 5 * 60 * 1000; // 5 minutes
+    const interval = setInterval(() => {
+      if (!document.hidden) fetchMembers();
+    }, POLL_INTERVAL);
+
+    const handleVisibility = () => {
+      if (!document.hidden) fetchMembers();
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', handleVisibility);
+    };
   }, [fetchMembers]);
 
   return (
@@ -77,27 +93,47 @@ export function TeamMembersPage() {
         <ErrorState error={error} onRetry={fetchMembers} />
       ) : members.length === 0 ? (
         <EmptyState />
-      ) : (
-        <Card className="overflow-hidden border border-slate-600">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-slate-700 bg-slate-800/50">
-                  <th className="text-left px-6 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">Name</th>
-                  <th className="text-left px-6 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">Email</th>
-                  <th className="text-left px-6 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">Role</th>
-                  <th className="px-6 py-3" />
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-700">
-                {members.map((member) => (
-                  <MemberRow key={member.id} member={member} />
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </Card>
-      )}
+      ) : (() => {
+        const sorted = shiftSort === 'none'
+          ? members
+          : [...members].sort((a, b) => {
+              if (shiftSort === 'desc') return (b.active_shift ? 1 : 0) - (a.active_shift ? 1 : 0);
+              return (a.active_shift ? 1 : 0) - (b.active_shift ? 1 : 0);
+            });
+        const cycleSort = () =>
+          setShiftSort((s) => s === 'none' ? 'desc' : s === 'desc' ? 'asc' : 'none');
+        const SortIcon = shiftSort === 'desc' ? ArrowDown : shiftSort === 'asc' ? ArrowUp : ArrowUpDown;
+        return (
+          <Card className="overflow-hidden border border-slate-600">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-slate-700 bg-slate-800/50">
+                    <th className="text-left px-6 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">Name</th>
+                    <th className="text-left px-6 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">Email</th>
+                    <th className="text-left px-6 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">Role</th>
+                    <th className="px-6 py-3">
+                      <button
+                        onClick={cycleSort}
+                        className="flex items-center gap-1.5 text-xs font-semibold text-gray-400 uppercase tracking-wide hover:text-gray-200 transition-colors"
+                      >
+                        Schicht
+                        <SortIcon size={13} className={shiftSort !== 'none' ? 'text-brand-primary' : ''} />
+                      </button>
+                    </th>
+                    <th className="px-6 py-3" />
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-700">
+                  {sorted.map((member) => (
+                    <MemberRow key={member.id} member={member} />
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </Card>
+        );
+      })()}
     </div>
   );
 }
@@ -132,6 +168,19 @@ function MemberRow({ member }: { member: TeamMember }) {
           <Shield size={11} />
           {member.role}
         </span>
+      </td>
+      <td className="px-6 py-4">
+        {member.active_shift ? (
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-green-500/10 text-green-400 border border-green-500/20">
+            <Clock size={11} />
+            Aktiv
+          </span>
+        ) : (
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-slate-700 text-gray-500 border border-slate-600">
+            <Clock size={11} />
+            Keine
+          </span>
+        )}
       </td>
       <td className="px-6 py-4" onClick={(e) => e.stopPropagation()}>
         <ActionsMenu />
