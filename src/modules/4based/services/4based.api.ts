@@ -252,6 +252,27 @@ export const createFileStack = async (
   return parseJson(response) as Promise<FileStackCreateResult>;
 };
 
+export interface FileStackUpdateBody {
+  description: string;
+  price: number;
+  tag: string[];
+  is_subscription_item: boolean;
+}
+
+export const updateFileStack = async (
+  fourbasedId: string,
+  fileStackId: string,
+  body: FileStackUpdateBody,
+): Promise<void> => {
+  const response = await fetch(`${API_BASE}/users/${fourbasedId}/file-stack/${fileStackId}`, {
+    method: "PUT",
+    headers: getAuthHeaders(),
+    body: JSON.stringify(body),
+  });
+
+  return parseJson(response) as Promise<void>;
+};
+
 export const sendChatMessage = async (
   fourbasedId: string,
   chatId: string,
