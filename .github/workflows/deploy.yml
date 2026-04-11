@@ -23,6 +23,7 @@ jobs:
         env:
           SSH_PRIVATE_KEY: ${{ secrets.IONOS_SSH_KEY }}
         run: |
+          mkdir -p ~/.ssh
           echo "$SSH_PRIVATE_KEY" > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
           ssh-keygen -l -f ~/.ssh/deploy_key
