@@ -19,6 +19,14 @@ jobs:
       - run: npm ci
       - run: npm run build
 
+      - name: Debug SSH Key
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.IONOS_SSH_KEY }}
+        run: |
+          echo "$SSH_PRIVATE_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keygen -l -f ~/.ssh/deploy_key
+
       - name: Deploy via rsync over SSH
         env:
           SSH_PRIVATE_KEY: ${{ secrets.IONOS_SSH_KEY }}
