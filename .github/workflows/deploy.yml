@@ -19,14 +19,13 @@ jobs:
       - run: npm ci
       - run: npm run build
 
-      - name: Upload dist
-        uses: wlixcc/SFTP-Deploy-Action@v1.2.6
+      - name: Deploy via SSH (rsync)
+        uses: burnett01/rsync-deployments@7.0.1
         with:
-          server: ${{ secrets.IONOS_HOST }}
-          username: ${{ secrets.IONOS_USER }}
-          password: ${{ secrets.IONOS_PASSWORD }}
-          port: ${{ secrets.IONOS_PORT }}
-          local_path: "./dist/*"
-          remote_path: "/public/dashboard"
-          sftp_only: true
-          delete_remote_files: true
+          switches: -avzr --delete
+          path: dist/
+          remote_path: /public/dashboard
+          remote_host: ${{ secrets.IONOS_HOST }}
+          remote_port: ${{ secrets.IONOS_PORT }}
+          remote_user: ${{ secrets.IONOS_USER }}
+          remote_key: ${{ secrets.IONOS_SSH_KEY }}
