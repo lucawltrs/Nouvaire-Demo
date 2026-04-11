@@ -18,36 +18,13 @@ jobs:
 
       - run: npm ci
       - run: npm run build
-      - name: Test SSH directly
+  
+     - name: Deploy via rsync over SSH
         env:
-          SSH_PRIVATE_KEY_B64: ${{ secrets.IONOS_SSH_KEY_B64 }}
-        run: |
-          mkdir -p ~/.ssh
-          echo "$SSH_PRIVATE_KEY_B64" | base64 -d > ~/.ssh/deploy_key
-          chmod 600 ~/.ssh/deploy_key
-          ssh -i ~/.ssh/deploy_key \
-            -p ${{ secrets.IONOS_PORT }} \
-            -o StrictHostKeyChecking=no \
-            -o UserKnownHostsFile=/dev/null \
-            -v \
-            ${{ secrets.IONOS_USER }}@${{ secrets.IONOS_HOST }} \
-            "echo success" 2>&1 | grep -E "(Offering|Authentications|denied|success|accepted|key)"
-
-      - name: Debug SSH Key
-        env:
-          SSH_PRIVATE_KEY_B64: ${{ secrets.IONOS_SSH_KEY_B64 }}
-        run: |
-          mkdir -p ~/.ssh
-          echo "$SSH_PRIVATE_KEY_B64" | base64 -d > ~/.ssh/deploy_key
-          chmod 600 ~/.ssh/deploy_key
-          ssh-keygen -l -f ~/.ssh/deploy_key
-
-      - name: Deploy via rsync over SSH
-        env:
-          IONOS_PASSWORD: ${{ secrets.IONOS_PASSWORD }}
+          SSHPASS: ${{ secrets.IONOS_PASSWORD }}
         run: |
           sudo apt-get install -y sshpass
           sshpass -e rsync -avzr --delete \
             -e "ssh -p ${{ secrets.IONOS_PORT }} -o StrictHostKeyChecking=no" \
             dist/ \
-            ${{ secrets.IONOS_USER }}@${{ secrets.IONOS_HOST }}:/public/dashboardd
+            ${{ secrets.IONOS_USER }}@${{ secrets.IONOS_HOST }}:/public/dashboard
