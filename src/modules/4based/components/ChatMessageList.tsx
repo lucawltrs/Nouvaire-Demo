@@ -9,6 +9,7 @@ interface ChatMessageListProps {
   hasMore: boolean;
   onLoadOlder: () => Promise<number>;
   formatChatTimestamp: (value?: string) => string;
+  onEditFileStack?: (message: FourBasedChatMessage) => void;
 }
 
 const TOP_THRESHOLD = 80;
@@ -44,6 +45,7 @@ export function ChatMessageList({
   hasMore,
   onLoadOlder,
   formatChatTimestamp,
+  onEditFileStack,
 }: ChatMessageListProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const initialScrollDoneRef = useRef(false);
@@ -109,8 +111,20 @@ export function ChatMessageList({
           return (
             <div
               key={message._id}
-              className={`flex ${ownMessage ? 'justify-end' : 'justify-start'}`}
+              className={`flex items-end gap-2 ${ownMessage ? 'justify-end' : 'justify-start'}`}
             >
+            {ownMessage && onEditFileStack && message.file_stack?._id && message.img_preview_link && (
+              <button
+                type="button"
+                onClick={() => onEditFileStack(message)}
+                className="shrink-0 mb-1 p-1.5 rounded-lg text-gray-500 hover:text-[#ED4C27] hover:bg-slate-700 transition-colors"
+                title="Bearbeiten"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor">
+                  <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                </svg>
+              </button>
+            )}
             <div
               className={`max-w-[80%] rounded-2xl px-4 py-2 border ${
                 isTip

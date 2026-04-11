@@ -17,7 +17,7 @@ import type { ChatListItem, PredefinedText, PivotData } from '../../modules/inbo
 import { ToastContainer } from '../../lib/toast';
 import { useChatMessages } from '../../modules/4based/hooks/useChatMessages';
 import { ChatMessageList } from '../../modules/4based/components/ChatMessageList';
-import { sendChatMessage, createFileStack } from '../../modules/4based/services/4based.api';
+import { sendChatMessage, createFileStack, updateFileStack } from '../../modules/4based/services/4based.api';
 import type { FourBasedChatMessage } from '../../modules/4based/services/4based.api';
 import { toast } from '../../lib/toast';
 
@@ -66,6 +66,8 @@ export function InboxChatPage() {
   const [selectedVaultItems, setSelectedVaultItems] = useState<CloudAsset[]>([]);
   const [vaultStep, setVaultStep] = useState<1 | 2>(1);
   const [isSendingVault, setIsSendingVault] = useState(false);
+  const [editingFileStackMessage, setEditingFileStackMessage] = useState<FourBasedChatMessage | null>(null);
+  const [isUpdatingFileStack, setIsUpdatingFileStack] = useState(false);
   const [isEmojiPickerOpen, setIsEmojiPickerOpen] = useState(false);
   const emojiPickerRef = useRef<HTMLDivElement>(null);
   const currentChatIdRef = useRef(chat_id);
@@ -300,6 +302,27 @@ export function InboxChatPage() {
       toast.error(message);
     } finally {
       setIsSendingVault(false);
+    }
+  };
+
+  const handleUpdateFileStack = async (description: string, priceInCents: number) => {
+    if (!fourbased_id || !editingFileStackMessage?.file_stack?._id || isUpdatingFileStack) return;
+    setIsUpdatingFileStack(true);
+    try {
+      await updateFileStack(fourbased_id, editingFileStackMessage.file_stack._id, {
+        description,
+        price: priceInCents,
+        tag: [],
+        is_subscription_item: false,
+      });
+      setEditingFileStackMessage(null);
+      await refresh();
+      toast.success('Bild erfolgreich bearbeitet.');
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Fehler beim Bearbeiten.';
+      toast.error(message);
+    } finally {
+      setIsUpdatingFileStack(false);
     }
   };
 
@@ -573,6 +596,7 @@ export function InboxChatPage() {
               hasMore={hasMore}
               onLoadOlder={loadOlder}
               formatChatTimestamp={formatChatTimestamp}
+              onEditFileStack={setEditingFileStackMessage}
             />
 
             {/* Message input */}
@@ -628,6 +652,21 @@ export function InboxChatPage() {
           </Card>
         )}
       </main>
+      {/* Edit File Stack Modal */}
+      <Modal
+        isOpen={!!editingFileStackMessage}
+        onClose={() => setEditingFileStackMessage(null)}
+        title="Bild/Video bearbeiten"
+      >
+        {editingFileStackMessage && (
+          <EditFileStackModal
+            message={editingFileStackMessage}
+            onCancel={() => setEditingFileStackMessage(null)}
+            onSave={handleUpdateFileStack}
+            isSaving={isUpdatingFileStack}
+          />
+        )}
+      </Modal>
       {/* Vault Modal */}
       <Modal
         isOpen={isVaultModalOpen}
@@ -1077,6 +1116,155 @@ function VaultThumbnail({
 }
 
 // Vault step 2 — send confirmation
+function EditFileStackModal({
+  message,
+  onCancel,
+  onSave,
+  isSaving = false,
+}: {
+  message: FourBasedChatMessage;
+  onCancel: () => void;
+  onSave: (description: string, priceInCents: number) => void;
+  isSaving?: boolean;
+}) {
+  const fs = message.file_stack;
+  const currentPriceWithVat = typeof fs?.price === 'number' ? fs.price : 0;
+  const VAT_RATE = 0.21;
+  const currentBasePrice = currentPriceWithVat > 0 ? currentPriceWithVat / (1 + VAT_RATE) / 100 : 0;
+
+  const [description, setDescription] = useState(message.message ?? '');
+  const [priceInput, setPriceInput] = useState(
+    currentBasePrice > 0 ? currentBasePrice.toFixed(2) : '',
+  );
+  const [isEmojiPickerOpen, setIsEmojiPickerOpen] = useState(false);
+  const [pickerPos, setPickerPos] = useState({ top: 0, left: 0 });
+  const descTextareaRef = useRef<HTMLTextAreaElement>(null);
+  const emojiBtnRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    if (!isEmojiPickerOpen) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as Node;
+      if (emojiBtnRef.current && emojiBtnRef.current.contains(target)) return;
+      const pickerEl = document.getElementById('edit-fs-emoji-picker-portal');
+      if (pickerEl && pickerEl.contains(target)) return;
+      setIsEmojiPickerOpen(false);
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isEmojiPickerOpen]);
+
+  const handleEmojiBtnClick = () => {
+    if (!isEmojiPickerOpen && emojiBtnRef.current) {
+      const rect = emojiBtnRef.current.getBoundingClientRect();
+      setPickerPos({ top: rect.top - 440, left: rect.right - 352 });
+    }
+    setIsEmojiPickerOpen(prev => !prev);
+  };
+
+  const handleEmojiSelect = (emoji: { native: string }) => {
+    const textarea = descTextareaRef.current;
+    if (textarea) {
+      const start = textarea.selectionStart ?? description.length;
+      const end = textarea.selectionEnd ?? description.length;
+      const newValue = description.slice(0, start) + emoji.native + description.slice(end);
+      setDescription(newValue);
+      requestAnimationFrame(() => {
+        textarea.focus();
+        const pos = start + emoji.native.length;
+        textarea.setSelectionRange(pos, pos);
+      });
+    } else {
+      setDescription(prev => prev + emoji.native);
+    }
+    setIsEmojiPickerOpen(false);
+  };
+
+  const MIN_PRICE = 3.00;
+  const basePrice = parseFloat(priceInput || '0') || 0;
+  const vatAmount = basePrice * VAT_RATE;
+  const userPrice = basePrice + vatAmount;
+  const creatorAmount = basePrice * 0.70;
+  const isPriceInvalid = basePrice > 0 && basePrice < MIN_PRICE;
+
+  const handleSave = () => {
+    if (isPriceInvalid) return;
+    const priceWithVat = Math.round(basePrice * (1 + VAT_RATE) * 100);
+    const priceInCents = Number.isNaN(priceWithVat) ? 0 : priceWithVat;
+    onSave(description, priceInCents);
+  };
+
+  return (
+    <div className="flex flex-col gap-5">
+      <div className="flex gap-5 items-start">
+        {/* Preview */}
+        {message.img_preview_link && (
+          <div className="relative w-48 shrink-0 rounded-xl overflow-hidden bg-slate-800 border border-slate-700 aspect-square">
+            <img
+              src={message.img_preview_link}
+              alt="Vorschau"
+              className="w-full h-full object-cover"
+            />
+          </div>
+        )}
+
+        {/* Fields */}
+        <div className="flex flex-col gap-4 flex-1 min-w-0">
+          {/* Price */}
+          <div>
+            <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-1">Preis ($)</p>
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm pointer-events-none">$</span>
+              <Input
+                value={priceInput}
+                onChange={(e) => setPriceInput(e.target.value.replace(/[^0-9.]/g, ''))}
+                placeholder="Preis in $"
+                className={`pl-6 ${isPriceInvalid ? 'border-red-500 focus:border-red-500' : ''}`}
+              />
+            </div>
+            {isPriceInvalid && (
+              <p className="text-[10px] text-red-400 mt-1">Mindestpreis: $3.00</p>
+            )}
+            {basePrice >= MIN_PRICE && (
+              <div className="mt-2 rounded-lg bg-slate-800/60 border border-slate-700 p-2.5 flex flex-col gap-1.5 text-[11px]">
+                <div>
+                  <span className="text-gray-500">Deine Provision:</span>
+                  <span className="text-gray-300 ml-1">
+                    ${basePrice.toFixed(2)} × 70% = <span className="text-green-400 font-semibold">${creatorAmount.toFixed(2)}</span>
+                  </span>
+                </div>
+                <div>
+                  <span className="text-gray-500">Preis für User:</span>
+                  <span className="text-gray-300 ml-1">
+                    ${basePrice.toFixed(2)} + ${vatAmount.toFixed(2)} <span className="text-gray-500">(MwSt.)</span> = <span className="text-[#ED4C27] font-semibold">${userPrice.toFixed(2)}</span>
+                  </span>
+                </div>
+                <p className="text-gray-600 leading-tight">
+                  Die MwSt. wird direkt abgeführt.
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      <div className="flex items-center justify-between pt-3 border-t border-slate-700">
+        <button
+          type="button"
+          onClick={onCancel}
+          className="flex items-center gap-2 text-sm text-gray-400 hover:text-gray-100 transition-colors"
+          disabled={isSaving}
+        >
+          Abbrechen
+        </button>
+        <Button onClick={handleSave} disabled={isSaving || isPriceInvalid || !description.trim()}>
+          {isSaving ? <Loader2 size={15} className="animate-spin" /> : 'Speichern'}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 function VaultSendStep({
   items,
   onBack,
