@@ -18,6 +18,8 @@ export function NotificationsPage() {
 
   const [webhookUrl, setWebhookUrl] = useState('');
   const [workSessionsEnabled, setWorkSessionsEnabled] = useState(false);
+  const [unreadMessagesEnabled, setUnreadMessagesEnabled] = useState(false);
+  const [unreadThresholdMinutes, setUnreadThresholdMinutes] = useState(60);
 
   const fetchSettings = useCallback(async () => {
     try {
@@ -26,6 +28,8 @@ export function NotificationsPage() {
       const data = await notificationsApi.get();
       setWebhookUrl(data.discord_webhook_url ?? '');
       setWorkSessionsEnabled(data.work_sessions_enabled);
+      setUnreadMessagesEnabled(data.unread_messages_enabled);
+      setUnreadThresholdMinutes(data.unread_messages_threshold_minutes ?? 60);
     } catch (err) {
       console.error('Failed to fetch notification settings:', err);
       setError('Failed to load notification settings. Please try again.');
@@ -44,6 +48,8 @@ export function NotificationsPage() {
       await notificationsApi.update({
         discord_webhook_url: webhookUrl.trim() || null,
         work_sessions_enabled: workSessionsEnabled,
+        unread_messages_enabled: unreadMessagesEnabled,
+        unread_messages_threshold_minutes: unreadThresholdMinutes,
       });
       toast.success('Notification settings saved');
     } catch (err) {
@@ -122,6 +128,52 @@ export function NotificationsPage() {
                 />
               </button>
             </div>
+
+            {/* Unread Messages Toggle */}
+            <div className="flex items-center justify-between py-4 border-t border-slate-700">
+              <div>
+                <p className="text-sm font-medium text-gray-100">Unread Message Notifications</p>
+                <p className="text-xs text-gray-400 mt-0.5">
+                  Send a Discord message when there are unread messages past the threshold
+                </p>
+              </div>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={unreadMessagesEnabled}
+                onClick={() => setUnreadMessagesEnabled((v) => !v)}
+                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 focus:ring-offset-slate-800 ${
+                  unreadMessagesEnabled ? 'bg-brand-primary' : 'bg-slate-600'
+                }`}
+              >
+                <span
+                  className={`pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow ring-0 transition-transform duration-200 ${
+                    unreadMessagesEnabled ? 'translate-x-5' : 'translate-x-0'
+                  }`}
+                />
+              </button>
+            </div>
+
+            {/* Unread Messages Threshold */}
+            {unreadMessagesEnabled && (
+              <div className="pb-2">
+                <Input
+                  label="Unread Message Threshold (minutes)"
+                  type="number"
+                  placeholder="60"
+                  value={String(unreadThresholdMinutes)}
+                  onChange={(e) => {
+                    const val = Math.min(10080, Math.max(1, Number(e.target.value)));
+                    setUnreadThresholdMinutes(val);
+                  }}
+                  min={1}
+                  max={10080}
+                />
+                <p className="text-xs text-gray-400 mt-1">
+                  Min: 1 minute · Max: 10080 minutes (1 week)
+                </p>
+              </div>
+            )}
 
             {/* Save */}
             <div className="pt-2">
