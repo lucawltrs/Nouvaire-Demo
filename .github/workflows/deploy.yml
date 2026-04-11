@@ -44,13 +44,10 @@ jobs:
 
       - name: Deploy via rsync over SSH
         env:
-          SSH_PRIVATE_KEY_B64: ${{ secrets.IONOS_SSH_KEY_B64 }}
+          IONOS_PASSWORD: ${{ secrets.IONOS_PASSWORD }}
         run: |
-          mkdir -p ~/.ssh
-          echo "$SSH_PRIVATE_KEY_B64" | base64 -d > ~/.ssh/deploy_key
-          chmod 600 ~/.ssh/deploy_key
-          ssh-keyscan -t ed25519 -p ${{ secrets.IONOS_PORT }} ${{ secrets.IONOS_HOST }} >> ~/.ssh/known_hosts
-          rsync -avzr --delete \
-            -e "ssh -i ~/.ssh/deploy_key -p ${{ secrets.IONOS_PORT }} -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" \
+          sudo apt-get install -y sshpass
+          sshpass -e rsync -avzr --delete \
+            -e "ssh -p ${{ secrets.IONOS_PORT }} -o StrictHostKeyChecking=no" \
             dist/ \
-            ${{ secrets.IONOS_USER }}@${{ secrets.IONOS_HOST }}:/public/dashboard
+            ${{ secrets.IONOS_USER }}@${{ secrets.IONOS_HOST }}:/public/dashboardd
