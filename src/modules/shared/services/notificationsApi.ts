@@ -5,6 +5,8 @@ export interface NotificationSettings {
   team_id: number;
   discord_webhook_url: string | null;
   work_sessions_enabled: boolean;
+  unread_messages_enabled: boolean;
+  unread_messages_threshold_minutes: number | null;
   created_at: string;
   updated_at: string;
 }
@@ -12,6 +14,8 @@ export interface NotificationSettings {
 export interface UpdateNotificationSettingsPayload {
   discord_webhook_url?: string | null;
   work_sessions_enabled?: boolean;
+  unread_messages_enabled?: boolean;
+  unread_messages_threshold_minutes?: number;
 }
 
 const getApiUrl = () => getConfig().API_URL;
@@ -41,7 +45,7 @@ export const notificationsApi = {
     );
     if (!response.ok) throw new Error('Failed to fetch notification settings');
     const raw = await response.json();
-    return raw?.data ?? raw;
+    return raw?.message ?? raw?.data ?? raw;
   },
 
   async update(payload: UpdateNotificationSettingsPayload): Promise<NotificationSettings> {
