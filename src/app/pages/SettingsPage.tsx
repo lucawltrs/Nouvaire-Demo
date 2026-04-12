@@ -1,4 +1,4 @@
-import { Settings, Users, Shield, Building2, ChevronRight, Layers, Bell } from 'lucide-react';
+import { Settings, Users, Shield, Building2, ChevronRight, Layers } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Card } from '../../components/ui/Card';
 import { useAuthStore } from '../../lib/auth/useAuthStore';
@@ -92,11 +92,11 @@ export function SettingsPage() {
             >
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-lg bg-brand-primary/10 flex items-center justify-center shrink-0 group-hover:bg-brand-primary/20 transition-colors">
-                  <Bell size={16} className="text-brand-primary" />
+                  <Settings size={16} className="text-brand-primary" />
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-gray-100">Notifications</p>
-                  <p className="text-xs text-gray-400">Configure Discord webhook notifications</p>
+                  <p className="text-sm font-medium text-gray-100">Settings</p>
+                  <p className="text-xs text-gray-400">Configure notifications and team settings</p>
                 </div>
               </div>
               <ChevronRight size={16} className="text-gray-500 group-hover:text-brand-primary transition-colors" />
@@ -134,17 +134,6 @@ export function SettingsPage() {
           </dl>
         </Card>
       </div>
-
-      {/* Danger Zone */}
-      <Card className="p-6 border border-red-900/40">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="w-9 h-9 rounded-lg bg-red-900/20 flex items-center justify-center">
-            <Settings size={18} className="text-red-500" />
-          </div>
-          <h2 className="text-base font-semibold text-gray-100">Danger Zone</h2>
-        </div>
-        <p className="text-sm text-gray-400">Destructive actions will appear here.</p>
-      </Card>
     </div>
   );
 }
