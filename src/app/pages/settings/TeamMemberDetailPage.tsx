@@ -1,10 +1,14 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Clock, AlertCircle, Calendar, Timer, StopCircle, X } from 'lucide-react';
+import { ArrowLeft, Clock, AlertCircle, Calendar, Timer, StopCircle, X, DollarSign } from 'lucide-react';
 import { Card } from '../../../components/ui/Card';
 import { PageLoader } from '../../../components/ui/PageLoader';
 import { teamApi, type TeamMember } from '../../../modules/shared/services/teamApi';
-import { getWorkSessionsForUser, postAdminEndWorkSession, type WorkSession } from '../../../modules/work-sessions/services/workSession.api';
+import {
+  getSessionOverview,
+  postAdminEndWorkSession,
+  type SessionOverviewSession,
+} from '../../../modules/work-sessions/services/workSession.api';
 import { useAuthStore } from '../../../lib/auth/useAuthStore';
 
 function formatDateTime(iso: string | null): string {
@@ -32,19 +36,20 @@ export function TeamMemberDetailPage() {
 
   const { token } = useAuthStore();
   const [member, setMember] = useState<TeamMember | null>(null);
-  const [sessions, setSessions] = useState<WorkSession[]>([]);
+  const [sessions, setSessions] = useState<SessionOverviewSession[]>([]);
+  const [totalRevenue, setTotalRevenue] = useState<string>('$ 0.00');
   const [isLoadingMember, setIsLoadingMember] = useState(true);
   const [isLoadingSessions, setIsLoadingSessions] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   // Admin-end modal state
-  const [adminEndSession, setAdminEndSession] = useState<WorkSession | null>(null);
+  const [adminEndSession, setAdminEndSession] = useState<SessionOverviewSession | null>(null);
   const [adminNote, setAdminNote] = useState('');
   const [adminEndedAt, setAdminEndedAt] = useState('');
   const [adminEndLoading, setAdminEndLoading] = useState(false);
   const [adminEndError, setAdminEndError] = useState<string | null>(null);
 
-  const openAdminEndModal = (session: WorkSession) => {
+  const openAdminEndModal = (session: SessionOverviewSession) => {
     const now = new Date();
     const pad = (n: number) => String(n).padStart(2, '0');
     const local = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
@@ -62,15 +67,16 @@ export function TeamMemberDetailPage() {
   };
 
   const handleAdminEnd = async () => {
-    if (!adminEndSession || !token) return;
+    if (!adminEndSession || !token || !memberId) return;
     setAdminEndLoading(true);
     setAdminEndError(null);
     try {
       const endedAtIso = new Date(adminEndedAt).toISOString().slice(0, 19);
       await postAdminEndWorkSession(adminEndSession.id, adminNote, endedAtIso, token);
       closeAdminEndModal();
-      const data = await getWorkSessionsForUser(Number(memberId));
-      setSessions(data);
+      const overview = await getSessionOverview(Number(memberId));
+      setSessions(overview?.sessions ?? []);
+      setTotalRevenue(overview?.total_revenue ?? '$ 0.00');
     } catch (err) {
       setAdminEndError(err instanceof Error ? err.message : 'Fehler beim Beenden der Schicht.');
     } finally {
@@ -97,11 +103,12 @@ export function TeamMemberDetailPage() {
     }
 
     try {
-      const data = await getWorkSessionsForUser(id);
-      setSessions(data);
+      const overview = await getSessionOverview(id);
+      setSessions(overview?.sessions ?? []);
+      setTotalRevenue(overview?.total_revenue ?? '$ 0.00');
     } catch {
-      // sessions error is non-fatal, show empty
       setSessions([]);
+      setTotalRevenue('$ 0.00');
     } finally {
       setIsLoadingSessions(false);
     }
@@ -169,7 +176,7 @@ export function TeamMemberDetailPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
         <Card className="p-4 border border-slate-600">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-brand-primary/10 rounded-lg">
@@ -189,6 +196,17 @@ export function TeamMemberDetailPage() {
             <div>
               <p className="text-xs text-gray-400">Gesamtarbeitszeit</p>
               <p className="text-xl font-bold text-gray-100">{formatDuration(totalMinutes)}</p>
+            </div>
+          </div>
+        </Card>
+        <Card className="p-4 border border-slate-600">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-green-500/10 rounded-lg">
+              <DollarSign size={18} className="text-green-400" />
+            </div>
+            <div>
+              <p className="text-xs text-gray-400">Gesamtumsatz</p>
+              <p className="text-xl font-bold text-green-400">{totalRevenue}</p>
             </div>
           </div>
         </Card>
@@ -230,6 +248,7 @@ export function TeamMemberDetailPage() {
                   <th className="text-left px-6 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">Ende</th>
                   <th className="text-left px-6 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">Dauer</th>
                   <th className="text-left px-6 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">Status</th>
+                  <th className="text-left px-6 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">Umsatz (20%)</th>
                   <th className="px-6 py-3" />
                 </tr>
               </thead>
@@ -241,19 +260,20 @@ export function TeamMemberDetailPage() {
                     <td className="px-6 py-4 text-gray-300">{formatDateTime(session.ended_at)}</td>
                     <td className="px-6 py-4 text-gray-300">{formatDuration(session.duration)}</td>
                     <td className="px-6 py-4">
-                      {session.ended_at ? (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-900/30 text-green-400 border border-green-800/40">
-                          Beendet
-                        </span>
-                      ) : (
+                      {session.is_active ? (
                         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-brand-primary/10 text-brand-primary border border-brand-primary/20">
                           <span className="w-1.5 h-1.5 rounded-full bg-brand-primary animate-pulse" />
                           Aktiv
                         </span>
+                      ) : (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-900/30 text-green-400 border border-green-800/40">
+                          Beendet
+                        </span>
                       )}
                     </td>
+                    <td className="px-6 py-4 text-green-400 font-medium">{session.revenue}</td>
                     <td className="px-6 py-4 text-right">
-                      {!session.ended_at && (
+                      {session.is_active && (
                         <button
                           onClick={() => openAdminEndModal(session)}
                           className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium text-red-400 border border-red-800/40 hover:bg-red-900/20 transition-colors"
@@ -270,6 +290,7 @@ export function TeamMemberDetailPage() {
           </div>
         )}
       </Card>
+
       {/* Admin-End Modal */}
       {adminEndSession && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">

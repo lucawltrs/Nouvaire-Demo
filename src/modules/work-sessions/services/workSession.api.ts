@@ -94,6 +94,31 @@ export async function putEndWorkSession(id: number, endedAt: string, token: stri
   }
 }
 
+export interface SessionOverviewSession {
+  id: number;
+  started_at: string;
+  ended_at: string | null;
+  duration: number | null;
+  is_active: boolean;
+  revenue: string;
+}
+
+export interface SessionOverview {
+  user: {
+    id: number;
+    name: string;
+    email: string;
+  };
+  sessions: SessionOverviewSession[];
+  total_revenue: string;
+}
+
+export async function getSessionOverview(userId: number): Promise<SessionOverview> {
+  const res = await apiFetch(`${getConfig().API_URL}/members/${userId}/session-overview`);
+  const raw = await res.json();
+  return raw?.message;
+}
+
 export async function postAdminEndWorkSession(
   id: number,
   adminNote: string,
