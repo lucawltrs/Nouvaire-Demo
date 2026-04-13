@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Clock, AlertCircle, Timer, DollarSign, TrendingUp } from 'lucide-react';
+import { Clock, AlertCircle, Timer, DollarSign, TrendingUp, Trophy, Lock, CheckCircle2 } from 'lucide-react';
 import { Card } from '../../components/ui/Card';
 import { PageLoader } from '../../components/ui/PageLoader';
 import {
@@ -60,6 +60,16 @@ export function MyProfilePage() {
 
   const totalMinutes = sessions.reduce((acc, s) => acc + (s.duration ?? 0), 0);
   const completedSessions = sessions.filter((s) => !s.is_active).length;
+
+  const revenueValue = parseFloat(totalRevenue.replace(/[^0-9.]/g, '')) || 0;
+  const MILESTONES = [100, 250, 500, 1000, 2500, 5000, 10000];
+  const nextMilestone = MILESTONES.find((m) => m > revenueValue) ?? null;
+  const prevMilestone = nextMilestone
+    ? (MILESTONES[MILESTONES.indexOf(nextMilestone) - 1] ?? 0)
+    : MILESTONES[MILESTONES.length - 1];
+  const progress = nextMilestone
+    ? Math.min(100, ((revenueValue - prevMilestone) / (nextMilestone - prevMilestone)) * 100)
+    : 100;
 
   return (
     <div className="space-y-6">
@@ -139,6 +149,70 @@ export function MyProfilePage() {
           </div>
         </Card>
       </div>
+
+      {/* Revenue Roadmap */}
+      <Card className="p-6 border border-slate-600">
+        <div className="flex items-center gap-3 mb-5">
+          <div className="w-9 h-9 rounded-lg bg-yellow-500/10 flex items-center justify-center">
+            <Trophy size={18} className="text-yellow-400" />
+          </div>
+          <div>
+            <h2 className="text-base font-semibold text-gray-100">Revenue Roadmap</h2>
+            <p className="text-xs text-gray-400">
+              {nextMilestone
+                ? `Noch $${(nextMilestone - revenueValue).toFixed(2)} bis zum nächsten Meilenstein`
+                : 'Alle Meilensteine erreicht — Legend!'}
+            </p>
+          </div>
+        </div>
+
+        {/* Progress bar to next milestone */}
+        {nextMilestone && (
+          <div className="mb-6">
+            <div className="flex justify-between text-xs text-gray-400 mb-1.5">
+              <span>${prevMilestone.toLocaleString()}</span>
+              <span className="font-medium text-gray-300">${revenueValue.toFixed(2)}</span>
+              <span>${nextMilestone.toLocaleString()}</span>
+            </div>
+            <div className="h-2.5 w-full bg-slate-700 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-gradient-to-r from-yellow-500 to-yellow-400 rounded-full transition-all duration-700"
+                style={{ width: `${progress}%` }}
+              />
+            </div>
+            <p className="text-right text-xs text-gray-500 mt-1">{progress.toFixed(1)}%</p>
+          </div>
+        )}
+
+        {/* Milestone badges */}
+        <div className="flex flex-wrap gap-2">
+          {MILESTONES.map((milestone) => {
+            const done = revenueValue >= milestone;
+            const isCurrent = milestone === nextMilestone;
+            return (
+              <div
+                key={milestone}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
+                  done
+                    ? 'bg-green-900/30 text-green-400 border-green-800/50'
+                    : isCurrent
+                    ? 'bg-yellow-500/10 text-yellow-400 border-yellow-500/30'
+                    : 'bg-slate-800 text-gray-500 border-slate-700'
+                }`}
+              >
+                {done ? (
+                  <CheckCircle2 size={12} />
+                ) : isCurrent ? (
+                  <Trophy size={12} />
+                ) : (
+                  <Lock size={12} />
+                )}
+                ${milestone.toLocaleString()}
+              </div>
+            );
+          })}
+        </div>
+      </Card>
 
       {/* Sessions Table */}
       <Card className="overflow-hidden border border-slate-600">

@@ -9,6 +9,7 @@ import {
   postAdminEndWorkSession,
   type SessionOverviewSession,
 } from '../../../modules/work-sessions/services/workSession.api';
+import { settingsApi } from '../../../modules/shared/services/settingsApi';
 import { useAuthStore } from '../../../lib/auth/useAuthStore';
 
 function formatDateTime(iso: string | null): string {
@@ -38,6 +39,7 @@ export function TeamMemberDetailPage() {
   const [member, setMember] = useState<TeamMember | null>(null);
   const [sessions, setSessions] = useState<SessionOverviewSession[]>([]);
   const [totalRevenue, setTotalRevenue] = useState<string>('$ 0.00');
+  const [chatterPercentage, setChatterPercentage] = useState<number | null>(null);
   const [isLoadingMember, setIsLoadingMember] = useState(true);
   const [isLoadingSessions, setIsLoadingSessions] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -111,6 +113,13 @@ export function TeamMemberDetailPage() {
       setTotalRevenue('$ 0.00');
     } finally {
       setIsLoadingSessions(false);
+    }
+
+    try {
+      const teamSettings = await settingsApi.get();
+      setChatterPercentage(teamSettings.chatter_percentage);
+    } catch {
+      // leave null, fallback shown in header
     }
   }, [memberId]);
 
@@ -248,7 +257,9 @@ export function TeamMemberDetailPage() {
                   <th className="text-left px-6 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">Ende</th>
                   <th className="text-left px-6 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">Dauer</th>
                   <th className="text-left px-6 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">Status</th>
-                  <th className="text-left px-6 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">Umsatz (20%)</th>
+                  <th className="text-left px-6 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">
+                    Umsatz{chatterPercentage !== null ? ` (${chatterPercentage}%)` : ''}
+                  </th>
                   <th className="px-6 py-3" />
                 </tr>
               </thead>

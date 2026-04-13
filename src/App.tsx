@@ -22,7 +22,7 @@ import { TeamMembersPage } from './app/pages/settings/TeamMembersPage';
 import { TeamMemberDetailPage } from './app/pages/settings/TeamMemberDetailPage';
 import { FourBasedAccountsPage } from './app/pages/settings/FourBasedAccountsPage';
 import { GroupsPage } from './app/pages/settings/GroupsPage';
-import { NotificationsPage } from './app/pages/settings/NotificationsPage';
+import { GeneralSettingsPage } from './app/pages/settings/GeneralSettingsPage';
 import { MyProfilePage } from './app/pages/MyProfilePage';
 
 function App() {
@@ -236,7 +236,7 @@ function App() {
             element={
               <ProtectedRoute>
                 <MainLayout>
-                  <NotificationsPage />
+                  <GeneralSettingsPage />
                 </MainLayout>
               </ProtectedRoute>
             }
