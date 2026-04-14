@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import {
   ArrowLeft,
@@ -20,20 +20,21 @@ import {
   Save,
   X,
   Loader2,
+  Tag,
+  ChevronDown,
+  ChevronRight,
+  GripVertical,
 } from 'lucide-react';
 import { Card } from '../../../components/ui/Card';
 import { PageLoader } from '../../../components/ui/PageLoader';
-import { getConfig } from '../../../lib/config';
 import { accountsApi } from '../../../modules/accounts/accountsApi';
 import type { Account } from '../../../modules/accounts/types';
 import { formatCurrency, formatRelativeTime } from '../../../modules/dashboard';
+import { inboxApi } from '../../../modules/inbox/services/inbox.api';
+import type { ConfiguredMessage, ConfiguredMessageCategory } from '../../../modules/inbox/types';
+import { useAuthStore } from '../../../lib/auth/useAuthStore';
 
 type Tab = 'overview' | 'inbox' | 'cloud' | 'settings';
-
-interface PredefinedText {
-  id: number | string;
-  message: string;
-}
 
 export function AccountDetailPage() {
   const { fourbased_id } = useParams<{ fourbased_id: string }>();
@@ -358,115 +359,84 @@ function CloudTab({ fourbasedId }: { fourbasedId: string }) {
 // ============================================================================
 
 function SettingsTab({ fourbasedId }: { fourbasedId: string }) {
+  const { team } = useAuthStore();
+  const isAdmin = team?.role === 'admin';
+
   return (
     <div className="space-y-6">
-      <PredefinedTextsCard fourbasedId={fourbasedId} />
-      {/* Placeholder for future settings sections */}
-      <Card className="p-6 border border-dashed border-slate-700">
-        <p className="text-sm text-gray-500 text-center">Weitere Einstellungen folgen…</p>
-      </Card>
+      {isAdmin && <CategoriesCard />}
+      <ConfiguredMessagesCard fourbasedId={fourbasedId} isAdmin={isAdmin} />
     </div>
   );
 }
 
-function PredefinedTextsCard({ fourbasedId }: { fourbasedId: string }) {
-  const [texts, setTexts] = useState<PredefinedText[]>([]);
+// ── Categories Card (admin only) ─────────────────────────────────────────────
+
+function CategoriesCard() {
+  const [categories, setCategories] = useState<ConfiguredMessageCategory[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [newMessage, setNewMessage] = useState('');
+  const [newName, setNewName] = useState('');
+  const [newColor, setNewColor] = useState('#6366f1');
   const [isAdding, setIsAdding] = useState(false);
-  const [editId, setEditId] = useState<number | string | null>(null);
-  const [editMessage, setEditMessage] = useState('');
-  const [savingId, setSavingId] = useState<number | string | null>(null);
-  const [deletingId, setDeletingId] = useState<number | string | null>(null);
+  const [editId, setEditId] = useState<number | null>(null);
+  const [editName, setEditName] = useState('');
+  const [editColor, setEditColor] = useState('');
+  const [savingId, setSavingId] = useState<number | null>(null);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
 
-  const apiBase = `${getConfig().API_URL}/4based/users/${fourbasedId}/predefined-texts`;
-
-  const authHeaders = useCallback(
-    () => ({
-      'Content-Type': 'application/json',
-      ...(localStorage.getItem('auth_token')
-        ? { Authorization: `Bearer ${localStorage.getItem('auth_token')}` }
-        : {}),
-    }),
-    [],
-  );
-
-  const fetchTexts = useCallback(async () => {
+  const fetchCategories = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
-      const res = await fetch(apiBase, { headers: authHeaders() });
-      if (!res.ok) throw new Error();
-      const raw = await res.json();
-      setTexts(Array.isArray(raw) ? raw : (raw?.data ?? []));
+      setCategories(await inboxApi.getConfiguredMessageCategories());
     } catch {
-      setError('Vordefinierte Texte konnten nicht geladen werden.');
+      setError('Kategorien konnten nicht geladen werden.');
     } finally {
       setIsLoading(false);
     }
-  }, [apiBase, authHeaders]);
+  }, []);
 
-  useEffect(() => {
-    fetchTexts();
-  }, [fetchTexts]);
+  useEffect(() => { fetchCategories(); }, [fetchCategories]);
 
   const handleAdd = async () => {
-    const msg = newMessage.trim();
-    if (!msg) return;
+    const name = newName.trim();
+    if (!name) return;
     setIsAdding(true);
     try {
-      const res = await fetch(apiBase, {
-        method: 'POST',
-        headers: authHeaders(),
-        body: JSON.stringify({ message: msg }),
-      });
-      if (!res.ok) throw new Error();
-      const created = await res.json();
-      setTexts((prev) => [...prev, created?.data ?? created]);
-      setNewMessage('');
+      const created = await inboxApi.createConfiguredMessageCategory({ name, color: newColor });
+      setCategories((prev) => [...prev, created]);
+      setNewName('');
     } catch {
-      setError('Text konnte nicht hinzugefügt werden.');
+      setError('Kategorie konnte nicht erstellt werden.');
     } finally {
       setIsAdding(false);
     }
   };
 
-  const handleUpdate = async (id: number | string) => {
-    const msg = editMessage.trim();
-    if (!msg) return;
+  const handleUpdate = async (id: number) => {
+    const name = editName.trim();
+    if (!name) return;
     setSavingId(id);
     try {
-      const res = await fetch(`${apiBase}/${id}`, {
-        method: 'PUT',
-        headers: authHeaders(),
-        body: JSON.stringify({ message: msg }),
-      });
-      if (!res.ok) throw new Error();
-      const updated = await res.json();
-      setTexts((prev) =>
-        prev.map((t) => (t.id === id ? (updated?.data ?? updated) : t)),
-      );
+      const updated = await inboxApi.updateConfiguredMessageCategory(id, { name, color: editColor });
+      setCategories((prev) => prev.map((c) => (c.id === id ? updated : c)));
       setEditId(null);
-      setEditMessage('');
+      setEditName('');
     } catch {
-      setError('Text konnte nicht aktualisiert werden.');
+      setError('Kategorie konnte nicht aktualisiert werden.');
     } finally {
       setSavingId(null);
     }
   };
 
-  const handleDelete = async (id: number | string) => {
+  const handleDelete = async (id: number) => {
     setDeletingId(id);
     try {
-      const res = await fetch(`${apiBase}/${id}`, {
-        method: 'DELETE',
-        headers: authHeaders(),
-      });
-      if (!res.ok) throw new Error();
-      setTexts((prev) => prev.filter((t) => t.id !== id));
+      await inboxApi.deleteConfiguredMessageCategory(id);
+      setCategories((prev) => prev.filter((c) => c.id !== id));
     } catch {
-      setError('Text konnte nicht gelöscht werden.');
+      setError('Kategorie konnte nicht gelöscht werden.');
     } finally {
       setDeletingId(null);
     }
@@ -476,10 +446,377 @@ function PredefinedTextsCard({ fourbasedId }: { fourbasedId: string }) {
     <Card className="p-6 border border-slate-600">
       <div className="flex items-center gap-3 mb-5">
         <div className="w-8 h-8 rounded-lg bg-[#ED4C27]/15 flex items-center justify-center">
+          <Tag size={16} className="text-[#ED4C27]" />
+        </div>
+        <div>
+          <h3 className="text-sm font-semibold text-gray-100">Kategorien</h3>
+          <p className="text-xs text-gray-500">Kategorien für vordefinierte Nachrichten verwalten</p>
+        </div>
+      </div>
+
+      {error && (
+        <div className="mb-4 flex items-center gap-2 text-xs text-red-400 bg-red-900/20 border border-red-800/40 rounded-lg px-3 py-2">
+          <AlertCircle size={13} />
+          {error}
+        </div>
+      )}
+
+      <div className="flex gap-2 mb-4">
+        <input
+          type="color"
+          value={newColor}
+          onChange={(e) => setNewColor(e.target.value)}
+          disabled={isAdding}
+          className="w-10 h-10 rounded-lg border border-slate-600 bg-slate-800 cursor-pointer disabled:opacity-50 shrink-0"
+          title="Farbe wählen"
+        />
+        <input
+          type="text"
+          value={newName}
+          onChange={(e) => setNewName(e.target.value)}
+          onKeyDown={(e) => e.key === 'Enter' && handleAdd()}
+          placeholder="Neue Kategorie…"
+          disabled={isAdding}
+          className="flex-1 min-w-0 bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-sm text-gray-100 placeholder-gray-500 focus:outline-none focus:border-[#ED4C27] focus:ring-1 focus:ring-[#ED4C27]/30 disabled:opacity-50 transition"
+        />
+        <button
+          onClick={handleAdd}
+          disabled={isAdding || !newName.trim()}
+          className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-white bg-[#ED4C27] hover:bg-[#D8431F] rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
+        >
+          {isAdding ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}
+          Hinzufügen
+        </button>
+      </div>
+
+      {isLoading ? (
+        <div className="space-y-2">
+          {[1, 2].map((i) => <div key={i} className="h-9 bg-slate-700 rounded-lg animate-pulse" />)}
+        </div>
+      ) : categories.length === 0 ? (
+        <p className="text-sm text-gray-500 text-center py-4">Noch keine Kategorien vorhanden</p>
+      ) : (
+        <ul className="space-y-2">
+          {categories.map((cat) => (
+            <li key={cat.id} className="flex items-center gap-2 bg-slate-800/60 border border-slate-700 rounded-lg px-3 py-2 group">
+              {editId === cat.id ? (
+                <>
+                  <input
+                    type="color"
+                    value={editColor}
+                    onChange={(e) => setEditColor(e.target.value)}
+                    className="w-8 h-8 rounded border border-slate-600 bg-slate-700 cursor-pointer shrink-0"
+                  />
+                  <input
+                    type="text"
+                    value={editName}
+                    onChange={(e) => setEditName(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') handleUpdate(cat.id);
+                      if (e.key === 'Escape') { setEditId(null); setEditName(''); }
+                    }}
+                    autoFocus
+                    className="flex-1 min-w-0 bg-slate-700 border border-slate-600 rounded px-2 py-1 text-sm text-gray-100 focus:outline-none focus:border-[#ED4C27]"
+                  />
+                  <button onClick={() => handleUpdate(cat.id)} disabled={savingId === cat.id} className="p-1.5 text-green-400 hover:text-green-300 disabled:opacity-50 transition-colors" title="Speichern">
+                    {savingId === cat.id ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+                  </button>
+                  <button onClick={() => { setEditId(null); setEditName(''); }} className="p-1.5 text-gray-400 hover:text-gray-200 transition-colors" title="Abbrechen">
+                    <X size={14} />
+                  </button>
+                </>
+              ) : (
+                <>
+                  <span
+                    className="w-3 h-3 rounded-full shrink-0"
+                    style={{ backgroundColor: cat.color ?? '#6366f1' }}
+                  />
+                  <span className="flex-1 text-sm text-gray-200 truncate">{cat.name}</span>
+                  <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button onClick={() => { setEditId(cat.id); setEditName(cat.name); setEditColor(cat.color ?? '#6366f1'); }} className="p-1.5 text-gray-400 hover:text-gray-100 transition-colors" title="Bearbeiten">
+                      <Pencil size={13} />
+                    </button>
+                    <button onClick={() => handleDelete(cat.id)} disabled={deletingId === cat.id} className="p-1.5 text-gray-400 hover:text-red-400 disabled:opacity-50 transition-colors" title="Löschen">
+                      {deletingId === cat.id ? <Loader2 size={13} className="animate-spin" /> : <Trash2 size={13} />}
+                    </button>
+                  </div>
+                </>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
+    </Card>
+  );
+}
+
+// ── Configured Messages Card ─────────────────────────────────────────────────
+
+function ConfiguredMessagesCard({ fourbasedId, isAdmin }: { fourbasedId: string; isAdmin: boolean }) {
+  const [messages, setMessages] = useState<ConfiguredMessage[]>([]);
+  const [categories, setCategories] = useState<ConfiguredMessageCategory[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Add form
+  const [newMessage, setNewMessage] = useState('');
+  const [newName, setNewName] = useState('');
+  const [newCategoryId, setNewCategoryId] = useState<number | null>(null);
+  const [isAdding, setIsAdding] = useState(false);
+
+  // Edit state
+  const [editId, setEditId] = useState<string | null>(null);
+  const [editMessage, setEditMessage] = useState('');
+  const [editName, setEditName] = useState('');
+  const [editCategoryId, setEditCategoryId] = useState<number | null>(null);
+  const [savingId, setSavingId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  // Collapsed category groups
+  const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(new Set());
+
+  // Drag-and-drop state
+  const [dragId, setDragId] = useState<string | null>(null);
+  const [dragOverId, setDragOverId] = useState<string | null>(null);
+  const [dragOverCategoryEnd, setDragOverCategoryEnd] = useState<string | null>(null);
+
+  const fetchData = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const [msgs, cats] = await Promise.all([
+        inboxApi.getConfiguredMessages(fourbasedId),
+        inboxApi.getConfiguredMessageCategories(),
+      ]);
+      setMessages(msgs);
+      setCategories(cats);
+    } catch {
+      setError('Nachrichten konnten nicht geladen werden.');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [fourbasedId]);
+
+  useEffect(() => { fetchData(); }, [fetchData]);
+
+  // Group messages by internal.category.id (numeric), sorted by sort_order within each group
+  const grouped = useMemo(() => {
+    const byCategory = new Map<string, { category: ConfiguredMessageCategory | null; items: ConfiguredMessage[] }>();
+    const uncategorized: ConfiguredMessage[] = [];
+
+    for (const msg of messages) {
+      const cat = msg.internal?.category ?? null;
+      if (cat) {
+        const key = String(cat.id);
+        if (!byCategory.has(key)) byCategory.set(key, { category: cat, items: [] });
+        byCategory.get(key)!.items.push(msg);
+      } else {
+        uncategorized.push(msg);
+      }
+    }
+
+    const sortItems = (items: ConfiguredMessage[]) =>
+      [...items].sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
+
+    const result: { key: string; category: ConfiguredMessageCategory | null; items: ConfiguredMessage[] }[] = [];
+    byCategory.forEach((val, key) => result.push({ key, category: val.category, items: sortItems(val.items) }));
+    if (uncategorized.length > 0) result.push({ key: '__none__', category: null, items: sortItems(uncategorized) });
+    return result;
+  }, [messages]);
+
+  const toggleCategory = (key: string) => {
+    setCollapsedCategories((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  };
+
+  // Central drop handler: inserts dragId before position toIndex in targetCategoryKey
+  const performDrop = async (targetCategoryKey: string, toIndex: number) => {
+    if (!dragId) return;
+
+    const sourceGroup = grouped.find(g => g.items.some(i => i._id === dragId));
+    const targetGroup = grouped.find(g => g.key === targetCategoryKey);
+    if (!sourceGroup || !targetGroup) return;
+
+    const draggedItem = sourceGroup.items.find(i => i._id === dragId)!;
+    const isSameCategory = sourceGroup.key === targetCategoryKey;
+
+    if (isSameCategory) {
+      const fromIndex = sourceGroup.items.findIndex(i => i._id === dragId);
+      // Adjust index: removing the item shifts subsequent indices
+      const adjustedTo = fromIndex < toIndex ? toIndex - 1 : toIndex;
+      if (fromIndex === adjustedTo) return;
+
+      const reordered = [...sourceGroup.items];
+      reordered.splice(fromIndex, 1);
+      reordered.splice(adjustedTo, 0, draggedItem);
+
+      setMessages(prev =>
+        prev.map(m => {
+          const idx = reordered.findIndex(r => r._id === m._id);
+          return idx !== -1 ? { ...m, sort_order: idx } : m;
+        })
+      );
+      try {
+        await Promise.all(
+          reordered.map((item, idx) =>
+            inboxApi.updateConfiguredMessageMeta(fourbasedId, item._id, { sort_order: idx })
+          )
+        );
+      } catch {
+        setError('Reihenfolge konnte nicht gespeichert werden.');
+        fetchData();
+      }
+    } else {
+      // Cross-category: remove from source, insert at toIndex in target
+      const newSourceItems = sourceGroup.items.filter(i => i._id !== dragId);
+      const newTargetItems = [...targetGroup.items];
+      newTargetItems.splice(toIndex, 0, draggedItem);
+      const newCategory = targetGroup.category;
+
+      setMessages(prev =>
+        prev.map(m => {
+          if (m._id === dragId) {
+            return {
+              ...m,
+              sort_order: newTargetItems.findIndex(r => r._id === dragId),
+              internal: { ...m.internal, category: newCategory, notes: m.internal?.notes ?? null },
+            };
+          }
+          const srcIdx = newSourceItems.findIndex(r => r._id === m._id);
+          if (srcIdx !== -1) return { ...m, sort_order: srcIdx };
+          const tgtIdx = newTargetItems.findIndex(r => r._id === m._id);
+          if (tgtIdx !== -1) return { ...m, sort_order: tgtIdx };
+          return m;
+        })
+      );
+      try {
+        await Promise.all([
+          inboxApi.updateConfiguredMessageMeta(fourbasedId, dragId, {
+            category_id: newCategory?.id ?? null,
+            sort_order: newTargetItems.findIndex(r => r._id === dragId),
+          }),
+          ...newSourceItems.map((item, idx) =>
+            inboxApi.updateConfiguredMessageMeta(fourbasedId, item._id, { sort_order: idx })
+          ),
+          ...newTargetItems
+            .filter(i => i._id !== dragId)
+            .map(item =>
+              inboxApi.updateConfiguredMessageMeta(fourbasedId, item._id, {
+                sort_order: newTargetItems.findIndex(r => r._id === item._id),
+              })
+            ),
+        ]);
+      } catch {
+        setError('Reihenfolge konnte nicht gespeichert werden.');
+        fetchData();
+      }
+    }
+  };
+
+  const handleDropOnItem = (targetId: string, targetCategoryKey: string) => {
+    if (!dragId || dragId === targetId) return;
+    const targetGroup = grouped.find(g => g.key === targetCategoryKey);
+    const toIndex = targetGroup?.items.findIndex(i => i._id === targetId) ?? -1;
+    if (toIndex === -1) return;
+    performDrop(targetCategoryKey, toIndex);
+  };
+
+  const handleDropAtEnd = (targetCategoryKey: string) => {
+    if (!dragId) return;
+    const targetGroup = grouped.find(g => g.key === targetCategoryKey);
+    if (!targetGroup) return;
+    performDrop(targetCategoryKey, targetGroup.items.length);
+  };
+
+  const handleAdd = async () => {
+    const msg = newMessage.trim();
+    if (!msg) return;
+    setIsAdding(true);
+    try {
+      // Step 1: create the message on 4based
+      const created = await inboxApi.createConfiguredMessage(fourbasedId, {
+        message: msg,
+        name: newName.trim() || undefined,
+      });
+      // Step 2: if a category is selected, set it via /meta
+      if (newCategoryId !== null) {
+        await inboxApi.updateConfiguredMessageMeta(fourbasedId, created._id, { category_id: newCategoryId });
+        // Reflect category in local state optimistically
+        created.internal = { category: categories.find(c => c.id === newCategoryId) ?? null, notes: null };
+      }
+      setMessages((prev) => [...prev, created]);
+      setNewMessage('');
+      setNewName('');
+      setNewCategoryId(null);
+    } catch {
+      setError('Nachricht konnte nicht hinzugefügt werden.');
+    } finally {
+      setIsAdding(false);
+    }
+  };
+
+  const handleUpdate = async (id: string) => {
+    const msg = editMessage.trim();
+    if (!msg) return;
+    setSavingId(id);
+    try {
+      const original = messages.find(m => m._id === id);
+      const originalCatId = original?.internal?.category?.id ?? null;
+
+      // Update message text/name on 4based
+      const updated = await inboxApi.updateConfiguredMessage(fourbasedId, id, {
+        message: msg,
+        name: editName.trim() || undefined,
+      });
+
+      // Update category via /meta if it changed
+      if (editCategoryId !== originalCatId) {
+        await inboxApi.updateConfiguredMessageMeta(fourbasedId, id, { category_id: editCategoryId });
+        updated.internal = { category: editCategoryId !== null ? (categories.find(c => c.id === editCategoryId) ?? null) : null, notes: original?.internal?.notes ?? null };
+      } else {
+        updated.internal = original?.internal ?? { category: null, notes: null };
+      }
+
+      setMessages((prev) => prev.map((m) => (m._id === id ? updated : m)));
+      setEditId(null);
+    } catch {
+      setError('Nachricht konnte nicht aktualisiert werden.');
+    } finally {
+      setSavingId(null);
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    setDeletingId(id);
+    try {
+      await inboxApi.deleteConfiguredMessage(fourbasedId, id);
+      setMessages((prev) => prev.filter((m) => m._id !== id));
+    } catch {
+      setError('Nachricht konnte nicht gelöscht werden.');
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
+  const startEdit = (msg: ConfiguredMessage) => {
+    setEditId(msg._id);
+    setEditMessage(msg.message);
+    setEditName(msg.name ?? '');
+    setEditCategoryId(msg.internal?.category?.id ?? null);
+  };
+
+  return (
+    <Card className="p-6 border border-slate-600">
+      <div className="flex items-center gap-3 mb-5">
+        <div className="w-8 h-8 rounded-lg bg-[#ED4C27]/15 flex items-center justify-center">
           <MessageSquare size={16} className="text-[#ED4C27]" />
         </div>
         <div>
-          <h3 className="text-sm font-semibold text-gray-100">Vordefinierte Texte</h3>
+          <h3 className="text-sm font-semibold text-gray-100">Vordefinierte Nachrichten</h3>
           <p className="text-xs text-gray-500">Schnellantworten für diesen Account</p>
         </div>
       </div>
@@ -491,104 +828,182 @@ function PredefinedTextsCard({ fourbasedId }: { fourbasedId: string }) {
         </div>
       )}
 
-      {/* Add new */}
-      <div className="flex gap-2 mb-5">
-        <input
-          type="text"
-          value={newMessage}
-          onChange={(e) => setNewMessage(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && handleAdd()}
-          placeholder="Neuen Text eingeben…"
-          disabled={isAdding}
-          className="flex-1 min-w-0 bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-sm text-gray-100 placeholder-gray-500 focus:outline-none focus:border-[#ED4C27] focus:ring-1 focus:ring-[#ED4C27]/30 disabled:opacity-50 transition"
-        />
-        <button
-          onClick={handleAdd}
-          disabled={isAdding}
-          className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-white bg-[#ED4C27] hover:bg-[#D8431F] rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
-        >
-          {isAdding ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}
-          Hinzufügen
-        </button>
-      </div>
+      {/* Add form — admin only */}
+      {isAdmin && (
+        <div className="flex flex-col gap-2 mb-5">
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={newName}
+              onChange={(e) => setNewName(e.target.value)}
+              placeholder="Name / Titel…"
+              disabled={isAdding}
+              className="w-40 shrink-0 bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-sm text-gray-100 placeholder-gray-500 focus:outline-none focus:border-[#ED4C27] focus:ring-1 focus:ring-[#ED4C27]/30 disabled:opacity-50 transition"
+            />
+            <input
+              type="text"
+              value={newMessage}
+              onChange={(e) => setNewMessage(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleAdd()}
+              placeholder="Nachrichtentext…"
+              disabled={isAdding}
+              className="flex-1 min-w-0 bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-sm text-gray-100 placeholder-gray-500 focus:outline-none focus:border-[#ED4C27] focus:ring-1 focus:ring-[#ED4C27]/30 disabled:opacity-50 transition"
+            />
+            <button
+              onClick={handleAdd}
+              disabled={isAdding || !newMessage.trim()}
+              className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-white bg-[#ED4C27] hover:bg-[#D8431F] rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
+            >
+              {isAdding ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}
+              Hinzufügen
+            </button>
+          </div>
+          {categories.length > 0 && (
+            <select
+              value={newCategoryId ?? ''}
+              onChange={(e) => setNewCategoryId(e.target.value ? Number(e.target.value) : null)}
+              className="bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-sm text-gray-300 focus:outline-none focus:border-[#ED4C27] transition"
+            >
+              <option value="">Keine Kategorie</option>
+              {categories.map((cat) => (
+                <option key={cat.id} value={cat.id}>{cat.name}</option>
+              ))}
+            </select>
+          )}
+        </div>
+      )}
 
-      {/* List */}
+      {/* List grouped by category */}
       {isLoading ? (
         <div className="space-y-2">
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="h-10 bg-slate-700 rounded-lg animate-pulse" />
-          ))}
+          {[1, 2, 3].map((i) => <div key={i} className="h-10 bg-slate-700 rounded-lg animate-pulse" />)}
         </div>
-      ) : texts.length === 0 ? (
+      ) : messages.length === 0 ? (
         <div className="text-center py-8 text-gray-500">
           <MessageSquare size={28} className="mx-auto mb-2 opacity-30" />
-          <p className="text-sm">Noch keine vordefinierten Texte</p>
+          <p className="text-sm">Noch keine vordefinierten Nachrichten</p>
         </div>
       ) : (
-        <ul className="space-y-2">
-          {texts.map((text) => (
-            <li
-              key={text.id}
-              className="flex items-center gap-2 bg-slate-800/60 border border-slate-700 rounded-lg px-3 py-2 group"
-            >
-              {editId === text.id ? (
-                <>
-                  <input
-                    type="text"
-                    value={editMessage}
-                    onChange={(e) => setEditMessage(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') handleUpdate(text.id);
-                      if (e.key === 'Escape') { setEditId(null); setEditMessage(''); }
-                    }}
-                    autoFocus
-                    className="flex-1 min-w-0 bg-slate-700 border border-slate-600 rounded px-2 py-1 text-sm text-gray-100 focus:outline-none focus:border-[#ED4C27]"
-                  />
-                  <button
-                    onClick={() => handleUpdate(text.id)}
-                    disabled={savingId === text.id}
-                    className="p-1.5 text-green-400 hover:text-green-300 disabled:opacity-50 transition-colors"
-                    title="Speichern"
-                  >
-                    {savingId === text.id
-                      ? <Loader2 size={14} className="animate-spin" />
-                      : <Save size={14} />}
-                  </button>
-                  <button
-                    onClick={() => { setEditId(null); setEditMessage(''); }}
-                    className="p-1.5 text-gray-400 hover:text-gray-200 transition-colors"
-                    title="Abbrechen"
-                  >
-                    <X size={14} />
-                  </button>
-                </>
-              ) : (
-                <>
-                  <span className="flex-1 text-sm text-gray-200 truncate">{text.message}</span>
-                  <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button
-                      onClick={() => { setEditId(text.id); setEditMessage(text.message); }}
-                      className="p-1.5 text-gray-400 hover:text-gray-100 transition-colors"
-                      title="Bearbeiten"
+        <div className="space-y-4">
+          {grouped.map(({ key, category, items }) => (
+            <div key={key}>
+              {/* Category header */}
+              <button
+                type="button"
+                onClick={() => toggleCategory(key)}
+                className="w-full flex items-center gap-2 mb-2 group/header"
+              >
+                {collapsedCategories.has(key)
+                  ? <ChevronRight size={14} className="text-gray-500 shrink-0" />
+                  : <ChevronDown size={14} className="text-gray-500 shrink-0" />}
+                {category?.color
+                  ? <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: category.color }} />
+                  : <Tag size={12} className="text-gray-500 shrink-0" />}
+                <span className="text-xs font-semibold uppercase tracking-wide text-gray-400 group-hover/header:text-gray-300 transition-colors">
+                  {category ? category.name : 'Ohne Kategorie'}
+                </span>
+                <span className="text-xs text-gray-600 ml-auto">{items.length}</span>
+              </button>
+
+              {!collapsedCategories.has(key) && (
+                <ul className="space-y-2 pl-4">
+                  {items.map((msg) => (
+                    <li
+                      key={msg._id}
+                      draggable={isAdmin && editId !== msg._id}
+                      onDragStart={() => isAdmin && setDragId(msg._id)}
+                      onDragOver={(e) => { if (!isAdmin) return; e.preventDefault(); setDragOverId(msg._id); setDragOverCategoryEnd(null); }}
+                      onDrop={() => isAdmin && handleDropOnItem(msg._id, key)}
+                      onDragEnd={() => { setDragId(null); setDragOverId(null); setDragOverCategoryEnd(null); }}
+                      className={[
+                        'flex items-start gap-2 bg-slate-800/60 border rounded-lg px-3 py-2 group transition-colors',
+                        dragId === msg._id ? 'opacity-40' : '',
+                        dragOverId === msg._id && dragId !== msg._id ? 'border-[#ED4C27]' : 'border-slate-700',
+                      ].join(' ')}
                     >
-                      <Pencil size={13} />
-                    </button>
-                    <button
-                      onClick={() => handleDelete(text.id)}
-                      disabled={deletingId === text.id}
-                      className="p-1.5 text-gray-400 hover:text-red-400 disabled:opacity-50 transition-colors"
-                      title="Löschen"
-                    >
-                      {deletingId === text.id
-                        ? <Loader2 size={13} className="animate-spin" />
-                        : <Trash2 size={13} />}
-                    </button>
-                  </div>
-                </>
+                      {editId === msg._id ? (
+                        <div className="flex flex-col gap-2 flex-1 min-w-0">
+                          <div className="flex gap-2">
+                            <input
+                              type="text"
+                              value={editName}
+                              onChange={(e) => setEditName(e.target.value)}
+                              placeholder="Name / Titel…"
+                              className="w-36 shrink-0 bg-slate-700 border border-slate-600 rounded px-2 py-1 text-sm text-gray-100 focus:outline-none focus:border-[#ED4C27]"
+                            />
+                            <input
+                              type="text"
+                              value={editMessage}
+                              onChange={(e) => setEditMessage(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') handleUpdate(msg._id);
+                                if (e.key === 'Escape') setEditId(null);
+                              }}
+                              autoFocus
+                              className="flex-1 min-w-0 bg-slate-700 border border-slate-600 rounded px-2 py-1 text-sm text-gray-100 focus:outline-none focus:border-[#ED4C27]"
+                            />
+                          </div>
+                          {categories.length > 0 && (
+                            <select
+                              value={editCategoryId ?? ''}
+                              onChange={(e) => setEditCategoryId(e.target.value ? Number(e.target.value) : null)}
+                              className="bg-slate-700 border border-slate-600 rounded px-2 py-1 text-xs text-gray-300 focus:outline-none focus:border-[#ED4C27]"
+                            >
+                              <option value="">Keine Kategorie</option>
+                              {categories.map((cat) => (
+                                <option key={cat.id} value={cat.id}>{cat.name}</option>
+                              ))}
+                            </select>
+                          )}
+                          <div className="flex gap-1">
+                            <button onClick={() => handleUpdate(msg._id)} disabled={savingId === msg._id} className="flex items-center gap-1 px-2 py-1 text-xs text-green-400 hover:text-green-300 disabled:opacity-50 transition-colors">
+                              {savingId === msg._id ? <Loader2 size={12} className="animate-spin" /> : <Save size={12} />}
+                              Speichern
+                            </button>
+                            <button onClick={() => setEditId(null)} className="flex items-center gap-1 px-2 py-1 text-xs text-gray-400 hover:text-gray-200 transition-colors">
+                              <X size={12} />
+                              Abbrechen
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <>
+                          {isAdmin && <GripVertical size={14} className="text-gray-600 cursor-grab active:cursor-grabbing shrink-0 mt-0.5 opacity-0 group-hover:opacity-100 transition-opacity" />}
+                          <div className="flex-1 min-w-0">
+                            {msg.name && <p className="text-xs font-medium text-gray-400 mb-0.5 truncate">{msg.name}</p>}
+                            <p className="text-sm text-gray-200 break-words">{msg.message}</p>
+                          </div>
+                          {isAdmin && (
+                            <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+                              <button onClick={() => startEdit(msg)} className="p-1.5 text-gray-400 hover:text-gray-100 transition-colors" title="Bearbeiten">
+                                <Pencil size={13} />
+                              </button>
+                              <button onClick={() => handleDelete(msg._id)} disabled={deletingId === msg._id} className="p-1.5 text-gray-400 hover:text-red-400 disabled:opacity-50 transition-colors" title="Löschen">
+                                {deletingId === msg._id ? <Loader2 size={13} className="animate-spin" /> : <Trash2 size={13} />}
+                              </button>
+                            </div>
+                          )}
+                        </>
+                      )}
+                    </li>
+                  ))}
+                  {/* Drop zone at end of category — admin only */}
+                  {isAdmin && dragId && (
+                    <li
+                      onDragOver={(e) => { e.preventDefault(); setDragOverId(null); setDragOverCategoryEnd(key); }}
+                      onDrop={() => handleDropAtEnd(key)}
+                      onDragLeave={() => setDragOverCategoryEnd(null)}
+                      className={[
+                        'h-7 rounded-lg border border-dashed transition-colors',
+                        dragOverCategoryEnd === key ? 'border-[#ED4C27] bg-[#ED4C27]/5' : 'border-slate-700/50',
+                      ].join(' ')}
+                    />
+                  )}
+                </ul>
               )}
-            </li>
+            </div>
           ))}
-        </ul>
+        </div>
       )}
     </Card>
   );

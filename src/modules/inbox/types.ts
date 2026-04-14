@@ -115,6 +115,28 @@ export interface PredefinedText {
   message: string;
 }
 
+export interface ConfiguredMessageCategory {
+  id: number;
+  name: string;
+  color?: string;
+}
+
+export interface ConfiguredMessage {
+  _id: string;
+  message: string;
+  name?: string;
+  type?: string;
+  user_id?: string;
+  configuration_id?: string;
+  file_stack_id?: string;
+  file_stack?: unknown | null;
+  sort_order?: number;
+  internal?: {
+    category: ConfiguredMessageCategory | null;
+    notes: string | null;
+  };
+}
+
 export interface PivotData {
   _id?: string;
   alias?: string;

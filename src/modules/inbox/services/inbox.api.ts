@@ -1,4 +1,4 @@
-import type { InboxAccount, InboxApiResponse, InboxQueryParams, ChatSearchParams, ChatListItem, PivotData, PredefinedText } from '../types';
+import type { InboxAccount, InboxApiResponse, InboxQueryParams, ChatSearchParams, ChatListItem, PivotData, PredefinedText, ConfiguredMessage, ConfiguredMessageCategory } from '../types';
 
 const getTeamId = (): number => {
   const match = document.cookie.match(/(?:^|; )auth_team=([^;]*)/);
@@ -114,5 +114,94 @@ export const inboxApi = {
     }
     const raw = await response.json();
     return raw?.response ?? raw;
+  },
+
+  // ── Configured Messages ──────────────────────────────────────────────────────
+
+  async getConfiguredMessages(fourbasedUserId: string): Promise<ConfiguredMessage[]> {
+    const teamId = getTeamId();
+    const response = await fourbasedFetch(`${getApiUrl()}/teams/${teamId}/fourbased-users/${fourbasedUserId}/configured-messages`);
+    if (!response.ok) throw new Error(`Failed to fetch configured messages: ${response.status}`);
+    const raw = await response.json();
+    return Array.isArray(raw) ? raw : (raw?.data?.messages ?? raw?.data ?? []);
+  },
+
+  async createConfiguredMessage(fourbasedUserId: string, data: { message: string; name?: string; category_id?: string | null }): Promise<ConfiguredMessage> {
+    const teamId = getTeamId();
+    const response = await fourbasedFetch(`${getApiUrl()}/teams/${teamId}/fourbased-users/${fourbasedUserId}/configured-messages`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) throw new Error(`Failed to create configured message: ${response.status}`);
+    const raw = await response.json();
+    return raw?.data?.message ?? raw?.data ?? raw;
+  },
+
+  async updateConfiguredMessage(fourbasedUserId: string, msgId: string, data: { message: string; name?: string; category_id?: string | null }): Promise<ConfiguredMessage> {
+    const teamId = getTeamId();
+    const response = await fourbasedFetch(`${getApiUrl()}/teams/${teamId}/fourbased-users/${fourbasedUserId}/configured-messages/${msgId}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) throw new Error(`Failed to update configured message: ${response.status}`);
+    const raw = await response.json();
+    return raw?.data?.message ?? raw?.data ?? raw;
+  },
+
+  async deleteConfiguredMessage(fourbasedUserId: string, msgId: string): Promise<void> {
+    const teamId = getTeamId();
+    const response = await fourbasedFetch(`${getApiUrl()}/teams/${teamId}/fourbased-users/${fourbasedUserId}/configured-messages/${msgId}`, {
+      method: 'DELETE',
+    });
+    if (!response.ok) throw new Error(`Failed to delete configured message: ${response.status}`);
+  },
+
+  async updateConfiguredMessageMeta(fourbasedUserId: string, msgId: string, data: { category_id?: number | null; notes?: string; sort_order?: number }): Promise<void> {
+    const teamId = getTeamId();
+    const response = await fourbasedFetch(`${getApiUrl()}/teams/${teamId}/fourbased-users/${fourbasedUserId}/configured-messages/${msgId}/meta`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) throw new Error(`Failed to update configured message meta: ${response.status}`);
+  },
+
+  // ── Configured Message Categories ────────────────────────────────────────────
+
+  async getConfiguredMessageCategories(): Promise<ConfiguredMessageCategory[]> {
+    const teamId = getTeamId();
+    const response = await fourbasedFetch(`${getApiUrl()}/teams/${teamId}/configured-message-categories`);
+    if (!response.ok) throw new Error(`Failed to fetch categories: ${response.status}`);
+    const raw = await response.json();
+    return Array.isArray(raw) ? raw : (raw?.data?.categories ?? raw?.data ?? []);
+  },
+
+  async createConfiguredMessageCategory(data: { name: string; color?: string }): Promise<ConfiguredMessageCategory> {
+    const teamId = getTeamId();
+    const response = await fourbasedFetch(`${getApiUrl()}/teams/${teamId}/configured-message-categories`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) throw new Error(`Failed to create category: ${response.status}`);
+    const raw = await response.json();
+    return raw?.data?.category ?? raw?.data ?? raw;
+  },
+
+  async updateConfiguredMessageCategory(categoryId: number, data: { name: string; color?: string }): Promise<ConfiguredMessageCategory> {
+    const teamId = getTeamId();
+    const response = await fourbasedFetch(`${getApiUrl()}/teams/${teamId}/configured-message-categories/${categoryId}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) throw new Error(`Failed to update category: ${response.status}`);
+    const raw = await response.json();
+    return raw?.data?.category ?? raw?.data ?? raw;
+  },
+
+  async deleteConfiguredMessageCategory(categoryId: number): Promise<void> {
+    const teamId = getTeamId();
+    const response = await fourbasedFetch(`${getApiUrl()}/teams/${teamId}/configured-message-categories/${categoryId}`, {
+      method: 'DELETE',
+    });
+    if (!response.ok) throw new Error(`Failed to delete category: ${response.status}`);
   },
 };

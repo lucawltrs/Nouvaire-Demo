@@ -13,7 +13,7 @@ import { Modal } from '../../components/ui/Modal';
 import { cloudApi, unblurUrl } from '../../modules/cloud/cloudApi';
 import type { CloudAsset } from '../../modules/cloud/types';
 import { inboxApi } from '../../modules/inbox/services/inbox.api';
-import type { ChatListItem, PredefinedText, PivotData } from '../../modules/inbox/types';
+import type { ChatListItem, ConfiguredMessage, ConfiguredMessageCategory, PivotData } from '../../modules/inbox/types';
 import { ToastContainer } from '../../lib/toast';
 import { useChatMessages } from '../../modules/4based/hooks/useChatMessages';
 import { ChatMessageList } from '../../modules/4based/components/ChatMessageList';
@@ -44,7 +44,7 @@ export function InboxChatPage() {
   const [searchLoading, setSearchLoading] = useState(false);
   const [messageInput, setMessageInput] = useState('');
   const [isSending, setIsSending] = useState(false);
-  const [predefinedTexts, setPredefinedTexts] = useState<PredefinedText[]>([]);
+  const [configuredMessages, setConfiguredMessages] = useState<ConfiguredMessage[]>([]);
   const [pivotData, setPivotData] = useState<PivotData | null>(null);
   const [isPivotLoading, setIsPivotLoading] = useState(false);
   const [isEditingPivot, setIsEditingPivot] = useState(false);
@@ -194,7 +194,7 @@ export function InboxChatPage() {
 
   useEffect(() => {
     if (!fourbased_id) return;
-    inboxApi.getPredefinedTexts(fourbased_id).then(setPredefinedTexts).catch(() => {});
+    inboxApi.getConfiguredMessages(fourbased_id).then(setConfiguredMessages).catch(() => {});
   }, [fourbased_id]);
 
   // Reset sending state when switching chats
@@ -217,6 +217,29 @@ export function InboxChatPage() {
     () => messages.find(m => m.user_id !== fourbased_id)?.user_id ?? null,
     [messages, fourbased_id],
   );
+
+  // Group configured messages by internal.category, sorted by sort_order
+  const groupedConfiguredMessages = useMemo(() => {
+    const byCategory = new Map<string, { category: ConfiguredMessageCategory | null; items: ConfiguredMessage[] }>();
+    const uncategorized: ConfiguredMessage[] = [];
+    for (const msg of configuredMessages) {
+      const cat = msg.internal?.category ?? null;
+      if (cat) {
+        const key = String(cat.id ?? (cat as unknown as Record<string, unknown>)._id ?? 'unknown');
+        if (!byCategory.has(key)) byCategory.set(key, { category: cat, items: [] });
+        byCategory.get(key)!.items.push(msg);
+      } else {
+        uncategorized.push(msg);
+      }
+    }
+    const sortItems = (items: ConfiguredMessage[]) =>
+      [...items].sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
+
+    const result: { key: string; category: ConfiguredMessageCategory | null; items: ConfiguredMessage[] }[] = [];
+    byCategory.forEach((val, key) => result.push({ key, category: val.category, items: sortItems(val.items) }));
+    if (uncategorized.length > 0) result.push({ key: '__none__', category: null, items: sortItems(uncategorized) });
+    return result;
+  }, [configuredMessages]);
 
   const fetchVault = useCallback(async (
     offset = 0,
@@ -549,12 +572,12 @@ export function InboxChatPage() {
                 >
                   <ArrowLeft size={16} />
                 </button>
-                {(predefinedTexts.length > 0 || pivotData || !!customerId) && (
+                {(pivotData || !!customerId) && (
                   <button
                     type="button"
                     onClick={() => setMobileInfoOpen(true)}
                     className="md:hidden flex items-center justify-center w-8 h-8 rounded-lg border border-slate-600 bg-slate-700 text-gray-400 hover:text-[#ED4C27] hover:border-[#ED4C27] transition-colors shrink-0"
-                    aria-label="Infos & Texte öffnen"
+                    aria-label="Kundeninfo öffnen"
                   >
                     <SlidersHorizontal size={16} />
                   </button>
@@ -600,8 +623,36 @@ export function InboxChatPage() {
             />
 
             {/* Message input */}
-            <div className="p-4 border-t border-slate-700 shrink-0">
-              <div className="flex items-end gap-3">
+            <div className="border-t border-slate-700 shrink-0">
+              {/* Predefined texts chip bar */}
+              {configuredMessages.length > 0 && (
+                <div className="px-4 pt-2.5 pb-1">
+                  <div className="flex gap-1.5 overflow-x-auto scrollbar-hide">
+                    {groupedConfiguredMessages.map(({ category, items }) =>
+                      items.map((pt) => (
+                        <button
+                          key={pt._id}
+                          type="button"
+                          title={pt.message}
+                          onClick={() => {
+                            setMessageInput(pt.message);
+                            textareaRef.current?.focus();
+                          }}
+                          className="shrink-0 flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] text-gray-400 bg-slate-700/60 border border-slate-600/60 hover:border-[#ED4C27] hover:text-gray-200 transition-colors"
+                        >
+                          {category?.color && (
+                            <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: category.color }} />
+                          )}
+                          <span className="max-w-[110px] truncate">
+                            {pt.name || pt.message}
+                          </span>
+                        </button>
+                      ))
+                    )}
+                  </div>
+                </div>
+              )}
+              <div className="p-4 pt-2.5 flex items-end gap-3">
                 <Textarea
                   ref={textareaRef}
                   value={messageInput}
@@ -817,8 +868,8 @@ export function InboxChatPage() {
         )}
       </Modal>
 
-      {/* Mobile bottom sheet: predefined texts + pivot info */}
-      {mobileInfoOpen && (predefinedTexts.length > 0 || isPivotLoading || pivotData || !!customerId) && createPortal(
+      {/* Mobile bottom sheet: pivot info */}
+      {mobileInfoOpen && (isPivotLoading || pivotData || !!customerId) && createPortal(
         <div className="md:hidden fixed inset-0 z-50 flex flex-col justify-end">
           {/* Backdrop */}
           <div
@@ -840,27 +891,6 @@ export function InboxChatPage() {
               </button>
             </div>
             <div className="overflow-y-auto flex-1 p-4 flex flex-col gap-4">
-              {predefinedTexts.length > 0 && (
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">Vordefinierte Texte</p>
-                  <div className="flex flex-col gap-2">
-                    {predefinedTexts.map((pt) => (
-                      <button
-                        key={pt.id}
-                        type="button"
-                        onClick={() => {
-                          setMessageInput(pt.message);
-                          setMobileInfoOpen(false);
-                          textareaRef.current?.focus();
-                        }}
-                        className="w-full text-left rounded-lg px-3 py-2 text-xs text-gray-200 bg-slate-700/60 hover:bg-slate-600 border border-slate-600 hover:border-[#ED4C27] transition-colors"
-                      >
-                        <span className="block text-gray-400 line-clamp-3">{pt.message}</span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
               {isPivotLoading ? (
                 <div className="flex items-center justify-center py-4">
                   <Loader2 size={16} className="animate-spin text-gray-400" />
@@ -916,30 +946,9 @@ export function InboxChatPage() {
         document.body
       )}
 
-      {/* Right panel: predefined texts + pivot info */}
-      {(predefinedTexts.length > 0 || isPivotLoading || pivotData || !!customerId) && (
+      {/* Right panel: pivot info */}
+      {(isPivotLoading || pivotData || !!customerId) && (
         <aside className="hidden md:flex w-56 shrink-0 flex-col gap-2 min-h-0">
-          {predefinedTexts.length > 0 && (
-            <Card className="max-h-[50vh] overflow-y-auto p-3 flex flex-col gap-2 shrink-0">
-              <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 shrink-0">
-                Vordefinierte Texte
-              </p>
-              {predefinedTexts.map((pt) => (
-                <button
-                  key={pt.id}
-                  type="button"
-                  onClick={() => {
-                    setMessageInput(pt.message);
-                    textareaRef.current?.focus();
-                  }}
-                  className="w-full text-left rounded-lg px-3 py-2 text-xs text-gray-200 bg-slate-700/60 hover:bg-slate-600 border border-slate-600 hover:border-[#ED4C27] transition-colors"
-                >
-                  <span className="block text-gray-400 line-clamp-3">{pt.message}</span>
-                </button>
-              ))}
-            </Card>
-          )}
-
           {/* Pivot info card */}
           {isPivotLoading ? (
             <Card className="p-3 flex items-center justify-center">
