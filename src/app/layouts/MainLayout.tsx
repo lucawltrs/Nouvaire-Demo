@@ -7,6 +7,9 @@ import { WorkSessionModal } from '../../modules/work-sessions/components/WorkSes
 import { putEndWorkSession } from '../../modules/work-sessions/services/workSession.api';
 import { unreadCountStore } from '../../lib/unreadCountStore';
 import { dashboardApi } from '../../modules/dashboard/services/dashboard.api';
+import { inboxApi } from '../../modules/inbox/services/inbox.api';
+import { newMessageNotifications } from '../../lib/newMessageNotifications';
+import { NewMessageToastContainer } from '../../components/ui/NewMessageToastContainer';
 
 const APP_TITLE = 'Nouvaire';
 
@@ -117,6 +120,25 @@ export function MainLayout({ children }: MainLayoutProps) {
     return () => clearInterval(id);
   }, []);
 
+  // ── Global new-message notifications (polls chats every 15 s) ──────────────
+  useEffect(() => {
+    const pollChats = async () => {
+      try {
+        const data = await inboxApi.getChats({ days: 30, filter: 'all', limit: 60, offset: 0, scope: 'all' });
+        const chats = data.data.flatMap((entry) =>
+          entry.members.flatMap((m) => m.accounts.flatMap((a) => a.chats))
+        );
+        newMessageNotifications.check(chats);
+      } catch {
+        // ignore
+      }
+    };
+    pollChats();
+    const id = setInterval(pollChats, 15_000);
+    return () => clearInterval(id);
+  }, []);
+  // ────────────────────────────────────────────────────────────────────────────
+
   useEffect(() => {
     if (prevUnreadRef.current !== null && unreadChats > prevUnreadRef.current) {
       playNotificationSound();
@@ -160,7 +182,6 @@ export function MainLayout({ children }: MainLayoutProps) {
     { path: '/accounts', label: 'Accounts', icon: Users },
     { path: '/inbox', label: 'Inbox', icon: MessagesSquare },
     { path: '/cloud', label: 'Cloud', icon: Cloud },
-    { path: '/performance', label: 'Performance', icon: BarChart3 },
     ...(isAdmin ? [{ path: '/settings', label: 'Settings', icon: Settings }] : []),
   ];
 
@@ -486,6 +507,7 @@ export function MainLayout({ children }: MainLayoutProps) {
       </nav>
 
       <WorkSessionModal />
+      <NewMessageToastContainer />
 
       <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8 w-full">
         {children}

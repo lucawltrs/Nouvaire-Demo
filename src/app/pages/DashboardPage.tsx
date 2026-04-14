@@ -1,8 +1,9 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
-import { Link } from 'react-router-dom';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { Card } from '../../components/ui/Card';
 import { PageLoader } from '../../components/ui/PageLoader';
-import { Receipt, Inbox, MessageSquareText, Heart, Users, Circle, Clock, ChevronDown, AlertCircle, User, CheckCheck, CornerUpLeft, Loader2, RotateCcw } from 'lucide-react';
+import { Receipt, Inbox, MessageSquareText, Heart, Users, Circle, Clock, ChevronDown, AlertCircle, User, CheckCheck, CornerUpLeft, Loader2, RotateCcw, Eye, X, Send } from 'lucide-react';
+import { sendChatMessage } from '../../modules/4based/services/4based.api';
 import { 
   dashboardApi, 
   type DashboardAccount,
@@ -448,14 +449,11 @@ interface LatestChatsSectionProps {
 
 function LatestChatsSection({ chats, showAccountName, onChatMarkedAsRead }: LatestChatsSectionProps) {
   const [loadingChats, setLoadingChats] = useState<Set<string>>(new Set());
+  const [replyChat, setReplyChat] = useState<MergedUnreadChat | null>(null);
+  const navigate = useNavigate();
 
   const handleMarkAsRead = async (chat: MergedUnreadChat) => {
     const chatKey = `${chat.fourbased_id}:${chat.chat_id}`;
-    
-    console.log('Chat object:', chat);
-    console.log('fourbased_id:', chat.fourbased_id);
-    console.log('chat_id:', chat.chat_id);
-    
     if (loadingChats.has(chatKey)) return;
 
     setLoadingChats((prev) => new Set(prev).add(chatKey));
@@ -464,8 +462,7 @@ function LatestChatsSection({ chats, showAccountName, onChatMarkedAsRead }: Late
       await dashboardApi.markChatAsRead(chat.fourbased_id, chat.chat_id);
       toast.success('Marked as read');
       onChatMarkedAsRead(chatKey, chat.unread_count);
-    } catch (error) {
-      console.error('Failed to mark chat as read:', error);
+    } catch {
       toast.error('Failed to mark as read');
     } finally {
       setLoadingChats((prev) => {
@@ -483,7 +480,7 @@ function LatestChatsSection({ chats, showAccountName, onChatMarkedAsRead }: Late
         {chats.map((chat) => {
           const chatKey = `${chat.fourbased_id}:${chat.chat_id}`;
           const isLoading = loadingChats.has(chatKey);
-          
+
           return (
             <div key={chatKey} className="p-4 sm:p-6 hover:bg-slate-700/50 transition-colors">
               <div className="flex items-start gap-4">
@@ -496,7 +493,7 @@ function LatestChatsSection({ chats, showAccountName, onChatMarkedAsRead }: Late
                       </span>
                     )}
                     {showAccountName && (
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-700 text-gray-300 shrink-0">
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-700 text-gray-300 shrink-0">
                         <Avatar src={chat.account_img_url} alt={chat.account_name} size="sm" />
                         <span>{chat.account_name}</span>
                       </span>
@@ -511,22 +508,32 @@ function LatestChatsSection({ chats, showAccountName, onChatMarkedAsRead }: Late
 
                 {/* Action Buttons */}
                 <div className="flex items-center gap-2 shrink-0">
-                  {/* Reply Button */}
-                  <Link
-                    to={`/inbox/${chat.fourbased_id}/chat/${chat.chat_id}`}
+                  {/* Open chat */}
+                  <button
+                    onClick={() => navigate(`/inbox/${chat.fourbased_id}/chat/${chat.chat_id}`)}
+                    title="Chat öffnen"
                     className="inline-flex items-center justify-center gap-1.5 px-3 py-2 text-xs sm:text-sm font-medium text-gray-300 hover:text-white bg-slate-700 hover:bg-slate-600 border border-slate-600 hover:border-slate-500 rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-1"
-                    title="Reply"
+                  >
+                    <Eye size={16} />
+                    <span className="hidden sm:inline">Öffnen</span>
+                  </button>
+
+                  {/* Quick reply */}
+                  <button
+                    onClick={() => setReplyChat(chat)}
+                    title="Antworten"
+                    className="inline-flex items-center justify-center gap-1.5 px-3 py-2 text-xs sm:text-sm font-medium text-gray-300 hover:text-white bg-slate-700 hover:bg-slate-600 border border-slate-600 hover:border-slate-500 rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-1"
                   >
                     <CornerUpLeft size={16} />
                     <span className="hidden sm:inline">Reply</span>
-                  </Link>
+                  </button>
 
-                  {/* Mark as Read Button */}
+                  {/* Mark as read */}
                   <button
                     onClick={() => handleMarkAsRead(chat)}
                     disabled={isLoading}
+                    title="Als gelesen markieren"
                     className="inline-flex items-center justify-center gap-1.5 px-3 py-2 text-xs sm:text-sm font-medium text-white bg-[#ED4C27] hover:bg-[#D8431F] border border-[#ED4C27] hover:border-[#D8431F] rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-[#ED4C27] focus:ring-offset-1 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow-md"
-                    title="Mark as read"
                   >
                     {isLoading ? (
                       <Loader2 size={16} className="animate-spin" />
@@ -543,7 +550,159 @@ function LatestChatsSection({ chats, showAccountName, onChatMarkedAsRead }: Late
           );
         })}
       </Card>
+
+      {replyChat && (
+        <ReplyPopup
+          chat={replyChat}
+          onClose={() => setReplyChat(null)}
+        />
+      )}
     </div>
+  );
+}
+
+// ============================================================================
+// Reply Popup
+// ============================================================================
+
+interface ReplyPopupProps {
+  chat: MergedUnreadChat;
+  onClose: () => void;
+}
+
+function ReplyPopup({ chat, onClose }: ReplyPopupProps) {
+  const [message, setMessage] = useState('');
+  const [sending, setSending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [sent, setSent] = useState(false);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Focus textarea on open
+  useEffect(() => {
+    textareaRef.current?.focus();
+  }, []);
+
+  // Close on Escape
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
+  }, [onClose]);
+
+  const handleSend = async () => {
+    const text = message.trim();
+    if (!text || sending) return;
+    setSending(true);
+    setError(null);
+    try {
+      await sendChatMessage(chat.fourbased_id, chat.chat_id, text);
+      setSent(true);
+      setTimeout(onClose, 1200);
+    } catch {
+      setError('Nachricht konnte nicht gesendet werden.');
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+      e.preventDefault();
+      handleSend();
+    }
+  };
+
+  return (
+    <>
+      {/* Backdrop */}
+      <div
+        className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm"
+        onClick={onClose}
+      />
+
+      {/* Popup */}
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
+        <div className="w-full max-w-md bg-slate-800 border border-slate-600 rounded-2xl shadow-2xl pointer-events-auto animate-slide-in">
+          {/* Header */}
+          <div className="flex items-start justify-between p-4 border-b border-slate-700">
+            <div className="flex items-start gap-3 min-w-0">
+              <div className="flex-1 min-w-0">
+                <p className="text-xs text-gray-400 mb-0.5">Antwort an</p>
+                <p className="font-semibold text-gray-100 truncate">{chat.customer_name}</p>
+                {chat.account_name && (
+                  <span className="inline-flex items-center gap-1.5 mt-1 px-2 py-0.5 rounded-full text-[11px] bg-slate-700 text-gray-400">
+                    <Avatar src={chat.account_img_url} alt={chat.account_name} size="sm" />
+                    {chat.account_name}
+                  </span>
+                )}
+              </div>
+            </div>
+            <div className="flex items-center gap-2 shrink-0 ml-3">
+              <Link
+                to={`/inbox/${chat.fourbased_id}/chat/${chat.chat_id}`}
+                className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-gray-400 hover:text-gray-100 bg-slate-700 hover:bg-slate-600 border border-slate-600 rounded-lg transition-colors"
+                title="Chat vollständig öffnen"
+              >
+                <Eye size={13} />
+                Öffnen
+              </Link>
+              <button
+                onClick={onClose}
+                className="p-1.5 text-gray-500 hover:text-gray-200 hover:bg-slate-700 rounded-lg transition-colors"
+                aria-label="Schließen"
+              >
+                <X size={16} />
+              </button>
+            </div>
+          </div>
+
+          {/* Last message preview */}
+          <div className="px-4 py-3 bg-slate-900/40 border-b border-slate-700/50">
+            <p className="text-xs text-gray-500 mb-1">Letzte Nachricht</p>
+            <p className="text-sm text-gray-400 line-clamp-2">{chat.last_message_preview || '—'}</p>
+          </div>
+
+          {/* Input */}
+          <div className="p-4">
+            {sent ? (
+              <div className="flex items-center justify-center gap-2 py-6 text-green-400">
+                <CheckCheck size={20} />
+                <span className="font-medium">Nachricht gesendet!</span>
+              </div>
+            ) : (
+              <>
+                <textarea
+                  ref={textareaRef}
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  placeholder="Nachricht eingeben…"
+                  rows={4}
+                  className="w-full px-3 py-2.5 text-sm bg-slate-700 border border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ED4C27]/40 focus:border-[#ED4C27] text-gray-100 placeholder-gray-500 resize-none transition-colors"
+                />
+                {error && (
+                  <p className="mt-2 text-xs text-red-400 flex items-center gap-1">
+                    <AlertCircle size={12} />
+                    {error}
+                  </p>
+                )}
+                <div className="flex items-center justify-between mt-3">
+                  <p className="text-[11px] text-gray-500">⌘ + Enter zum Senden</p>
+                  <button
+                    onClick={handleSend}
+                    disabled={sending || !message.trim()}
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-[#ED4C27] hover:bg-[#D8431F] text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {sending ? <Loader2 size={15} className="animate-spin" /> : <Send size={15} />}
+                    {sending ? 'Senden…' : 'Senden'}
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+    </>
   );
 }
 
