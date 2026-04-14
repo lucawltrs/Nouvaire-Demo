@@ -18,6 +18,7 @@ import type { ChatListItem, InboxAccount, InboxFilter } from '../../modules/inbo
 import { ToastContainer, toast } from '../../lib/toast';
 import { formatRelativeTime } from '../../modules/dashboard';
 import { unreadCountStore } from '../../lib/unreadCountStore';
+import { newMessageNotifications } from '../../lib/newMessageNotifications';
 
 // ============================================================================
 // InboxPage
@@ -184,6 +185,8 @@ export function InboxPage() {
           });
         }
         setChats(resolved);
+        // Feed notification store — it diffs against last known state
+        newMessageNotifications.check(resolved);
         // Update global unread count (only reliable when viewing all accounts)
         if (isAll) {
           const unreadCount =
@@ -212,6 +215,7 @@ export function InboxPage() {
       const loadingId = toast.info('Marking as read…', 0);
       try {
         await inboxApi.markChatAsRead(chat.fourbased_id, chat.chat_id);
+        newMessageNotifications.markChatRead(chat.fourbased_id, chat.chat_id);
         toast.dismiss(loadingId);
         toast.success('Marked as read');
         if (filter === 'unread') {
