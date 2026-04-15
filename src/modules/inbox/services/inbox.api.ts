@@ -95,13 +95,29 @@ export const inboxApi = {
     return Array.isArray(raw) ? raw : (raw?.data ?? []);
   },
 
-  async getPivot(fourbasedId: string, customerId: string): Promise<PivotData> {
-    const response = await fourbasedFetch(`${getApiUrl()}/4based/users/${fourbasedId}/pivot/${customerId}`);
+  async getPivot(fourbasedId: string, customerId: string, chatId?: string): Promise<PivotData> {
+    const params = chatId ? `?chat_id=${chatId}` : '';
+    const response = await fourbasedFetch(`${getApiUrl()}/4based/users/${fourbasedId}/pivot/${customerId}${params}`);
     if (!response.ok) {
       throw new Error(`Failed to fetch pivot: ${response.status}`);
     }
     const raw = await response.json();
-    return raw?.response ?? raw;
+    console.log('[getPivot] raw response:', JSON.stringify(raw));
+    const base: PivotData = raw?.response ?? raw;
+    if (raw?.price_override != null && base?.price_override == null) {
+      base.price_override = raw.price_override;
+    }
+    return base;
+  },
+
+  async updatePriceOverride(fourbasedId: string, chatId: string, messagePriceCents: number): Promise<void> {
+    const response = await fourbasedFetch(`${getApiUrl()}/4based/users/${fourbasedId}/chats/${chatId}/price-override`, {
+      method: 'PUT',
+      body: JSON.stringify({ message_price: messagePriceCents }),
+    });
+    if (!response.ok) {
+      throw new Error(`Failed to update price override: ${response.status}`);
+    }
   },
 
   async updatePivot(fourbasedId: string, customerId: string, data: { alias?: string; note?: string }): Promise<PivotData> {
@@ -112,7 +128,8 @@ export const inboxApi = {
     if (!response.ok) {
       throw new Error(`Failed to update pivot: ${response.status}`);
     }
-    const raw = await response.json();
+    const text = await response.text();
+    const raw = text ? JSON.parse(text) : {};
     return raw?.response ?? raw;
   },
 

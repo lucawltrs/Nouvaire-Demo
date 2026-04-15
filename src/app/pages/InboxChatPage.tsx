@@ -51,6 +51,7 @@ export function InboxChatPage() {
   const [isEditingPivot, setIsEditingPivot] = useState(false);
   const [pivotEditAlias, setPivotEditAlias] = useState('');
   const [pivotEditNote, setPivotEditNote] = useState('');
+  const [pivotEditPrice, setPivotEditPrice] = useState('');
   const [isSavingPivot, setIsSavingPivot] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [isVaultModalOpen, setIsVaultModalOpen] = useState(false);
@@ -296,7 +297,7 @@ export function InboxChatPage() {
   useEffect(() => {
     if (!fourbased_id || !customerId) { setPivotData(null); return; }
     setIsPivotLoading(true);
-    inboxApi.getPivot(fourbased_id, customerId)
+    inboxApi.getPivot(fourbased_id, customerId, chat_id)
       .then(setPivotData)
       .catch(() => setPivotData(null))
       .finally(() => setIsPivotLoading(false));
@@ -305,6 +306,9 @@ export function InboxChatPage() {
   useEffect(() => {
     setPivotEditAlias(pivotData?.alias ?? '');
     setPivotEditNote(pivotData?.note ?? '');
+    setPivotEditPrice(pivotData?.price_override?.data?.is_override
+      ? String(pivotData.price_override.data.effective_message_price)
+      : '');
     setIsEditingPivot(false);
   }, [pivotData]);
 
@@ -435,13 +439,27 @@ export function InboxChatPage() {
   };
 
   const handleSavePivot = async () => {
-    if (!fourbased_id || !customerId) return;
+    if (!fourbased_id || !customerId || !chat_id) return;
     setIsSavingPivot(true);
     try {
-      const updated = await inboxApi.updatePivot(fourbased_id, customerId, {
-        alias: pivotEditAlias.trim() || undefined,
-        note: pivotEditNote.trim() || undefined,
-      });
+      const aliasChanged = (pivotEditAlias.trim() || '') !== (pivotData?.alias ?? '');
+      const noteChanged = (pivotEditNote.trim() || '') !== (pivotData?.note ?? '');
+      const currentPriceCents = pivotData?.price_override?.data?.is_override
+        ? pivotData.price_override.data.effective_message_price
+        : null;
+      const newPriceCents = pivotEditPrice.trim() !== '' ? parseInt(pivotEditPrice, 10) : null;
+      const priceChanged = newPriceCents !== currentPriceCents && newPriceCents !== null && !Number.isNaN(newPriceCents);
+
+      if (aliasChanged || noteChanged) {
+        await inboxApi.updatePivot(fourbased_id, customerId, {
+          alias: pivotEditAlias.trim() || undefined,
+          note: pivotEditNote.trim() || undefined,
+        });
+      }
+      if (priceChanged) {
+        await inboxApi.updatePriceOverride(fourbased_id, chat_id, newPriceCents!);
+      }
+      const updated = await inboxApi.getPivot(fourbased_id, customerId, chat_id);
       setPivotData(updated);
       toast.success('Kundeninfo gespeichert.');
     } catch (err) {
@@ -902,7 +920,7 @@ export function InboxChatPage() {
                     {!isEditingPivot ? (
                       <button type="button" onClick={() => setIsEditingPivot(true)} className="text-[10px] text-[#ED4C27] hover:underline">Bearbeiten</button>
                     ) : (
-                      <button type="button" onClick={() => { setPivotEditAlias(pivotData?.alias ?? ''); setPivotEditNote(pivotData?.note ?? ''); setIsEditingPivot(false); }} className="text-[10px] text-gray-400 hover:underline">Abbrechen</button>
+                      <button type="button" onClick={() => { setPivotEditAlias(pivotData?.alias ?? ''); setPivotEditNote(pivotData?.note ?? ''); setPivotEditPrice(pivotData?.price_override?.data?.is_override ? String(pivotData.price_override.data.effective_message_price) : ''); setIsEditingPivot(false); }} className="text-[10px] text-gray-400 hover:underline">Abbrechen</button>
                     )}
                   </div>
                   {isEditingPivot ? (
@@ -914,6 +932,10 @@ export function InboxChatPage() {
                       <div>
                         <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-0.5">Notiz</p>
                         <Textarea value={pivotEditNote} onChange={(e) => setPivotEditNote(e.target.value)} placeholder="Notiz eingeben…" rows={3} />
+                      </div>
+                      <div>
+                        <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-0.5">Nachrichtenpreis (Cents)</p>
+                        <Input type="number" value={pivotEditPrice} onChange={(e) => setPivotEditPrice(e.target.value)} placeholder="z.B. 6" />
                       </div>
                       <Button size="sm" onClick={handleSavePivot} disabled={isSavingPivot}>
                         {isSavingPivot ? 'Speichert…' : 'Speichern'}
@@ -933,7 +955,15 @@ export function InboxChatPage() {
                           <p className="text-xs text-gray-300 leading-snug whitespace-pre-wrap">{pivotData.note}</p>
                         </div>
                       )}
-                      {!pivotData?.alias && !pivotData?.note && (
+                      {pivotData?.price_override?.data?.is_override && (
+                        <div>
+                          <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-0.5">Nachrichtenpreis</p>
+                          <p className="text-xs text-[#ED4C27] leading-snug">
+                            ${(pivotData.price_override.data.effective_message_price / 100).toFixed(2)}
+                          </p>
+                        </div>
+                      )}
+                      {!pivotData?.alias && !pivotData?.note && !pivotData?.price_override?.data?.is_override && (
                         <p className="text-xs text-gray-500">Keine Infos verfügbar.</p>
                       )}
                     </div>
@@ -974,6 +1004,9 @@ export function InboxChatPage() {
                     onClick={() => {
                       setPivotEditAlias(pivotData?.alias ?? '');
                       setPivotEditNote(pivotData?.note ?? '');
+                      setPivotEditPrice(pivotData?.price_override?.data?.is_override
+                        ? String(pivotData.price_override.data.effective_message_price)
+                        : '');
                       setIsEditingPivot(false);
                     }}
                     className="text-[10px] text-gray-400 hover:underline"
@@ -1001,6 +1034,15 @@ export function InboxChatPage() {
                       rows={3}
                     />
                   </div>
+                  <div>
+                    <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-0.5">Nachrichtenpreis (Cents)</p>
+                    <Input
+                      type="number"
+                      value={pivotEditPrice}
+                      onChange={(e) => setPivotEditPrice(e.target.value)}
+                      placeholder="z.B. 6"
+                    />
+                  </div>
                   <Button size="sm" onClick={handleSavePivot} disabled={isSavingPivot}>
                     {isSavingPivot ? 'Speichert…' : 'Speichern'}
                   </Button>
@@ -1019,7 +1061,15 @@ export function InboxChatPage() {
                       <p className="text-xs text-gray-300 leading-snug whitespace-pre-wrap">{pivotData.note}</p>
                     </div>
                   )}
-                  {!pivotData?.alias && !pivotData?.note && (
+                  {pivotData?.price_override?.data?.is_override && (
+                    <div>
+                      <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-0.5">Nachrichtenpreis</p>
+                      <p className="text-xs text-[#ED4C27] leading-snug">
+                        ${(pivotData.price_override.data.effective_message_price / 100).toFixed(2)}
+                      </p>
+                    </div>
+                  )}
+                  {!pivotData?.alias && !pivotData?.note && !pivotData?.price_override?.data?.is_override && (
                     <p className="text-xs text-gray-500">Keine Infos verfügbar.</p>
                   )}
                 </>
