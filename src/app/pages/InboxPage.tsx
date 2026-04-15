@@ -72,16 +72,13 @@ export function InboxPage() {
     })();
   }, []);
 
-  // Fetch chats for the active tab
-  const fetchChats = useCallback(
-    async (fourbasedId: string) => {
+  const loadChats = useCallback(
+    async (fourbasedId: string, silent = false) => {
       if (!fourbasedId) return;
+      const isAll = fourbasedId === '__all__';
       try {
-        setChatsLoading(true);
-        setChatsError(null);
-
-        const isAll = fourbasedId === '__all__';
-
+        if (!silent) { setChatsLoading(true); setChatsError(null); }
+        let resolved: ChatListItem[] = [];
         if (filter === 'all') {
           const data = await inboxApi.getChats({
             days: 30,
@@ -91,27 +88,35 @@ export function InboxPage() {
             scope: isAll ? 'all' : 'single',
             ...(isAll ? {} : { fourbased_id: fourbasedId }),
           });
-          const allChats = data.data.flatMap((entry) =>
+          resolved = data.data.flatMap((entry) =>
             entry.members.flatMap((m) =>
               m.accounts
                 .filter((a) => isAll || a.fourbased_id === fourbasedId)
                 .flatMap((a) => a.chats)
             )
           );
-          setChats(allChats);
         } else {
-          const results = await inboxApi.searchChats({
+          resolved = await inboxApi.searchChats({
             list_names: filter,
             limit: PAGE_SIZE,
             offset: 0,
             ...(isAll ? {} : { fourbased_id: fourbasedId }),
           });
-          setChats(results);
+        }
+        setChats(resolved);
+        if (silent) {
+          newMessageNotifications.check(resolved);
+          if (isAll) {
+            const unreadCount = filter === 'unread'
+              ? resolved.length
+              : resolved.filter((c) => c.is_unread).length;
+            unreadCountStore.set(unreadCount);
+          }
         }
       } catch {
-        setChatsError('Failed to load chats. Please try again.');
+        if (!silent) setChatsError('Failed to load chats. Please try again.');
       } finally {
-        setChatsLoading(false);
+        if (!silent) setChatsLoading(false);
       }
     },
     [filter]
@@ -123,8 +128,8 @@ export function InboxPage() {
     setChats([]);
     setSearchQuery('');
     setSearchResults(null);
-    fetchChats(activeTabId);
-  }, [activeTabId, filter, fetchChats]);
+    loadChats(activeTabId);
+  }, [activeTabId, loadChats]);
 
   // Debounced API search
   useEffect(() => {
@@ -155,59 +160,12 @@ export function InboxPage() {
     };
   }, [searchQuery, activeTabId]);
 
-  // Silent background refresh for the chat list (every 5 seconds)
-  const fetchChatsSilent = useCallback(
-    async (fourbasedId: string) => {
-      if (!fourbasedId) return;
-      try {
-        const isAll = fourbasedId === '__all__';
-        let resolved: ChatListItem[] = [];
-        if (filter === 'all') {
-          const data = await inboxApi.getChats({
-            days: 30,
-            filter: 'all',
-            limit: PAGE_SIZE,
-            offset: 0,
-            scope: isAll ? 'all' : 'single',
-            ...(isAll ? {} : { fourbased_id: fourbasedId }),
-          });
-          resolved = data.data.flatMap((entry) =>
-            entry.members.flatMap((m) =>
-              m.accounts
-                .filter((a) => isAll || a.fourbased_id === fourbasedId)
-                .flatMap((a) => a.chats)
-            )
-          );
-        } else {
-          resolved = await inboxApi.searchChats({
-            list_names: filter,
-            limit: PAGE_SIZE,
-            offset: 0,
-            ...(isAll ? {} : { fourbased_id: fourbasedId }),
-          });
-        }
-        setChats(resolved);
-        // Feed notification store — it diffs against last known state
-        newMessageNotifications.check(resolved);
-        // Update global unread count (only reliable when viewing all accounts)
-        if (isAll) {
-          const unreadCount =
-            filter === 'unread'
-              ? resolved.length
-              : resolved.filter((c) => c.is_unread).length;
-          unreadCountStore.set(unreadCount);
-        }
-      } catch {
-      }
-    },
-    [filter]
-  );
-
+  // Silent background refresh for the chat list (every 30 seconds)
   useEffect(() => {
     if (!activeTabId) return;
-    const interval = setInterval(() => fetchChatsSilent(activeTabId), 30 * 1000);
+    const interval = setInterval(() => loadChats(activeTabId, true), 30 * 1000);
     return () => clearInterval(interval);
-  }, [activeTabId, fetchChatsSilent]);
+  }, [activeTabId, loadChats]);
 
   // React to chats being marked as read from other pages (e.g. InboxChatPage after reply)
   useEffect(() => {
@@ -339,7 +297,7 @@ export function InboxPage() {
 
           {/* Reload */}
           <button
-            onClick={() => fetchChats(activeTabId)}
+            onClick={() => loadChats(activeTabId)}
             disabled={chatsLoading}
             title="Reload"
             className={`flex items-center justify-center px-3 py-2 bg-[#ED4C27] hover:bg-[#D8431F] border border-[#ED4C27] rounded-lg transition-colors shadow-sm ${
@@ -375,7 +333,7 @@ export function InboxPage() {
         isDisplayLoading ? (
           <PageLoader message="Lade Chats..." subtitle="Nachrichten der letzten 30 Tage werden abgerufen" />
         ) : chatsError ? (
-          <ErrorState error={chatsError} onRetry={() => fetchChats(activeTabId)} />
+          <ErrorState error={chatsError} onRetry={() => loadChats(activeTabId)} />
         ) : displayedChats.length === 0 ? (
           <EmptyState filter={filter} />
         ) : (

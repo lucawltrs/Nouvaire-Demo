@@ -286,21 +286,53 @@ function KpiCard({ title, value, icon: Icon, gradient, subtitle }: KpiCardProps)
 function SettingsTab({ fourbasedId }: { fourbasedId: string }) {
   const { team } = useAuthStore();
   const isAdmin = team?.role === 'admin';
+  const [categories, setCategories] = useState<ConfiguredMessageCategory[]>([]);
+  const [categoriesLoading, setCategoriesLoading] = useState(true);
+  const [categoriesError, setCategoriesError] = useState<string | null>(null);
+
+  const loadCategories = useCallback(async () => {
+    setCategoriesLoading(true);
+    setCategoriesError(null);
+    try {
+      setCategories(await inboxApi.getConfiguredMessageCategories(fourbasedId));
+    } catch {
+      setCategoriesError('Kategorien konnten nicht geladen werden.');
+    } finally {
+      setCategoriesLoading(false);
+    }
+  }, [fourbasedId]);
+
+  useEffect(() => { loadCategories(); }, [loadCategories]);
 
   return (
     <div className="space-y-6">
-      {isAdmin && <CategoriesCard fourbasedId={fourbasedId} />}
-      <ConfiguredMessagesCard fourbasedId={fourbasedId} isAdmin={isAdmin} />
+      {isAdmin && (
+        <CategoriesCard
+          fourbasedId={fourbasedId}
+          categories={categories}
+          isLoading={categoriesLoading}
+          error={categoriesError}
+          onRefresh={loadCategories}
+        />
+      )}
+      <ConfiguredMessagesCard
+        fourbasedId={fourbasedId}
+        isAdmin={isAdmin}
+        categories={categories}
+      />
     </div>
   );
 }
 
 // ── Categories Card (admin only) ─────────────────────────────────────────────
 
-function CategoriesCard({ fourbasedId }: { fourbasedId: string }) {
-  const [categories, setCategories] = useState<ConfiguredMessageCategory[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+function CategoriesCard({ fourbasedId, categories, isLoading, error, onRefresh }: {
+  fourbasedId: string;
+  categories: ConfiguredMessageCategory[];
+  isLoading: boolean;
+  error: string | null;
+  onRefresh: () => void;
+}) {
   const [newName, setNewName] = useState('');
   const [newColor, setNewColor] = useState('#6366f1');
   const [isAdding, setIsAdding] = useState(false);
@@ -310,30 +342,19 @@ function CategoriesCard({ fourbasedId }: { fourbasedId: string }) {
   const [savingId, setSavingId] = useState<number | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
 
-  const fetchCategories = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      setCategories(await inboxApi.getConfiguredMessageCategories(fourbasedId));
-    } catch {
-      setError('Kategorien konnten nicht geladen werden.');
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  useEffect(() => { fetchCategories(); }, [fetchCategories]);
+  const [mutationError, setMutationError] = useState<string | null>(null);
 
   const handleAdd = async () => {
     const name = newName.trim();
     if (!name) return;
     setIsAdding(true);
+    setMutationError(null);
     try {
-      const created = await inboxApi.createConfiguredMessageCategory(fourbasedId, { name, color: newColor });
-      setCategories((prev) => [...prev, created]);
+      await inboxApi.createConfiguredMessageCategory(fourbasedId, { name, color: newColor });
       setNewName('');
+      onRefresh();
     } catch {
-      setError('Kategorie konnte nicht erstellt werden.');
+      setMutationError('Kategorie konnte nicht erstellt werden.');
     } finally {
       setIsAdding(false);
     }
@@ -343,13 +364,14 @@ function CategoriesCard({ fourbasedId }: { fourbasedId: string }) {
     const name = editName.trim();
     if (!name) return;
     setSavingId(id);
+    setMutationError(null);
     try {
-      const updated = await inboxApi.updateConfiguredMessageCategory(fourbasedId, id, { name, color: editColor });
-      setCategories((prev) => prev.map((c) => (c.id === id ? updated : c)));
+      await inboxApi.updateConfiguredMessageCategory(fourbasedId, id, { name, color: editColor });
       setEditId(null);
       setEditName('');
+      onRefresh();
     } catch {
-      setError('Kategorie konnte nicht aktualisiert werden.');
+      setMutationError('Kategorie konnte nicht aktualisiert werden.');
     } finally {
       setSavingId(null);
     }
@@ -357,11 +379,12 @@ function CategoriesCard({ fourbasedId }: { fourbasedId: string }) {
 
   const handleDelete = async (id: number) => {
     setDeletingId(id);
+    setMutationError(null);
     try {
       await inboxApi.deleteConfiguredMessageCategory(fourbasedId, id);
-      setCategories((prev) => prev.filter((c) => c.id !== id));
+      onRefresh();
     } catch {
-      setError('Kategorie konnte nicht gelöscht werden.');
+      setMutationError('Kategorie konnte nicht gelöscht werden.');
     } finally {
       setDeletingId(null);
     }
@@ -379,10 +402,10 @@ function CategoriesCard({ fourbasedId }: { fourbasedId: string }) {
         </div>
       </div>
 
-      {error && (
+      {(error ?? mutationError) && (
         <div className="mb-4 flex items-center gap-2 text-xs text-red-400 bg-red-900/20 border border-red-800/40 rounded-lg px-3 py-2">
           <AlertCircle size={13} />
-          {error}
+          {error ?? mutationError}
         </div>
       )}
 
@@ -477,9 +500,8 @@ function CategoriesCard({ fourbasedId }: { fourbasedId: string }) {
 
 // ── Configured Messages Card ─────────────────────────────────────────────────
 
-function ConfiguredMessagesCard({ fourbasedId, isAdmin }: { fourbasedId: string; isAdmin: boolean }) {
+function ConfiguredMessagesCard({ fourbasedId, isAdmin, categories }: { fourbasedId: string; isAdmin: boolean; categories: ConfiguredMessageCategory[] }) {
   const [messages, setMessages] = useState<ConfiguredMessage[]>([]);
-  const [categories, setCategories] = useState<ConfiguredMessageCategory[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -509,12 +531,7 @@ function ConfiguredMessagesCard({ fourbasedId, isAdmin }: { fourbasedId: string;
     setIsLoading(true);
     setError(null);
     try {
-      const [msgs, cats] = await Promise.all([
-        inboxApi.getConfiguredMessages(fourbasedId),
-        inboxApi.getConfiguredMessageCategories(fourbasedId),
-      ]);
-      setMessages(msgs);
-      setCategories(cats);
+      setMessages(await inboxApi.getConfiguredMessages(fourbasedId));
     } catch {
       setError('Nachrichten konnten nicht geladen werden.');
     } finally {

@@ -35,40 +35,28 @@ export function DashboardPage() {
     unreadCountStore.set(total);
   };
 
-  const fetchDashboard = useCallback(async () => {
+  const loadDashboard = useCallback(async (silent = false) => {
     try {
-      setIsLoading(true);
-      setError(null);
+      if (!silent) { setIsLoading(true); setError(null); }
       const data = await dashboardApi.getDashboard(rangeDays);
       setResponse(data);
       syncUnreadCount(data);
-      setRemovedChatIds(new Set()); // Reset removed chats on new data
+      if (!silent) setRemovedChatIds(new Set());
     } catch (err) {
-      console.error('Failed to fetch dashboard data:', err);
-      setError('Failed to load dashboard data. Please try again later.');
+      if (!silent) {
+        console.error('Failed to fetch dashboard data:', err);
+        setError('Failed to load dashboard data. Please try again later.');
+      }
     } finally {
-      setIsLoading(false);
+      if (!silent) setIsLoading(false);
     }
-  }, [rangeDays]);
-
-  const fetchDashboardSilent = useCallback(async () => {
-    try {
-      const data = await dashboardApi.getDashboard(rangeDays);
-      setResponse(data);
-      syncUnreadCount(data);
-    } catch {
-      // Silently ignore errors during background refresh
-    }
-  }, [rangeDays]);
+  }, [rangeDays]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    fetchDashboard();
-  }, [fetchDashboard]);
-
-  useEffect(() => {
-    const interval = setInterval(fetchDashboardSilent, 30 * 1000);
+    loadDashboard();
+    const interval = setInterval(() => loadDashboard(true), 30 * 1000);
     return () => clearInterval(interval);
-  }, [fetchDashboardSilent]);
+  }, [rangeDays]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Handler to update KPIs after marking a chat as read
   const handleChatMarkedAsRead = useCallback((chatKey: string, unreadCount: number) => {
@@ -151,7 +139,7 @@ export function DashboardPage() {
           selectedAccountId={selectedAccountId}
           onAccountChange={setSelectedAccountId}
           meta={null}
-          onReload={fetchDashboard}
+          onReload={loadDashboard}
           isLoading={isLoading}
         />
         <PageLoader
@@ -172,7 +160,7 @@ export function DashboardPage() {
           selectedAccountId={selectedAccountId}
           onAccountChange={setSelectedAccountId}
           meta={null}
-          onReload={fetchDashboard}
+          onReload={loadDashboard}
           isLoading={isLoading}
         />
         <ErrorState error={error || 'Unknown error'} onRetry={() => window.location.reload()} />
@@ -190,7 +178,7 @@ export function DashboardPage() {
         selectedAccountId={selectedAccountId}
         onAccountChange={setSelectedAccountId}
         meta={response.meta}
-        onReload={fetchDashboard}
+        onReload={loadDashboard}
         isLoading={isLoading}
       />
 
