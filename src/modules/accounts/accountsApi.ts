@@ -22,6 +22,8 @@ const fourbasedFetch = async (url: string, options: RequestInit = {}) => {
   return fetch(url, { ...options, headers });
 };
 
+let accountsCache: Account[] | null = null;
+
 export const accountsApi = {
   async getAccounts(): Promise<Account[]> {
     const response = await fourbasedFetch(`${getApiUrl()}/teams/${getTeamId()}/fourbased-users`);
@@ -31,19 +33,13 @@ export const accountsApi = {
     }
 
     const raw = await response.json();
-    return raw?.data?.accounts ?? [];
+    const accounts: Account[] = raw?.data?.accounts ?? [];
+    accountsCache = accounts;
+    return accounts;
   },
 
   async getAccount(fourbasedId: string): Promise<Account> {
-    // Try a dedicated single-account endpoint first; fall back to finding in the list
-    const listResponse = await fourbasedFetch(`${getApiUrl()}/teams/${getTeamId()}/fourbased-users`);
-
-    if (!listResponse.ok) {
-      throw new Error('Failed to fetch accounts');
-    }
-
-    const raw = await listResponse.json();
-    const list: Account[] = raw?.data?.accounts ?? [];
+    const list = accountsCache ?? await accountsApi.getAccounts();
     const account = list.find((a) => a.fourbased_id === fourbasedId);
 
     if (!account) {

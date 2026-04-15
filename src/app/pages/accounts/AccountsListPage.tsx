@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, memo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Users, AlertCircle } from 'lucide-react';
 import { Card } from '../../../components/ui/Card';
@@ -84,7 +84,7 @@ interface AccountRowProps {
   onClick: () => void;
 }
 
-function AccountRow({ account, onClick }: AccountRowProps) {
+const AccountRow = memo(function AccountRow({ account, onClick }: AccountRowProps) {
   return (
     <tr
       className="hover:bg-slate-700/50 transition-colors cursor-pointer"
@@ -102,7 +102,7 @@ function AccountRow({ account, onClick }: AccountRowProps) {
       <td className="px-6 py-4 text-gray-400">{account.identifier}</td>
     </tr>
   );
-}
+});
 
 // ============================================================================
 // Helpers

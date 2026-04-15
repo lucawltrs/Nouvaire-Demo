@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, memo, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { Card } from '../../components/ui/Card';
 import { PageLoader } from '../../components/ui/PageLoader';
@@ -45,6 +45,8 @@ export function InboxPage() {
 
   // Per-row loading state (mark as read)
   const [rowLoading, setRowLoading] = useState<Set<string>>(new Set());
+  const rowLoadingRef = useRef(rowLoading);
+  useEffect(() => { rowLoadingRef.current = rowLoading; }, [rowLoading]);
 
   const setRowLoadingKey = (key: string, loading: boolean) => {
     setRowLoading((prev) => {
@@ -203,14 +205,14 @@ export function InboxPage() {
 
   useEffect(() => {
     if (!activeTabId) return;
-    const interval = setInterval(() => fetchChatsSilent(activeTabId), 5 * 1000);
+    const interval = setInterval(() => fetchChatsSilent(activeTabId), 30 * 1000);
     return () => clearInterval(interval);
   }, [activeTabId, fetchChatsSilent]);
 
   const handleMarkAsRead = useCallback(
     async (chat: ChatListItem) => {
       const key = `${chat.fourbased_id}:${chat.chat_id}`;
-      if (rowLoading.has(key)) return;
+      if (rowLoadingRef.current.has(key)) return;
       setRowLoadingKey(key, true);
       const loadingId = toast.info('Marking as read…', 0);
       try {
@@ -236,7 +238,7 @@ export function InboxPage() {
         setRowLoadingKey(key, false);
       }
     },
-    [filter, rowLoading]
+    [filter]
   );
 
   const displayedChats = searchQuery.trim().length >= 3 ? (searchResults ?? []) : chats;
@@ -390,7 +392,7 @@ interface ChatRowProps {
   onMarkAsRead: (chat: ChatListItem) => void;
 }
 
-function ChatRow({ chat, isLoading, onMarkAsRead }: ChatRowProps) {
+const ChatRow = memo(function ChatRow({ chat, isLoading, onMarkAsRead }: ChatRowProps) {
   return (
     <Link
       to={`/inbox/${chat.fourbased_id}/chat/${chat.chat_id}`}
@@ -463,7 +465,7 @@ function ChatRow({ chat, isLoading, onMarkAsRead }: ChatRowProps) {
       </div>
     </Link>
   );
-}
+});
 
 // ============================================================================
 // Account Avatar

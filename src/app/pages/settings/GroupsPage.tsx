@@ -66,13 +66,13 @@ export function GroupsPage() {
     }
     try {
       setIsSubmitting(true);
-      await groupsApi.create({
+      const newGroup = await groupsApi.create({
         name: form.name.trim(),
         ...(form.description.trim() && { description: form.description.trim() }),
       });
       toast.success('Group created successfully');
       setIsCreateModalOpen(false);
-      await fetchGroups();
+      setGroups((prev) => [...prev, newGroup]);
     } catch (err) {
       console.error('Failed to create group:', err);
       toast.error('Failed to create group. Please try again.');
@@ -83,12 +83,19 @@ export function GroupsPage() {
 
   const handleRemoveMember = async () => {
     if (!removeMemberTarget) return;
+    const { group, member } = removeMemberTarget;
     try {
       setIsRemoving(true);
-      await groupsApi.removeMember(removeMemberTarget.group.id, removeMemberTarget.member.id);
+      await groupsApi.removeMember(group.id, member.id);
       toast.success('Member removed from group');
       setRemoveMemberTarget(null);
-      await fetchGroups();
+      setGroups((prev) =>
+        prev.map((g) =>
+          g.id === group.id
+            ? { ...g, team_users: g.team_users.filter((tu) => tu.id !== member.id) }
+            : g
+        )
+      );
     } catch (err) {
       console.error('Failed to remove member:', err);
       toast.error('Failed to remove member. Please try again.');
