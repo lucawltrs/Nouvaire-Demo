@@ -98,11 +98,10 @@ export function InboxChatPage() {
 
   const filteredChats = searchQuery.trim().length >= 3 ? (searchResults ?? []) : chats;
 
-  const fetchChats = useCallback(async () => {
+  const loadChats = useCallback(async (silent = false) => {
     if (!fourbased_id) return;
     try {
-      setIsLoadingChats(true);
-      setChatsError(null);
+      if (!silent) { setIsLoadingChats(true); setChatsError(null); }
       const data = await inboxApi.getChats({ days: 30, filter: 'all', limit: 100, scope: 'single', fourbased_id });
       const flatChats = data.data.flatMap((entry) =>
         entry.members.flatMap((m) =>
@@ -113,15 +112,15 @@ export function InboxChatPage() {
       );
       setChats(flatChats);
     } catch {
-      setChatsError('Chats konnten nicht geladen werden.');
+      if (!silent) setChatsError('Chats konnten nicht geladen werden.');
     } finally {
-      setIsLoadingChats(false);
+      if (!silent) setIsLoadingChats(false);
     }
-  }, [fourbased_id]); // only re-fetch when account changes, not on every chat switch
+  }, [fourbased_id]);
 
   useEffect(() => {
-    fetchChats();
-  }, [fetchChats]);
+    loadChats();
+  }, [loadChats]);
 
   // If the active chat is not in the loaded list (e.g. older than 30 days or beyond limit),
   // fetch it individually via search by chat_id and inject it into the list.
@@ -147,11 +146,7 @@ export function InboxChatPage() {
     setSearchLoading(true);
     const timeoutId = setTimeout(async () => {
       try {
-        const results = await inboxApi.searchChats({
-          query: q,
-          limit: 60,
-          fourbased_id,
-        });
+        const results = await inboxApi.searchChats({ query: q, limit: 60, fourbased_id });
         setSearchResults(results);
       } catch {
         setSearchResults([]);
@@ -165,32 +160,15 @@ export function InboxChatPage() {
     };
   }, [searchQuery, fourbased_id]);
 
-  // Silent background refresh for the chat list (every 2 minutes)
-  const fetchChatsSilent = useCallback(async () => {
-    if (!fourbased_id) return;
-    try {
-      const data = await inboxApi.getChats({ days: 30, filter: 'all', limit: 100, scope: 'single', fourbased_id });
-      const flatChats = data.data.flatMap((entry) =>
-        entry.members.flatMap((m) =>
-          m.accounts
-            .filter((a) => a.fourbased_id === fourbased_id)
-            .flatMap((a) => a.chats)
-        )
-      );
-      setChats(flatChats);
-    } catch {
-      // Silently ignore errors during background refresh
-    }
-  }, [fourbased_id]);
-
+  // Silent background refresh for the chat list (every 30 seconds)
   useEffect(() => {
-    const interval = setInterval(fetchChatsSilent, 30 * 1000);
+    const interval = setInterval(() => loadChats(true), 30 * 1000);
     return () => clearInterval(interval);
-  }, [fetchChatsSilent]);
+  }, [loadChats]);
 
   // Silent background refresh for messages in the active chat (every 30 seconds)
   useEffect(() => {
-    const interval = setInterval(refreshSilent, 5 * 1000);
+    const interval = setInterval(refreshSilent, 10 * 1000);
     return () => clearInterval(interval);
   }, [refreshSilent]);
 
