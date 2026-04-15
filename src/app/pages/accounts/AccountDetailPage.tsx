@@ -3,8 +3,6 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import {
   ArrowLeft,
   Circle,
-  Inbox,
-  Cloud,
   DollarSign,
   Heart,
   Image,
@@ -34,7 +32,7 @@ import { inboxApi } from '../../../modules/inbox/services/inbox.api';
 import type { ConfiguredMessage, ConfiguredMessageCategory } from '../../../modules/inbox/types';
 import { useAuthStore } from '../../../lib/auth/useAuthStore';
 
-type Tab = 'overview' | 'inbox' | 'cloud' | 'settings';
+type Tab = 'overview' | 'settings';
 
 export function AccountDetailPage() {
   const { fourbased_id } = useParams<{ fourbased_id: string }>();
@@ -143,29 +141,12 @@ export function AccountDetailPage() {
             </div>
           </div>
 
-          {/* Right: action buttons */}
-          <div className="flex gap-3 flex-wrap">
-            <Link
-              to={`/inbox?fourbased_id=${account.fourbased_id}`}
-              className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-300 bg-card border border-slate-600 rounded-lg hover:bg-slate-700 transition-colors"
-            >
-              <Inbox size={16} />
-              Open Inbox
-            </Link>
-            <Link
-              to={`/cloud/users/${account.fourbased_id}`}
-              className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-[#ED4C27] hover:bg-[#D8431F] rounded-lg transition-colors shadow-sm"
-            >
-              <Cloud size={16} />
-              Open Cloud
-            </Link>
-          </div>
         </div>
       </Card>
 
       {/* Tabs */}
       <div className="flex border-b border-slate-700 gap-1">
-        {(['overview', 'inbox', 'cloud', 'settings'] as Tab[]).map((tab) => (
+        {(['overview', 'settings'] as Tab[]).map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
@@ -182,8 +163,6 @@ export function AccountDetailPage() {
 
       {/* Tab Content */}
       {activeTab === 'overview' && <OverviewTab account={account} />}
-      {activeTab === 'inbox' && <InboxTab fourbasedId={account.fourbased_id} />}
-      {activeTab === 'cloud' && <CloudTab fourbasedId={account.fourbased_id} />}
       {activeTab === 'settings' && <SettingsTab fourbasedId={account.fourbased_id} />}
     </div>
   );
@@ -296,60 +275,6 @@ function KpiCard({ title, value, icon: Icon, gradient, subtitle }: KpiCardProps)
       </div>
       <p className="text-2xl font-bold text-gray-100 mb-1">{value}</p>
       <p className="text-xs text-gray-500">{subtitle}</p>
-    </Card>
-  );
-}
-
-// ============================================================================
-// Inbox Tab
-// ============================================================================
-
-function InboxTab({ fourbasedId }: { fourbasedId: string }) {
-  return (
-    <Card className="p-8 border border-slate-600">
-      <div className="text-center max-w-sm mx-auto">
-        <div className="w-14 h-14 rounded-full bg-slate-700 flex items-center justify-center mx-auto mb-4">
-          <Inbox size={24} className="text-gray-400" />
-        </div>
-        <h3 className="text-base font-semibold text-gray-100 mb-2">View this account's inbox</h3>
-        <p className="text-sm text-gray-400 mb-5">
-          All conversations for this account are managed in the Inbox section.
-        </p>
-        <Link
-          to={`/inbox?fourbased_id=${fourbasedId}`}
-          className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-white bg-[#ED4C27] hover:bg-[#D8431F] rounded-lg transition-colors shadow-sm"
-        >
-          <Inbox size={16} />
-          Open Inbox
-        </Link>
-      </div>
-    </Card>
-  );
-}
-
-// ============================================================================
-// Cloud Tab
-// ============================================================================
-
-function CloudTab({ fourbasedId }: { fourbasedId: string }) {
-  return (
-    <Card className="p-8 border border-slate-600">
-      <div className="text-center max-w-sm mx-auto">
-        <div className="w-14 h-14 rounded-full bg-slate-700 flex items-center justify-center mx-auto mb-4">
-          <Cloud size={24} className="text-gray-400" />
-        </div>
-        <h3 className="text-base font-semibold text-gray-100 mb-2">View this account's cloud assets</h3>
-        <p className="text-sm text-gray-400 mb-5">
-          All media and files for this account are stored in the Cloud section.
-        </p>
-        <Link
-          to={`/cloud/users/${fourbasedId}`}
-          className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-white bg-[#ED4C27] hover:bg-[#D8431F] rounded-lg transition-colors shadow-sm"
-        >
-          <Cloud size={16} />
-          Open Cloud
-        </Link>
-      </div>
     </Card>
   );
 }

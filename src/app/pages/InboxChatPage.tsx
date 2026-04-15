@@ -585,9 +585,6 @@ export function InboxChatPage() {
                 <AccountAvatar src={activeChat.customer_avatar_url ?? undefined} name={activeChat.customer_name} size="md" isOnline={activeChat.customer_is_online} />
                 <div className="min-w-0 flex-1">
                   <h1 className="text-lg font-bold text-gray-100 truncate">{activeChat.customer_name}</h1>
-                  <div className="mt-1">
-                    <Badge>Zuletzt aktiv: {formatChatTimestamp(activeChat.last_message_at)}</Badge>
-                  </div>
                 </div>
                 {/* Profile link */}
                 <a
