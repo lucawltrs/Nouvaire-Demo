@@ -209,6 +209,24 @@ export function InboxPage() {
     return () => clearInterval(interval);
   }, [activeTabId, fetchChatsSilent]);
 
+  // React to chats being marked as read from other pages (e.g. InboxChatPage after reply)
+  useEffect(() => {
+    return newMessageNotifications.onChatRead((fourbasedId, chatId) => {
+      const key = `${fourbasedId}:${chatId}`;
+      if (filter === 'unread') {
+        setChats((prev) => prev.filter((c) => `${c.fourbased_id}:${c.chat_id}` !== key));
+      } else {
+        setChats((prev) =>
+          prev.map((c) =>
+            `${c.fourbased_id}:${c.chat_id}` === key
+              ? { ...c, is_unread: false, unread_count: 0 }
+              : c
+          )
+        );
+      }
+    });
+  }, [filter]);
+
   const handleMarkAsRead = useCallback(
     async (chat: ChatListItem) => {
       const key = `${chat.fourbased_id}:${chat.chat_id}`;
