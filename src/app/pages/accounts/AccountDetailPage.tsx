@@ -289,7 +289,7 @@ function SettingsTab({ fourbasedId }: { fourbasedId: string }) {
 
   return (
     <div className="space-y-6">
-      {isAdmin && <CategoriesCard />}
+      {isAdmin && <CategoriesCard fourbasedId={fourbasedId} />}
       <ConfiguredMessagesCard fourbasedId={fourbasedId} isAdmin={isAdmin} />
     </div>
   );
@@ -297,7 +297,7 @@ function SettingsTab({ fourbasedId }: { fourbasedId: string }) {
 
 // ── Categories Card (admin only) ─────────────────────────────────────────────
 
-function CategoriesCard() {
+function CategoriesCard({ fourbasedId }: { fourbasedId: string }) {
   const [categories, setCategories] = useState<ConfiguredMessageCategory[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -314,7 +314,7 @@ function CategoriesCard() {
     setIsLoading(true);
     setError(null);
     try {
-      setCategories(await inboxApi.getConfiguredMessageCategories());
+      setCategories(await inboxApi.getConfiguredMessageCategories(fourbasedId));
     } catch {
       setError('Kategorien konnten nicht geladen werden.');
     } finally {
@@ -329,7 +329,7 @@ function CategoriesCard() {
     if (!name) return;
     setIsAdding(true);
     try {
-      const created = await inboxApi.createConfiguredMessageCategory({ name, color: newColor });
+      const created = await inboxApi.createConfiguredMessageCategory(fourbasedId, { name, color: newColor });
       setCategories((prev) => [...prev, created]);
       setNewName('');
     } catch {
@@ -344,7 +344,7 @@ function CategoriesCard() {
     if (!name) return;
     setSavingId(id);
     try {
-      const updated = await inboxApi.updateConfiguredMessageCategory(id, { name, color: editColor });
+      const updated = await inboxApi.updateConfiguredMessageCategory(fourbasedId, id, { name, color: editColor });
       setCategories((prev) => prev.map((c) => (c.id === id ? updated : c)));
       setEditId(null);
       setEditName('');
@@ -358,7 +358,7 @@ function CategoriesCard() {
   const handleDelete = async (id: number) => {
     setDeletingId(id);
     try {
-      await inboxApi.deleteConfiguredMessageCategory(id);
+      await inboxApi.deleteConfiguredMessageCategory(fourbasedId, id);
       setCategories((prev) => prev.filter((c) => c.id !== id));
     } catch {
       setError('Kategorie konnte nicht gelöscht werden.');
@@ -511,7 +511,7 @@ function ConfiguredMessagesCard({ fourbasedId, isAdmin }: { fourbasedId: string;
     try {
       const [msgs, cats] = await Promise.all([
         inboxApi.getConfiguredMessages(fourbasedId),
-        inboxApi.getConfiguredMessageCategories(),
+        inboxApi.getConfiguredMessageCategories(fourbasedId),
       ]);
       setMessages(msgs);
       setCategories(cats);
