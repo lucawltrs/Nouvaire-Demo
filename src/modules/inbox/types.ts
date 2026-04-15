@@ -137,6 +137,14 @@ export interface ConfiguredMessage {
   };
 }
 
+export interface PivotPriceOverrideData {
+  effective_message_price: number;
+  is_override: boolean;
+  global_message_price: number;
+  cooldown_active: boolean;
+  cooldown_expires_at: string | null;
+}
+
 export interface PivotData {
   _id?: string;
   alias?: string;
@@ -146,4 +154,5 @@ export interface PivotData {
   auto_follow_message_sent?: boolean;
   has_payed_chat_unlock_price?: boolean;
   created_at?: string;
+  price_override?: { data: PivotPriceOverrideData } | null;
 }
