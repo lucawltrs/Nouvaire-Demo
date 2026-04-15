@@ -20,6 +20,7 @@ import { ChatMessageList } from '../../modules/4based/components/ChatMessageList
 import { sendChatMessage, createFileStack, updateFileStack } from '../../modules/4based/services/4based.api';
 import type { FourBasedChatMessage } from '../../modules/4based/services/4based.api';
 import { toast } from '../../lib/toast';
+import { newMessageNotifications } from '../../lib/newMessageNotifications';
 
 const formatChatTimestamp = (value?: string) => {
   if (!value) return '-';
@@ -378,6 +379,8 @@ export function InboxChatPage() {
       await sendChatMessage(fourbased_id, sentForChatId, trimmed);
       if (currentChatIdRef.current === sentForChatId) {
         await refresh();
+        inboxApi.markChatAsRead(fourbased_id, sentForChatId).catch(() => {});
+        newMessageNotifications.markChatRead(fourbased_id, sentForChatId);
       }
     } catch (err) {
       if (currentChatIdRef.current === sentForChatId) {

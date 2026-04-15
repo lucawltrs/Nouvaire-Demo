@@ -17,6 +17,8 @@ import {
 } from '../../modules/dashboard';
 import { ToastContainer, toast } from '../../lib/toast';
 import { unreadCountStore } from '../../lib/unreadCountStore';
+import { inboxApi } from '../../modules/inbox/services/inbox.api';
+import { newMessageNotifications } from '../../lib/newMessageNotifications';
 
 type RangeDays = 7 | 30 | 90;
 
@@ -598,6 +600,8 @@ function ReplyPopup({ chat, onClose }: ReplyPopupProps) {
     setError(null);
     try {
       await sendChatMessage(chat.fourbased_id, chat.chat_id, text);
+      inboxApi.markChatAsRead(chat.fourbased_id, chat.chat_id).catch(() => {});
+      newMessageNotifications.markChatRead(chat.fourbased_id, chat.chat_id);
       setSent(true);
       setTimeout(onClose, 1200);
     } catch {

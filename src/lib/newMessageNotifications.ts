@@ -7,12 +7,14 @@ export interface NewMessageNotification {
 }
 
 type Listener = (notifications: NewMessageNotification[]) => void;
+type ChatReadListener = (fourbasedId: string, chatId: string) => void;
 
 class NewMessageNotificationStore {
   private knownChats = new Map<string, { unread_count: number; is_unread: boolean }>();
   private initialized = false;
   private pending: NewMessageNotification[] = [];
   private listeners = new Set<Listener>();
+  private chatReadListeners = new Set<ChatReadListener>();
   private dismissTimers = new Map<string, ReturnType<typeof setTimeout>>();
 
   private notify() {
@@ -22,6 +24,11 @@ class NewMessageNotificationStore {
   subscribe(fn: Listener) {
     this.listeners.add(fn);
     return () => this.listeners.delete(fn);
+  }
+
+  onChatRead(fn: ChatReadListener) {
+    this.chatReadListeners.add(fn);
+    return () => this.chatReadListeners.delete(fn);
   }
 
   /**
@@ -106,6 +113,7 @@ class NewMessageNotificationStore {
       (n) => n.chat.fourbased_id === fourbasedId && n.chat.chat_id === chatId
     );
     for (const n of toRemove) this.dismiss(n.id);
+    this.chatReadListeners.forEach((fn) => fn(fourbasedId, chatId));
   }
 }
 
