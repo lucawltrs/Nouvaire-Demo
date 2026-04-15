@@ -179,7 +179,7 @@ export function DashboardPage() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-4 sm:space-y-8">
       <ToastContainer />
       <DashboardHeader
         rangeDays={rangeDays}
@@ -193,10 +193,12 @@ export function DashboardPage() {
       />
 
       {kpis && (
-        <KpiGrid 
-          kpis={kpis} 
-          isAggregated={selectedAccountId === 'all'}
-        />
+        <div className="hidden sm:block">
+          <KpiGrid
+            kpis={kpis}
+            isAggregated={selectedAccountId === 'all'}
+          />
+        </div>
       )}
 
       {chats.length > 0 && (
@@ -256,7 +258,7 @@ function DashboardHeader({
       <div>
         <h1 className="text-2xl sm:text-3xl font-bold text-gray-100">Dashboard</h1>
         {meta && (
-          <p className="mt-2 text-xs sm:text-sm text-gray-400">
+          <p className="hidden sm:block mt-2 text-xs sm:text-sm text-gray-400">
             Last updated: {formatDate(meta.generated_at)} • Accounts: {meta.total_accounts}
           </p>
         )}
@@ -266,14 +268,14 @@ function DashboardHeader({
         {/* Reload Button */}
         <button
           onClick={onReload}
-          className={`flex items-center justify-center px-3 sm:px-4 py-2 bg-[#ED4C27] hover:bg-[#D8431F] border border-[#ED4C27] hover:border-[#D8431F] rounded-lg transition-colors shadow-sm hover:shadow-md ${isLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
+          className={`hidden sm:flex items-center justify-center px-3 sm:px-4 py-2 bg-[#ED4C27] hover:bg-[#D8431F] border border-[#ED4C27] hover:border-[#D8431F] rounded-lg transition-colors shadow-sm hover:shadow-md ${isLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
           title="Reload dashboard"
           disabled={isLoading}
         >
           <RotateCcw size={20} className="text-white" style={isLoading ? { animation: 'spin-ccw 1s linear infinite' } : {}} />
         </button>
         {/* Range Selector */}
-        <div className="flex rounded-lg border border-slate-600 bg-card overflow-hidden">
+        <div className="hidden sm:flex rounded-lg border border-slate-600 bg-card overflow-hidden">
           {([7, 30, 90] as RangeDays[]).map((range) => (
             <button
               key={range}
@@ -290,7 +292,7 @@ function DashboardHeader({
         </div>
 
         {/* Account Selector */}
-        <div className="relative">
+        <div className="hidden sm:block relative">
           <button
             onClick={() => setIsAccountDropdownOpen(!isAccountDropdownOpen)}
             className="flex items-center gap-2 px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-gray-300 bg-card border border-slate-600 rounded-lg hover:bg-slate-700 transition-colors min-w-0 max-w-[200px] sm:max-w-none"
@@ -475,7 +477,7 @@ function LatestChatsSection({ chats, showAccountName, onChatMarkedAsRead }: Late
 
   return (
     <div>
-      <h2 className="text-xl sm:text-2xl font-bold text-gray-100 mb-4">Latest unread chats</h2>
+      <h2 className="hidden sm:block text-xl sm:text-2xl font-bold text-gray-100 mb-4">Latest unread chats</h2>
       <Card className="divide-y divide-slate-700 border border-slate-600">
         {chats.map((chat) => {
           const chatKey = `${chat.fourbased_id}:${chat.chat_id}`;
