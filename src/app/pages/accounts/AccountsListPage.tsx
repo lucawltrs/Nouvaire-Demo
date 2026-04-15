@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Users, ChevronRight, AlertCircle, Circle } from 'lucide-react';
+import { Users, AlertCircle } from 'lucide-react';
 import { Card } from '../../../components/ui/Card';
 import { PageLoader } from '../../../components/ui/PageLoader';
 import { accountsApi } from '../../../modules/accounts/accountsApi';
@@ -54,12 +54,7 @@ export function AccountsListPage() {
                 <thead>
                   <tr className="border-b border-slate-700 bg-slate-800/50">
                     <th className="text-left px-6 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">Account</th>
-                    <th className="text-left px-6 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">Identifier</th>
-                    <th className="text-left px-6 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">Status</th>
-                    <th className="text-right px-6 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">Revenue</th>
-                    <th className="text-right px-6 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">Followers</th>
-                    <th className="text-left px-6 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">Last Activity</th>
-                    <th className="px-6 py-3" />
+                    <th className="text-left px-6 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">E-Mail</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-700">
@@ -103,52 +98,8 @@ function AccountRow({ account, onClick }: AccountRowProps) {
         </div>
       </td>
 
-      {/* Identifier */}
+      {/* E-Mail */}
       <td className="px-6 py-4 text-gray-400">{account.identifier}</td>
-
-      {/* Online status */}
-      <td className="px-6 py-4">
-        <span
-          className={`inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full ${
-            account.is_online === true
-              ? 'bg-green-900/40 text-green-400'
-              : 'bg-slate-700 text-gray-400'
-          }`}
-        >
-          <Circle
-            size={7}
-            style={{ color: account.online_status_dot === 'green' ? '#22c55e' : '#64748b' }}
-            className={account.is_online === true ? 'fill-green-400' : 'fill-gray-500'}
-          />
-          {account.is_online === true ? 'Online' : account.is_online === false ? 'Offline' : '—'}
-        </span>
-      </td>
-
-      {/* Revenue */}
-      <td className="px-6 py-4 text-right font-medium text-gray-100">
-        {account.revenue ?? '—'}
-      </td>
-
-      {/* Followers */}
-      <td className="px-6 py-4 text-right text-gray-300">
-        {account.followers != null ? (account.followers as number).toLocaleString() : '—'}
-      </td>
-
-      {/* Last Activity */}
-      <td className="px-6 py-4 text-gray-400">
-        {account.last_activity ?? '—'}
-      </td>
-
-      {/* Action */}
-      <td className="px-6 py-4">
-        <button
-          onClick={(e) => { e.stopPropagation(); onClick(); }}
-          className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-gray-300 hover:text-white bg-slate-700 hover:bg-slate-600 border border-slate-600 hover:border-slate-500 rounded-lg transition-all"
-        >
-          Open
-          <ChevronRight size={14} />
-        </button>
-      </td>
     </tr>
   );
 }

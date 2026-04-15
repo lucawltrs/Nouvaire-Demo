@@ -11,7 +11,6 @@ import FourBasedModelsPage from './app/pages/FourBasedModelsPage';
 import { FourBasedModelDetailPage } from './modules/4based/pages/FourBasedModelDetailPage';
 import { FourBasedModelStatisticsPage } from './modules/4based/pages/FourBasedModelStatisticsPage';
 import { FourBasedModelChatsPage } from './modules/4based/pages/FourBasedModelChatsPage';
-import { FourBasedModelSingleChatPage } from './modules/4based/pages/FourBasedModelSingleChatPage';
 import { useAuthStore } from './lib/auth/useAuthStore';
 import CloudOverviewPage from './app/pages/cloud/CloudOverviewPage';
 import CloudUserAssetsPage from './app/pages/cloud/CloudUserAssetsPage';
@@ -116,16 +115,6 @@ function App() {
               <ProtectedRoute>
                 <MainLayout>
                   <FourBasedModelChatsPage />
-                </MainLayout>
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/4based/models/:fourbasedId/chats/:chatId"
-            element={
-              <ProtectedRoute>
-                <MainLayout>
-                  <FourBasedModelSingleChatPage />
                 </MainLayout>
               </ProtectedRoute>
             }
