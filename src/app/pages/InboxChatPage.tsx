@@ -182,7 +182,7 @@ export function InboxChatPage() {
   }, [fourbased_id]);
 
   useEffect(() => {
-    const interval = setInterval(fetchChatsSilent, 5 * 1000);
+    const interval = setInterval(fetchChatsSilent, 30 * 1000);
     return () => clearInterval(interval);
   }, [fetchChatsSilent]);
 
