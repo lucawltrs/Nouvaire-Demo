@@ -13,7 +13,7 @@ import { Modal } from '../../components/ui/Modal';
 import { cloudApi, unblurUrl } from '../../modules/cloud/cloudApi';
 import type { CloudAsset } from '../../modules/cloud/types';
 import { inboxApi } from '../../modules/inbox/services/inbox.api';
-import type { ChatListItem, ConfiguredMessage, ConfiguredMessageCategory, PivotData } from '../../modules/inbox/types';
+import type { ChatListItem, ConfiguredMessage, ConfiguredMessageCategory, PivotData, AccountInfo } from '../../modules/inbox/types';
 import { ToastContainer } from '../../lib/toast';
 import { useChatMessages } from '../../modules/4based/hooks/useChatMessages';
 import { ChatMessageList } from '../../modules/4based/components/ChatMessageList';
@@ -53,6 +53,8 @@ export function InboxChatPage() {
   const [pivotEditNote, setPivotEditNote] = useState('');
   const [pivotEditPrice, setPivotEditPrice] = useState('');
   const [isSavingPivot, setIsSavingPivot] = useState(false);
+  const [accountInfo, setAccountInfo] = useState<AccountInfo | null>(null);
+  const [isAccountInfoLoading, setIsAccountInfoLoading] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [isVaultModalOpen, setIsVaultModalOpen] = useState(false);
   const [vaultItems, setVaultItems] = useState<CloudAsset[]>([]);
@@ -289,6 +291,16 @@ export function InboxChatPage() {
       : '');
     setIsEditingPivot(false);
   }, [pivotData]);
+
+  useEffect(() => {
+    if (!fourbased_id) { setAccountInfo(null); return; }
+    setIsAccountInfoLoading(true);
+    inboxApi.getAccountInfo(fourbased_id)
+      .then(setAccountInfo)
+      .catch(() => setAccountInfo(null))
+      .finally(() => setIsAccountInfoLoading(false));
+  }, [fourbased_id]);
+
 
   const handleSendVaultItem = async (description: string, priceInCents: number) => {
     if (!fourbased_id || !chat_id || selectedVaultItems.length === 0 || isSendingVault) return;
@@ -948,14 +960,15 @@ export function InboxChatPage() {
                   )}
                 </div>
               )}
+
             </div>
           </div>
         </div>,
         document.body
       )}
 
-      {/* Right panel: pivot info */}
-      {(isPivotLoading || pivotData || !!customerId) && (
+      {/* Right panel: pivot info + account info */}
+      {(isPivotLoading || pivotData || !!customerId || isAccountInfoLoading || accountInfo !== undefined) && (
         <aside className="hidden md:flex w-72 shrink-0 flex-col gap-2 min-h-0">
           {/* Pivot info card */}
           {isPivotLoading ? (
@@ -1051,6 +1064,79 @@ export function InboxChatPage() {
                     <p className="text-base text-gray-500">Keine Infos verfügbar.</p>
                   )}
                 </>
+              )}
+            </Card>
+          )}
+
+          {/* Account Info card – read-only */}
+          {isAccountInfoLoading ? (
+            <Card className="p-3 flex items-center justify-center">
+              <Loader2 size={16} className="animate-spin text-gray-400" />
+            </Card>
+          ) : (
+            <Card className="p-3 flex flex-col gap-2">
+              <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">Account Info</p>
+              {accountInfo ? (
+                <div className="grid grid-cols-2 gap-x-3 gap-y-2">
+                  {accountInfo.name && (
+                    <div>
+                      <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-0.5">Name</p>
+                      <p className="text-xs text-gray-100 leading-snug">{accountInfo.name}</p>
+                    </div>
+                  )}
+                  {accountInfo.age != null && (
+                    <div>
+                      <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-0.5">Alter</p>
+                      <p className="text-xs text-gray-100 leading-snug">{accountInfo.age}</p>
+                    </div>
+                  )}
+                  {accountInfo.origin && (
+                    <div>
+                      <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-0.5">Herkunft</p>
+                      <p className="text-xs text-gray-100 leading-snug">{accountInfo.origin}</p>
+                    </div>
+                  )}
+                  {accountInfo.occupation && (
+                    <div>
+                      <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-0.5">Beruf</p>
+                      <p className="text-xs text-gray-100 leading-snug">{accountInfo.occupation}</p>
+                    </div>
+                  )}
+                  {accountInfo.bra_size && (
+                    <div>
+                      <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-0.5">BH-Größe</p>
+                      <p className="text-xs text-gray-100 leading-snug">{accountInfo.bra_size}</p>
+                    </div>
+                  )}
+                  {accountInfo.taboos && accountInfo.taboos.length > 0 && (
+                    <div className="col-span-2">
+                      <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-0.5">Taboos</p>
+                      <div className="flex flex-wrap gap-1">
+                        {accountInfo.taboos.map((t) => (
+                          <span key={t} className="text-[10px] bg-slate-700 text-gray-300 rounded px-1.5 py-0.5">{t}</span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {accountInfo.hobbies && accountInfo.hobbies.length > 0 && (
+                    <div className="col-span-2">
+                      <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-0.5">Hobbys</p>
+                      <div className="flex flex-wrap gap-1">
+                        {accountInfo.hobbies.map((h) => (
+                          <span key={h} className="text-[10px] bg-slate-700 text-gray-300 rounded px-1.5 py-0.5">{h}</span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {accountInfo.notes && (
+                    <div className="col-span-2">
+                      <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-0.5">Notizen</p>
+                      <p className="text-xs text-gray-300 leading-snug whitespace-pre-wrap">{accountInfo.notes}</p>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <p className="text-xs text-gray-500">Keine Account Infos hinterlegt.</p>
               )}
             </Card>
           )}

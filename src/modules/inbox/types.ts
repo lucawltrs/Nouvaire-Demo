@@ -156,3 +156,18 @@ export interface PivotData {
   created_at?: string;
   price_override?: { data: PivotPriceOverrideData } | null;
 }
+
+export interface AccountInfo {
+  id?: number;
+  fourbased_user_id?: number;
+  name?: string;
+  age?: number;
+  origin?: string;
+  occupation?: string;
+  bra_size?: string;
+  taboos?: string[];
+  hobbies?: string[];
+  notes?: string;
+  created_at?: string;
+  updated_at?: string;
+}
