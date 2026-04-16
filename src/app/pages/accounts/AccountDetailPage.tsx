@@ -29,7 +29,10 @@ import { accountsApi } from '../../../modules/accounts/accountsApi';
 import type { Account } from '../../../modules/accounts/types';
 import { formatCurrency, formatRelativeTime } from '../../../modules/dashboard';
 import { inboxApi } from '../../../modules/inbox/services/inbox.api';
-import type { ConfiguredMessage, ConfiguredMessageCategory } from '../../../modules/inbox/types';
+import type { ConfiguredMessage, ConfiguredMessageCategory, AccountInfo } from '../../../modules/inbox/types';
+import { Input } from '../../../components/ui/Input';
+import { Textarea } from '../../../components/ui/Textarea';
+import { Button } from '../../../components/ui/Button';
 import { useAuthStore } from '../../../lib/auth/useAuthStore';
 
 type Tab = 'overview' | 'settings';
@@ -173,6 +176,70 @@ export function AccountDetailPage() {
 // ============================================================================
 
 function OverviewTab({ account }: { account: Account }) {
+  const { team } = useAuthStore();
+  const isAdmin = team?.role === 'admin';
+
+  const [accountInfo, setAccountInfo] = useState<AccountInfo | null>(null);
+  const [isAccountInfoLoading, setIsAccountInfoLoading] = useState(true);
+  const [isEditingAccountInfo, setIsEditingAccountInfo] = useState(false);
+  const [isSavingAccountInfo, setIsSavingAccountInfo] = useState(false);
+  const [accountInfoError, setAccountInfoError] = useState<string | null>(null);
+  const [editName, setEditName] = useState('');
+  const [editAge, setEditAge] = useState('');
+  const [editOrigin, setEditOrigin] = useState('');
+  const [editOccupation, setEditOccupation] = useState('');
+  const [editBraSize, setEditBraSize] = useState('');
+  const [editTaboos, setEditTaboos] = useState('');
+  const [editHobbies, setEditHobbies] = useState('');
+  const [editNotes, setEditNotes] = useState('');
+
+  useEffect(() => {
+    if (!account.fourbased_id) return;
+    setIsAccountInfoLoading(true);
+    inboxApi.getAccountInfo(account.fourbased_id)
+      .then(setAccountInfo)
+      .catch(() => setAccountInfo(null))
+      .finally(() => setIsAccountInfoLoading(false));
+  }, [account.fourbased_id]);
+
+  useEffect(() => {
+    setEditName(accountInfo?.name ?? '');
+    setEditAge(accountInfo?.age != null ? String(accountInfo.age) : '');
+    setEditOrigin(accountInfo?.origin ?? '');
+    setEditOccupation(accountInfo?.occupation ?? '');
+    setEditBraSize(accountInfo?.bra_size ?? '');
+    setEditTaboos((accountInfo?.taboos ?? []).join(', '));
+    setEditHobbies((accountInfo?.hobbies ?? []).join(', '));
+    setEditNotes(accountInfo?.notes ?? '');
+    setIsEditingAccountInfo(false);
+  }, [accountInfo]);
+
+  const handleSaveAccountInfo = async () => {
+    if (!account.fourbased_id) return;
+    setIsSavingAccountInfo(true);
+    setAccountInfoError(null);
+    try {
+      const payload = {
+        name: editName.trim() || undefined,
+        age: editAge.trim() !== '' ? parseInt(editAge, 10) : undefined,
+        origin: editOrigin.trim() || undefined,
+        occupation: editOccupation.trim() || undefined,
+        bra_size: editBraSize.trim() || undefined,
+        taboos: editTaboos.trim() ? editTaboos.split(',').map(s => s.trim()).filter(Boolean) : undefined,
+        hobbies: editHobbies.trim() ? editHobbies.split(',').map(s => s.trim()).filter(Boolean) : undefined,
+        notes: editNotes.trim() || undefined,
+      };
+      const updated = accountInfo
+        ? await inboxApi.updateAccountInfo(account.fourbased_id, payload)
+        : await inboxApi.createAccountInfo(account.fourbased_id, payload);
+      setAccountInfo(updated);
+    } catch {
+      setAccountInfoError('Account Info konnte nicht gespeichert werden.');
+    } finally {
+      setIsSavingAccountInfo(false);
+    }
+  };
+
   const hasStats =
     account.total_netto_amount != null ||
     account.follower_count != null ||
@@ -181,77 +248,229 @@ function OverviewTab({ account }: { account: Account }) {
     account.file_stack_with_price_count != null ||
     account.has_subscription_configuration != null;
 
-  if (!hasStats) {
-    return (
-      <Card className="p-8 border border-slate-600">
-        <div className="text-center text-gray-400">
-          <Users className="w-10 h-10 mx-auto mb-3 opacity-40" />
-          <p className="text-sm">Detailed stats are not available for this account.</p>
-        </div>
-      </Card>
-    );
-  }
-
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-      {account.total_netto_amount != null && (
-        <KpiCard
-          title="Revenue"
-          value={formatCurrency(account.total_netto_amount)}
-          icon={DollarSign}
-          gradient="from-[#ED4C27] to-[#D8431F]"
-          subtitle="Net total"
-        />
+    <div className="space-y-6">
+      {/* KPI Cards */}
+      {hasStats && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {account.total_netto_amount != null && (
+            <KpiCard
+              title="Revenue"
+              value={formatCurrency(account.total_netto_amount)}
+              icon={DollarSign}
+              gradient="from-[#ED4C27] to-[#D8431F]"
+              subtitle="Net total"
+            />
+          )}
+          {account.follower_count != null && (
+            <KpiCard
+              title="Followers"
+              value={account.follower_count.toLocaleString()}
+              icon={Users}
+              gradient="from-[#ED4C27] to-[#D8431F]"
+              subtitle="Total followers"
+            />
+          )}
+          {account.likes_count != null && (
+            <KpiCard
+              title="Likes"
+              value={account.likes_count.toLocaleString()}
+              icon={Heart}
+              gradient="from-pink-500 to-rose-500"
+              subtitle="Total likes"
+            />
+          )}
+          {account.file_stack_count != null && (
+            <KpiCard
+              title="File Stack"
+              value={account.file_stack_count.toLocaleString()}
+              icon={Image}
+              gradient="from-violet-500 to-purple-500"
+              subtitle="Total files"
+            />
+          )}
+          {account.file_stack_with_price_count != null && (
+            <KpiCard
+              title="Paid Content"
+              value={account.file_stack_with_price_count.toLocaleString()}
+              icon={Layers}
+              gradient="from-blue-500 to-indigo-500"
+              subtitle="Files with price"
+            />
+          )}
+          {account.has_subscription_configuration != null && (
+            <KpiCard
+              title="Subscription"
+              value={account.has_subscription_configuration ? 'Configured' : 'Not set'}
+              icon={account.has_subscription_configuration ? CheckCircle2 : XCircle}
+              gradient={
+                account.has_subscription_configuration
+                  ? 'from-green-500 to-emerald-500'
+                  : 'from-gray-500 to-slate-500'
+              }
+              subtitle={account.has_subscription_configuration ? 'Active configuration' : 'No configuration'}
+            />
+          )}
+        </div>
       )}
-      {account.follower_count != null && (
-        <KpiCard
-          title="Followers"
-          value={account.follower_count.toLocaleString()}
-          icon={Users}
-          gradient="from-[#ED4C27] to-[#D8431F]"
-          subtitle="Total followers"
-        />
-      )}
-      {account.likes_count != null && (
-        <KpiCard
-          title="Likes"
-          value={account.likes_count.toLocaleString()}
-          icon={Heart}
-          gradient="from-pink-500 to-rose-500"
-          subtitle="Total likes"
-        />
-      )}
-      {account.file_stack_count != null && (
-        <KpiCard
-          title="File Stack"
-          value={account.file_stack_count.toLocaleString()}
-          icon={Image}
-          gradient="from-violet-500 to-purple-500"
-          subtitle="Total files"
-        />
-      )}
-      {account.file_stack_with_price_count != null && (
-        <KpiCard
-          title="Paid Content"
-          value={account.file_stack_with_price_count.toLocaleString()}
-          icon={Layers}
-          gradient="from-blue-500 to-indigo-500"
-          subtitle="Files with price"
-        />
-      )}
-      {account.has_subscription_configuration != null && (
-        <KpiCard
-          title="Subscription"
-          value={account.has_subscription_configuration ? 'Configured' : 'Not set'}
-          icon={account.has_subscription_configuration ? CheckCircle2 : XCircle}
-          gradient={
-            account.has_subscription_configuration
-              ? 'from-green-500 to-emerald-500'
-              : 'from-gray-500 to-slate-500'
-          }
-          subtitle={account.has_subscription_configuration ? 'Active configuration' : 'No configuration'}
-        />
-      )}
+
+      {/* Account Info Card */}
+      <Card className="p-4 border border-slate-600">
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-sm font-semibold text-gray-100">Account Info</h2>
+          {isAdmin && !isAccountInfoLoading && (
+            !isEditingAccountInfo ? (
+              <button
+                type="button"
+                onClick={() => setIsEditingAccountInfo(true)}
+                className="text-sm text-[#ED4C27] hover:underline"
+              >
+                Bearbeiten
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => {
+                  setEditName(accountInfo?.name ?? '');
+                  setEditAge(accountInfo?.age != null ? String(accountInfo.age) : '');
+                  setEditOrigin(accountInfo?.origin ?? '');
+                  setEditOccupation(accountInfo?.occupation ?? '');
+                  setEditBraSize(accountInfo?.bra_size ?? '');
+                  setEditTaboos((accountInfo?.taboos ?? []).join(', '));
+                  setEditHobbies((accountInfo?.hobbies ?? []).join(', '));
+                  setEditNotes(accountInfo?.notes ?? '');
+                  setIsEditingAccountInfo(false);
+                  setAccountInfoError(null);
+                }}
+                className="text-sm text-gray-400 hover:underline"
+              >
+                Abbrechen
+              </button>
+            )
+          )}
+        </div>
+
+        {isAccountInfoLoading ? (
+          <div className="flex items-center justify-center py-4">
+            <Loader2 size={18} className="animate-spin text-gray-400" />
+          </div>
+        ) : isEditingAccountInfo ? (
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            <div>
+              <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-1">Name</p>
+              <Input value={editName} onChange={(e) => setEditName(e.target.value)} placeholder="Name…" />
+            </div>
+            <div>
+              <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-1">Alter</p>
+              <Input type="number" value={editAge} onChange={(e) => setEditAge(e.target.value)} placeholder="z.B. 24" />
+            </div>
+            <div>
+              <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-1">Herkunft</p>
+              <Input value={editOrigin} onChange={(e) => setEditOrigin(e.target.value)} placeholder="z.B. Deutschland" />
+            </div>
+            <div>
+              <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-1">Beruf</p>
+              <Input value={editOccupation} onChange={(e) => setEditOccupation(e.target.value)} placeholder="z.B. Model" />
+            </div>
+            <div>
+              <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-1">BH-Größe</p>
+              <Input value={editBraSize} onChange={(e) => setEditBraSize(e.target.value)} placeholder="z.B. 75C" />
+            </div>
+            <div>
+              <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-1">Taboos (kommagetrennt)</p>
+              <Input value={editTaboos} onChange={(e) => setEditTaboos(e.target.value)} placeholder="z.B. Gesicht, Real meets" />
+            </div>
+            <div className="col-span-2 sm:col-span-3">
+              <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-1">Hobbys (kommagetrennt)</p>
+              <Input value={editHobbies} onChange={(e) => setEditHobbies(e.target.value)} placeholder="z.B. Fitness, Gaming" />
+            </div>
+            <div className="col-span-2 sm:col-span-3">
+              <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-1">Notizen</p>
+              <Textarea value={editNotes} onChange={(e) => setEditNotes(e.target.value)} placeholder="Notizen…" rows={2} />
+            </div>
+            {accountInfoError && (
+              <p className="col-span-2 sm:col-span-3 text-xs text-red-400">{accountInfoError}</p>
+            )}
+            <div className="col-span-2 sm:col-span-3">
+              <Button onClick={handleSaveAccountInfo} disabled={isSavingAccountInfo}>
+                {isSavingAccountInfo ? 'Speichert…' : 'Speichern'}
+              </Button>
+            </div>
+          </div>
+        ) : accountInfo ? (
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-x-6 gap-y-3">
+            {accountInfo.name && (
+              <div>
+                <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-0.5">Name</p>
+                <p className="text-xs text-gray-100">{accountInfo.name}</p>
+              </div>
+            )}
+            {accountInfo.age != null && (
+              <div>
+                <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-0.5">Alter</p>
+                <p className="text-xs text-gray-100">{accountInfo.age}</p>
+              </div>
+            )}
+            {accountInfo.origin && (
+              <div>
+                <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-0.5">Herkunft</p>
+                <p className="text-xs text-gray-100">{accountInfo.origin}</p>
+              </div>
+            )}
+            {accountInfo.occupation && (
+              <div>
+                <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-0.5">Beruf</p>
+                <p className="text-xs text-gray-100">{accountInfo.occupation}</p>
+              </div>
+            )}
+            {accountInfo.bra_size && (
+              <div>
+                <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-0.5">BH-Größe</p>
+                <p className="text-xs text-gray-100">{accountInfo.bra_size}</p>
+              </div>
+            )}
+            {accountInfo.taboos && accountInfo.taboos.length > 0 && (
+              <div className="col-span-2">
+                <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-0.5">Taboos</p>
+                <div className="flex flex-wrap gap-1">
+                  {accountInfo.taboos.map((t) => (
+                    <span key={t} className="text-[10px] bg-slate-700 text-gray-300 rounded px-1.5 py-0.5">{t}</span>
+                  ))}
+                </div>
+              </div>
+            )}
+            {accountInfo.hobbies && accountInfo.hobbies.length > 0 && (
+              <div className="col-span-2">
+                <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-0.5">Hobbys</p>
+                <div className="flex flex-wrap gap-1">
+                  {accountInfo.hobbies.map((h) => (
+                    <span key={h} className="text-xs bg-slate-700 text-gray-300 rounded px-2 py-0.5">{h}</span>
+                  ))}
+                </div>
+              </div>
+            )}
+            {accountInfo.notes && (
+              <div className="col-span-2 sm:col-span-3 lg:col-span-4">
+                <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-0.5">Notizen</p>
+                <p className="text-xs text-gray-300 whitespace-pre-wrap">{accountInfo.notes}</p>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="text-center py-4 text-gray-500">
+            <p className="text-xs">Keine Account Infos hinterlegt.</p>
+            {isAdmin && (
+              <button
+                type="button"
+                onClick={() => setIsEditingAccountInfo(true)}
+                className="mt-2 text-sm text-[#ED4C27] hover:underline"
+              >
+                Jetzt hinzufügen
+              </button>
+            )}
+          </div>
+        )}
+      </Card>
     </div>
   );
 }

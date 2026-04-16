@@ -1,4 +1,4 @@
-import type { InboxAccount, InboxApiResponse, InboxQueryParams, ChatSearchParams, ChatListItem, PivotData, PredefinedText, ConfiguredMessage, ConfiguredMessageCategory } from '../types';
+import type { InboxAccount, InboxApiResponse, InboxQueryParams, ChatSearchParams, ChatListItem, PivotData, PredefinedText, ConfiguredMessage, ConfiguredMessageCategory, AccountInfo } from '../types';
 
 const getTeamId = (): number => {
   const match = document.cookie.match(/(?:^|; )auth_team=([^;]*)/);
@@ -222,5 +222,37 @@ export const inboxApi = {
       method: 'DELETE',
     });
     if (!response.ok) throw new Error(`Failed to delete category: ${response.status}`);
+  },
+
+  // ── Account Info ─────────────────────────────────────────────────────────────
+
+  async getAccountInfo(fourbasedUserId: string): Promise<AccountInfo | null> {
+    const teamId = getTeamId();
+    const response = await fourbasedFetch(`${getApiUrl()}/teams/${teamId}/fourbased-users/${fourbasedUserId}/account-info`);
+    if (!response.ok) throw new Error(`Failed to fetch account info: ${response.status}`);
+    const raw = await response.json();
+    return raw?.data?.account_info ?? null;
+  },
+
+  async createAccountInfo(fourbasedUserId: string, data: Omit<AccountInfo, 'id' | 'fourbased_user_id' | 'created_at' | 'updated_at'>): Promise<AccountInfo> {
+    const teamId = getTeamId();
+    const response = await fourbasedFetch(`${getApiUrl()}/teams/${teamId}/fourbased-users/${fourbasedUserId}/account-info`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) throw new Error(`Failed to create account info: ${response.status}`);
+    const raw = await response.json();
+    return raw?.data?.account_info ?? raw;
+  },
+
+  async updateAccountInfo(fourbasedUserId: string, data: Omit<AccountInfo, 'id' | 'fourbased_user_id' | 'created_at' | 'updated_at'>): Promise<AccountInfo> {
+    const teamId = getTeamId();
+    const response = await fourbasedFetch(`${getApiUrl()}/teams/${teamId}/fourbased-users/${fourbasedUserId}/account-info`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) throw new Error(`Failed to update account info: ${response.status}`);
+    const raw = await response.json();
+    return raw?.data?.account_info ?? raw;
   },
 };
