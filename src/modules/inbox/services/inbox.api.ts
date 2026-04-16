@@ -143,7 +143,7 @@ export const inboxApi = {
     return Array.isArray(raw) ? raw : (raw?.data?.messages ?? raw?.data ?? []);
   },
 
-  async createConfiguredMessage(fourbasedUserId: string, data: { message: string; name?: string; category_id?: string | null }): Promise<ConfiguredMessage> {
+  async createConfiguredMessage(fourbasedUserId: string, data: { message: string; name?: string; category_id?: string | null; file_stack_id?: string | null }): Promise<ConfiguredMessage> {
     const teamId = getTeamId();
     const response = await fourbasedFetch(`${getApiUrl()}/teams/${teamId}/fourbased-users/${fourbasedUserId}/configured-messages`, {
       method: 'POST',
@@ -154,7 +154,7 @@ export const inboxApi = {
     return raw?.data?.message ?? raw?.data ?? raw;
   },
 
-  async updateConfiguredMessage(fourbasedUserId: string, msgId: string, data: { message: string; name?: string; category_id?: string | null }): Promise<ConfiguredMessage> {
+  async updateConfiguredMessage(fourbasedUserId: string, msgId: string, data: { message: string; name?: string; category_id?: string | null; file_stack_id?: string | null }): Promise<ConfiguredMessage> {
     const teamId = getTeamId();
     const response = await fourbasedFetch(`${getApiUrl()}/teams/${teamId}/fourbased-users/${fourbasedUserId}/configured-messages/${msgId}`, {
       method: 'PUT',

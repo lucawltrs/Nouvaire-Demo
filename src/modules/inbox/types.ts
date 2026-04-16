@@ -129,11 +129,23 @@ export interface ConfiguredMessage {
   user_id?: string;
   configuration_id?: string;
   file_stack_id?: string;
-  file_stack?: unknown | null;
+  file_stack?: {
+    _id: string;
+    code?: string;
+    type?: string;
+    fileStackType?: string;
+    extension?: string;
+    width?: number;
+    height?: number;
+    description?: string;
+    price?: number;
+  } | null;
+  img_url?: string;
   sort_order?: number;
   internal?: {
     category: ConfiguredMessageCategory | null;
     notes: string | null;
+    sort_order?: number;
   };
 }
 

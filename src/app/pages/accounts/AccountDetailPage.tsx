@@ -1,5 +1,6 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
+import { createPortal } from 'react-dom';
 import {
   ArrowLeft,
   Circle,
@@ -22,9 +23,16 @@ import {
   ChevronDown,
   ChevronRight,
   GripVertical,
+  Camera,
+  Film,
+  CheckCircle,
+  Smile,
 } from 'lucide-react';
+import Picker from '@emoji-mart/react';
+import data from '@emoji-mart/data';
 import { Card } from '../../../components/ui/Card';
 import { PageLoader } from '../../../components/ui/PageLoader';
+import { Modal } from '../../../components/ui/Modal';
 import { accountsApi } from '../../../modules/accounts/accountsApi';
 import type { Account } from '../../../modules/accounts/types';
 import { formatCurrency, formatRelativeTime } from '../../../modules/dashboard';
@@ -34,6 +42,9 @@ import { Input } from '../../../components/ui/Input';
 import { Textarea } from '../../../components/ui/Textarea';
 import { Button } from '../../../components/ui/Button';
 import { useAuthStore } from '../../../lib/auth/useAuthStore';
+import { cloudApi, unblurUrl } from '../../../modules/cloud/cloudApi';
+import type { CloudAsset } from '../../../modules/cloud/types';
+import { createFileStack } from '../../../modules/4based/services/4based.api';
 
 type Tab = 'overview' | 'settings';
 
@@ -728,6 +739,7 @@ function ConfiguredMessagesCard({ fourbasedId, isAdmin, categories }: { fourbase
   const [newMessage, setNewMessage] = useState('');
   const [newName, setNewName] = useState('');
   const [newCategoryId, setNewCategoryId] = useState<number | null>(null);
+  const [newFileStackId, setNewFileStackId] = useState<string | null>(null);
   const [isAdding, setIsAdding] = useState(false);
 
   // Edit state
@@ -735,8 +747,25 @@ function ConfiguredMessagesCard({ fourbasedId, isAdmin, categories }: { fourbase
   const [editMessage, setEditMessage] = useState('');
   const [editName, setEditName] = useState('');
   const [editCategoryId, setEditCategoryId] = useState<number | null>(null);
+  const [editFileStackId, setEditFileStackId] = useState<string | null>(null);
   const [savingId, setSavingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  // Vault modal state
+  const [isVaultModalOpen, setIsVaultModalOpen] = useState(false);
+  // 'add' | 'edit' — which form triggered the vault modal
+  const [vaultTarget, setVaultTarget] = useState<'add' | 'edit'>('add');
+  const [vaultItems, setVaultItems] = useState<CloudAsset[]>([]);
+  const [isLoadingVault, setIsLoadingVault] = useState(false);
+  const [vaultError, setVaultError] = useState<string | null>(null);
+  const [vaultOffset, setVaultOffset] = useState(0);
+  const [vaultHasMore, setVaultHasMore] = useState(false);
+  const [vaultFolders, setVaultFolders] = useState<string[]>([]);
+  const [activeVaultFolder, setActiveVaultFolder] = useState<string | null>(null);
+  const [vaultFileType, setVaultFileType] = useState<string | null>(null);
+  const [selectedVaultItems, setSelectedVaultItems] = useState<CloudAsset[]>([]);
+  const [vaultStep, setVaultStep] = useState<1 | 2>(1);
+  const [isSavingVault, setIsSavingVault] = useState(false);
 
   // Collapsed category groups
   const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(new Set());
@@ -759,6 +788,70 @@ function ConfiguredMessagesCard({ fourbasedId, isAdmin, categories }: { fourbase
   }, [fourbasedId]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
+
+  const fetchVault = useCallback(async (
+    offset = 0,
+    folder: string | null = null,
+    fileType: string | null = null,
+  ) => {
+    setIsLoadingVault(true);
+    setVaultError(null);
+    try {
+      const data = await cloudApi.getAssets(fourbasedId, {
+        offset,
+        belongs_to_folders: folder ?? undefined,
+        file_type: fileType ?? undefined,
+      });
+      const items = data.response;
+      setVaultItems(prev => offset === 0 ? items : [...prev, ...items]);
+      setVaultHasMore(data.pagination?.has_more ?? items.length === 60);
+      setVaultOffset(data.pagination?.next_offset ?? offset + items.length);
+    } catch {
+      setVaultError('Vault konnte nicht geladen werden.');
+    } finally {
+      setIsLoadingVault(false);
+    }
+  }, [fourbasedId]);
+
+  const handleOpenVault = (target: 'add' | 'edit') => {
+    setVaultTarget(target);
+    setIsVaultModalOpen(true);
+    setVaultItems([]);
+    setVaultOffset(0);
+    setVaultHasMore(false);
+    setActiveVaultFolder(null);
+    setVaultFolders([]);
+    setVaultFileType(null);
+    setSelectedVaultItems([]);
+    setVaultStep(1);
+    cloudApi.getUser(fourbasedId)
+      .then(u => { if ((u.folders ?? []).length > 0) setVaultFolders(u.folders ?? []); })
+      .catch(() => {});
+    fetchVault(0, null, null);
+  };
+
+  const handleSaveVaultItem = async (description: string, priceInCents: number) => {
+    if (selectedVaultItems.length === 0 || isSavingVault) return;
+    setIsSavingVault(true);
+    try {
+      const result = await createFileStack(fourbasedId, {
+        ids: selectedVaultItems.map(i => i._id),
+        description,
+        price: priceInCents,
+      });
+      const fileStackId = result.response._id;
+      if (vaultTarget === 'add') {
+        setNewFileStackId(fileStackId);
+      } else {
+        setEditFileStackId(fileStackId);
+      }
+      setIsVaultModalOpen(false);
+    } catch {
+      setVaultError('Fehler beim Erstellen des File Stacks.');
+    } finally {
+      setIsSavingVault(false);
+    }
+  };
 
   // Group messages by internal.category.id (numeric), sorted by sort_order within each group
   const grouped = useMemo(() => {
@@ -902,6 +995,7 @@ function ConfiguredMessagesCard({ fourbasedId, isAdmin, categories }: { fourbase
       const created = await inboxApi.createConfiguredMessage(fourbasedId, {
         message: msg,
         name: newName.trim() || undefined,
+        file_stack_id: newFileStackId ?? undefined,
       });
       // Step 2: if a category is selected, set it via /meta
       if (newCategoryId !== null) {
@@ -913,6 +1007,7 @@ function ConfiguredMessagesCard({ fourbasedId, isAdmin, categories }: { fourbase
       setNewMessage('');
       setNewName('');
       setNewCategoryId(null);
+      setNewFileStackId(null);
     } catch {
       setError('Nachricht konnte nicht hinzugefügt werden.');
     } finally {
@@ -932,6 +1027,7 @@ function ConfiguredMessagesCard({ fourbasedId, isAdmin, categories }: { fourbase
       const updated = await inboxApi.updateConfiguredMessage(fourbasedId, id, {
         message: msg,
         name: editName.trim() || undefined,
+        file_stack_id: editFileStackId ?? undefined,
       });
 
       // Update category via /meta if it changed
@@ -968,9 +1064,11 @@ function ConfiguredMessagesCard({ fourbasedId, isAdmin, categories }: { fourbase
     setEditMessage(msg.message);
     setEditName(msg.name ?? '');
     setEditCategoryId(msg.internal?.category?.id ?? null);
+    setEditFileStackId(msg.file_stack_id ?? null);
   };
 
   return (
+    <>
     <Card className="p-6 border border-slate-600">
       <div className="flex items-center gap-3 mb-5">
         <div className="w-8 h-8 rounded-lg bg-[#ED4C27]/15 flex items-center justify-center">
@@ -1019,18 +1117,46 @@ function ConfiguredMessagesCard({ fourbasedId, isAdmin, categories }: { fourbase
               Hinzufügen
             </button>
           </div>
-          {categories.length > 0 && (
-            <select
-              value={newCategoryId ?? ''}
-              onChange={(e) => setNewCategoryId(e.target.value ? Number(e.target.value) : null)}
-              className="bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-sm text-gray-300 focus:outline-none focus:border-[#ED4C27] transition"
+          <div className="flex items-center gap-2">
+            {categories.length > 0 && (
+              <select
+                value={newCategoryId ?? ''}
+                onChange={(e) => setNewCategoryId(e.target.value ? Number(e.target.value) : null)}
+                className="flex-1 bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-sm text-gray-300 focus:outline-none focus:border-[#ED4C27] transition"
+              >
+                <option value="">Keine Kategorie</option>
+                {categories.map((cat) => (
+                  <option key={cat.id} value={cat.id}>{cat.name}</option>
+                ))}
+              </select>
+            )}
+            {/* Photo/vault button */}
+            <button
+              type="button"
+              onClick={() => handleOpenVault('add')}
+              disabled={isAdding}
+              title={newFileStackId ? 'Foto ausgewählt – klicken zum Ändern' : 'Foto aus Vault auswählen'}
+              className={[
+                'flex items-center gap-1.5 px-3 py-2 text-sm rounded-lg border transition-colors shrink-0 disabled:opacity-50',
+                newFileStackId
+                  ? 'bg-[#ED4C27]/15 border-[#ED4C27]/40 text-[#ED4C27]'
+                  : 'bg-slate-800 border-slate-600 text-gray-400 hover:text-gray-100 hover:border-slate-500',
+              ].join(' ')}
             >
-              <option value="">Keine Kategorie</option>
-              {categories.map((cat) => (
-                <option key={cat.id} value={cat.id}>{cat.name}</option>
-              ))}
-            </select>
-          )}
+              <Camera size={14} />
+              {newFileStackId ? 'Foto ✓' : 'Foto'}
+            </button>
+            {newFileStackId && (
+              <button
+                type="button"
+                onClick={() => setNewFileStackId(null)}
+                className="p-2 text-gray-500 hover:text-red-400 transition-colors"
+                title="Foto entfernen"
+              >
+                <X size={13} />
+              </button>
+            )}
+          </div>
         </div>
       )}
 
@@ -1104,18 +1230,45 @@ function ConfiguredMessagesCard({ fourbasedId, isAdmin, categories }: { fourbase
                               className="flex-1 min-w-0 bg-slate-700 border border-slate-600 rounded px-2 py-1 text-sm text-gray-100 focus:outline-none focus:border-[#ED4C27]"
                             />
                           </div>
-                          {categories.length > 0 && (
-                            <select
-                              value={editCategoryId ?? ''}
-                              onChange={(e) => setEditCategoryId(e.target.value ? Number(e.target.value) : null)}
-                              className="bg-slate-700 border border-slate-600 rounded px-2 py-1 text-xs text-gray-300 focus:outline-none focus:border-[#ED4C27]"
+                          <div className="flex items-center gap-2">
+                            {categories.length > 0 && (
+                              <select
+                                value={editCategoryId ?? ''}
+                                onChange={(e) => setEditCategoryId(e.target.value ? Number(e.target.value) : null)}
+                                className="flex-1 bg-slate-700 border border-slate-600 rounded px-2 py-1 text-xs text-gray-300 focus:outline-none focus:border-[#ED4C27]"
+                              >
+                                <option value="">Keine Kategorie</option>
+                                {categories.map((cat) => (
+                                  <option key={cat.id} value={cat.id}>{cat.name}</option>
+                                ))}
+                              </select>
+                            )}
+                            {/* Photo/vault button */}
+                            <button
+                              type="button"
+                              onClick={() => handleOpenVault('edit')}
+                              title={editFileStackId ? 'Foto ausgewählt – klicken zum Ändern' : 'Foto aus Vault auswählen'}
+                              className={[
+                                'flex items-center gap-1 px-2 py-1 text-xs rounded border transition-colors shrink-0',
+                                editFileStackId
+                                  ? 'bg-[#ED4C27]/15 border-[#ED4C27]/40 text-[#ED4C27]'
+                                  : 'bg-slate-700 border-slate-600 text-gray-400 hover:text-gray-100',
+                              ].join(' ')}
                             >
-                              <option value="">Keine Kategorie</option>
-                              {categories.map((cat) => (
-                                <option key={cat.id} value={cat.id}>{cat.name}</option>
-                              ))}
-                            </select>
-                          )}
+                              <Camera size={12} />
+                              {editFileStackId ? '✓' : 'Foto'}
+                            </button>
+                            {editFileStackId && (
+                              <button
+                                type="button"
+                                onClick={() => setEditFileStackId(null)}
+                                className="p-1 text-gray-500 hover:text-red-400 transition-colors"
+                                title="Foto entfernen"
+                              >
+                                <X size={11} />
+                              </button>
+                            )}
+                          </div>
                           <div className="flex gap-1">
                             <button onClick={() => handleUpdate(msg._id)} disabled={savingId === msg._id} className="flex items-center gap-1 px-2 py-1 text-xs text-green-400 hover:text-green-300 disabled:opacity-50 transition-colors">
                               {savingId === msg._id ? <Loader2 size={12} className="animate-spin" /> : <Save size={12} />}
@@ -1130,9 +1283,24 @@ function ConfiguredMessagesCard({ fourbasedId, isAdmin, categories }: { fourbase
                       ) : (
                         <>
                           {isAdmin && <GripVertical size={14} className="text-gray-600 cursor-grab active:cursor-grabbing shrink-0 mt-0.5 opacity-0 group-hover:opacity-100 transition-opacity" />}
+                          {msg.img_url && (
+                            <div className="w-10 h-10 shrink-0 rounded-lg overflow-hidden bg-slate-800 border border-slate-700">
+                              <img
+                                src={unblurUrl(msg.img_url)}
+                                alt=""
+                                className="w-full h-full object-cover"
+                                onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                              />
+                            </div>
+                          )}
                           <div className="flex-1 min-w-0">
                             {msg.name && <p className="text-xs font-medium text-gray-400 mb-0.5 truncate">{msg.name}</p>}
                             <p className="text-sm text-gray-200 break-words">{msg.message}</p>
+                            {typeof msg.file_stack?.price === 'number' && msg.file_stack.price > 0 && (
+                              <p className="text-[10px] text-[#ED4C27] mt-0.5">
+                                ${(msg.file_stack.price / 1.21 / 100).toFixed(2)}
+                              </p>
+                            )}
                           </div>
                           {isAdmin && (
                             <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
@@ -1167,6 +1335,388 @@ function ConfiguredMessagesCard({ fourbasedId, isAdmin, categories }: { fourbase
         </div>
       )}
     </Card>
+
+    {/* Vault Modal */}
+    <Modal
+      isOpen={isVaultModalOpen}
+      onClose={() => setIsVaultModalOpen(false)}
+      title={vaultStep === 1 ? 'Vault – Foto auswählen' : 'Foto konfigurieren'}
+      size="xl"
+    >
+      {vaultStep === 2 && selectedVaultItems.length > 0 ? (
+        <VaultConfigStep
+          items={selectedVaultItems}
+          onBack={() => setVaultStep(1)}
+          onSave={handleSaveVaultItem}
+          isSaving={isSavingVault}
+        />
+      ) : (
+        <>
+          {/* File type filter */}
+          <div className="flex flex-wrap gap-2 mb-4">
+            {([null, 'image', 'video'] as const).map((ft) => (
+              <CfgVaultChip
+                key={ft ?? 'all'}
+                label={ft === null ? 'Alle' : ft === 'image' ? 'Bild' : 'Video'}
+                active={vaultFileType === ft}
+                onClick={() => {
+                  setVaultFileType(ft);
+                  setVaultItems([]);
+                  setVaultOffset(0);
+                  fetchVault(0, activeVaultFolder, ft);
+                }}
+              />
+            ))}
+          </div>
+
+          {/* Folder filter */}
+          {vaultFolders.length > 0 && (
+            <div className="flex flex-wrap gap-2 mb-4">
+              <CfgVaultChip label="Alle" active={activeVaultFolder === null} onClick={() => { setActiveVaultFolder(null); setVaultItems([]); setVaultOffset(0); fetchVault(0, null, vaultFileType); }} />
+              {vaultFolders.map(folder => (
+                <CfgVaultChip
+                  key={folder}
+                  label={folder}
+                  active={activeVaultFolder === folder}
+                  onClick={() => { setActiveVaultFolder(folder); setVaultItems([]); setVaultOffset(0); fetchVault(0, folder, vaultFileType); }}
+                />
+              ))}
+            </div>
+          )}
+
+          {isLoadingVault && vaultItems.length === 0 ? (
+            <div className="flex items-center justify-center h-48">
+              <Loader2 size={28} className="animate-spin text-gray-400" />
+            </div>
+          ) : vaultError ? (
+            <p className="text-red-500 text-sm">{vaultError}</p>
+          ) : vaultItems.length === 0 ? (
+            <p className="text-gray-400 text-sm">Keine Inhalte gefunden.</p>
+          ) : (
+            <>
+              <div className="grid grid-cols-4 gap-2">
+                {vaultItems.map((item) => (
+                  <CfgVaultThumbnail
+                    key={item._id}
+                    item={item}
+                    isSelected={selectedVaultItems.some(s => s._id === item._id)}
+                    onSelect={(i) => setSelectedVaultItems(prev =>
+                      prev.some(s => s._id === i._id)
+                        ? prev.filter(s => s._id !== i._id)
+                        : [...prev, i]
+                    )}
+                  />
+                ))}
+              </div>
+              {vaultHasMore && (
+                <div className="mt-4 flex justify-center">
+                  <Button onClick={() => fetchVault(vaultOffset, activeVaultFolder, vaultFileType)} disabled={isLoadingVault}>
+                    {isLoadingVault ? <Loader2 size={16} className="animate-spin" /> : 'Mehr laden'}
+                  </Button>
+                </div>
+              )}
+            </>
+          )}
+        </>
+      )}
+
+      {/* Sticky footer for step 1 when items are selected */}
+      {vaultStep === 1 && selectedVaultItems.length > 0 && (
+        <div className="sticky bottom-0 left-0 right-0 mt-4 pt-4 border-t border-slate-700 bg-card flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3 min-w-0 flex-1 overflow-x-auto pb-1">
+            {selectedVaultItems.map(item => (
+              <div key={item._id} className="relative shrink-0">
+                <img
+                  src={unblurUrl(item.img_url)}
+                  alt=""
+                  className="w-16 h-16 rounded-xl object-cover border border-slate-600"
+                />
+                <button
+                  type="button"
+                  onClick={() => setSelectedVaultItems(prev => prev.filter(s => s._id !== item._id))}
+                  className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-slate-900 border border-slate-600 flex items-center justify-center text-gray-400 hover:text-red-400 transition-colors"
+                >
+                  <X size={11} />
+                </button>
+              </div>
+            ))}
+            <span className="text-sm text-gray-400 shrink-0 ml-1">
+              {selectedVaultItems.length} ausgewählt
+            </span>
+          </div>
+          <Button onClick={() => setVaultStep(2)}>Weiter →</Button>
+        </div>
+      )}
+    </Modal>
+    </>
+  );
+}
+
+// ============================================================================
+// Vault helpers (for ConfiguredMessagesCard)
+// ============================================================================
+
+function CfgVaultChip({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="px-3 py-1 rounded-full text-xs font-medium transition-colors border"
+      style={
+        active
+          ? { background: 'rgba(237,76,39,0.12)', color: '#ED4C27', borderColor: 'rgba(237,76,39,0.3)' }
+          : { background: '#1E293B', color: '#9CA3AF', borderColor: '#334155' }
+      }
+    >
+      {label}
+    </button>
+  );
+}
+
+function CfgVaultThumbnail({
+  item,
+  isSelected = false,
+  onSelect,
+}: {
+  item: CloudAsset;
+  isSelected?: boolean;
+  onSelect?: (item: CloudAsset) => void;
+}) {
+  const isVideo = item.fileStackType === 'video';
+  return (
+    <div
+      role="button"
+      tabIndex={0}
+      onClick={() => onSelect?.(item)}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') onSelect?.(item); }}
+      className={`relative aspect-square rounded-lg overflow-hidden bg-slate-800 border-2 transition-all cursor-pointer group ${
+        isSelected ? 'border-[#ED4C27] ring-2 ring-[#ED4C27]/40' : 'border-slate-700 hover:border-slate-500'
+      }`}
+    >
+      <img
+        src={unblurUrl(item.img_url)}
+        alt={item.description ?? item._id}
+        className="w-full h-full object-cover"
+        loading="lazy"
+        onError={(e) => { e.currentTarget.style.display = 'none'; }}
+      />
+      {isVideo && (
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <div className="w-9 h-9 rounded-full bg-black/60 flex items-center justify-center">
+            <Film size={16} className="text-white" />
+          </div>
+        </div>
+      )}
+      {isSelected && (
+        <div className="absolute top-1.5 right-1.5 pointer-events-none">
+          <CheckCircle size={18} className="text-[#ED4C27] drop-shadow" fill="white" />
+        </div>
+      )}
+      {typeof item.price === 'number' && item.price > 0 && (
+        <span className="absolute bottom-1 right-1 text-[10px] font-semibold px-1.5 py-0.5 rounded bg-black/70 text-[#ED4C27]">
+          ${(item.price / 100).toFixed(2)}
+        </span>
+      )}
+    </div>
+  );
+}
+
+function VaultConfigStep({
+  items,
+  onBack,
+  onSave,
+  isSaving = false,
+}: {
+  items: CloudAsset[];
+  onBack: () => void;
+  onSave: (description: string, priceInCents: number) => void;
+  isSaving?: boolean;
+}) {
+  const firstItem = items[0];
+  const isVideo = firstItem.fileStackType === 'video';
+  const [description, setDescription] = useState('');
+  const [priceInput, setPriceInput] = useState(
+    typeof firstItem.price === 'number' && firstItem.price > 0 ? (firstItem.price / 100).toFixed(2) : '',
+  );
+  const [isEmojiPickerOpen, setIsEmojiPickerOpen] = useState(false);
+  const [pickerPos, setPickerPos] = useState({ top: 0, left: 0 });
+  const descTextareaRef = useRef<HTMLTextAreaElement>(null);
+  const emojiBtnRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    if (!isEmojiPickerOpen) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as Node;
+      if (emojiBtnRef.current && emojiBtnRef.current.contains(target)) return;
+      const pickerEl = document.getElementById('cfg-vault-emoji-picker-portal');
+      if (pickerEl && pickerEl.contains(target)) return;
+      setIsEmojiPickerOpen(false);
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isEmojiPickerOpen]);
+
+  const handleEmojiBtnClick = () => {
+    if (!isEmojiPickerOpen && emojiBtnRef.current) {
+      const rect = emojiBtnRef.current.getBoundingClientRect();
+      setPickerPos({ top: rect.top - 440, left: rect.right - 352 });
+    }
+    setIsEmojiPickerOpen(prev => !prev);
+  };
+
+  const handleEmojiSelect = (emoji: { native: string }) => {
+    const textarea = descTextareaRef.current;
+    if (textarea) {
+      const start = textarea.selectionStart ?? description.length;
+      const end = textarea.selectionEnd ?? description.length;
+      const newValue = description.slice(0, start) + emoji.native + description.slice(end);
+      setDescription(newValue);
+      requestAnimationFrame(() => {
+        textarea.focus();
+        const pos = start + emoji.native.length;
+        textarea.setSelectionRange(pos, pos);
+      });
+    } else {
+      setDescription(prev => prev + emoji.native);
+    }
+    setIsEmojiPickerOpen(false);
+  };
+
+  const VAT_RATE = 0.21;
+  const CREATOR_SHARE = 0.70;
+  const MIN_PRICE = 3.00;
+  const basePrice = parseFloat(priceInput || '0') || 0;
+  const vatAmount = basePrice * VAT_RATE;
+  const userPrice = basePrice + vatAmount;
+  const creatorAmount = basePrice * CREATOR_SHARE;
+  const isPriceInvalid = basePrice > 0 && basePrice < MIN_PRICE;
+
+  const handleSave = () => {
+    if (isPriceInvalid) return;
+    const priceWithVat = Math.round(basePrice * (1 + VAT_RATE) * 100);
+    const priceInCents = Number.isNaN(priceWithVat) ? 0 : priceWithVat;
+    onSave(description, priceInCents);
+  };
+
+  return (
+    <div className="flex flex-col gap-5">
+      <div className="flex gap-5 items-start">
+        {/* Preview */}
+        <div className="relative w-48 shrink-0 rounded-xl overflow-hidden bg-slate-800 border border-slate-700 aspect-square">
+          <img
+            src={unblurUrl(firstItem.img_url)}
+            alt={firstItem.description ?? firstItem._id}
+            className="w-full h-full object-cover"
+          />
+          {isVideo && (
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+              <div className="w-12 h-12 rounded-full bg-black/60 flex items-center justify-center">
+                <Film size={22} className="text-white" />
+              </div>
+            </div>
+          )}
+          {items.length > 1 && (
+            <div className="absolute bottom-2 right-2 bg-black/70 rounded-full px-2 py-0.5 text-xs text-white font-semibold">
+              +{items.length - 1}
+            </div>
+          )}
+        </div>
+
+        {/* Fields */}
+        <div className="flex flex-col gap-4 flex-1 min-w-0">
+          {/* Description */}
+          <div>
+            <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-1">
+              Beschreibung <span className="text-red-400">*</span>
+            </p>
+            <Textarea
+              ref={descTextareaRef}
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Beschreibung eingeben…"
+              rows={4}
+            />
+            <div className="flex justify-end mt-1">
+              <button
+                ref={emojiBtnRef}
+                type="button"
+                onClick={handleEmojiBtnClick}
+                className="flex items-center justify-center w-8 h-8 rounded-lg border border-slate-600 bg-slate-700 text-gray-400 hover:text-[#ED4C27] hover:border-[#ED4C27] transition-colors"
+                title="Emoji einfügen"
+              >
+                <Smile size={15} />
+              </button>
+              {isEmojiPickerOpen && createPortal(
+                <div
+                  id="cfg-vault-emoji-picker-portal"
+                  style={{ position: 'fixed', top: pickerPos.top, left: pickerPos.left, zIndex: 9999 }}
+                >
+                  <Picker
+                    data={data}
+                    onEmojiSelect={handleEmojiSelect}
+                    theme="dark"
+                    locale="de"
+                    previewPosition="none"
+                    skinTonePosition="search"
+                  />
+                </div>,
+                document.body,
+              )}
+            </div>
+          </div>
+
+          {/* Price */}
+          <div>
+            <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-1">Preis ($)</p>
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm pointer-events-none">$</span>
+              <Input
+                value={priceInput}
+                onChange={(e) => setPriceInput(e.target.value.replace(/[^0-9.]/g, ''))}
+                placeholder="Preis in $"
+                className={`pl-6 ${isPriceInvalid ? 'border-red-500 focus:border-red-500' : ''}`}
+              />
+            </div>
+            {isPriceInvalid && (
+              <p className="text-[10px] text-red-400 mt-1">Mindestpreis: $3.00</p>
+            )}
+            {basePrice >= MIN_PRICE && (
+              <div className="mt-2 rounded-lg bg-slate-800/60 border border-slate-700 p-2.5 flex flex-col gap-1.5 text-[11px]">
+                <div>
+                  <span className="text-gray-500">Deine Provision:</span>
+                  <span className="text-gray-300 ml-1">
+                    ${basePrice.toFixed(2)} × 70% = <span className="text-green-400 font-semibold">${creatorAmount.toFixed(2)}</span>
+                  </span>
+                </div>
+                <div>
+                  <span className="text-gray-500">Preis für User:</span>
+                  <span className="text-gray-300 ml-1">
+                    ${basePrice.toFixed(2)} + ${vatAmount.toFixed(2)} <span className="text-gray-500">(MwSt.)</span> = <span className="text-[#ED4C27] font-semibold">${userPrice.toFixed(2)}</span>
+                  </span>
+                </div>
+                <p className="text-gray-600 leading-tight">
+                  Die MwSt. wird direkt abgeführt.
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      <div className="flex items-center justify-between pt-3 border-t border-slate-700">
+        <button
+          type="button"
+          onClick={onBack}
+          className="flex items-center gap-2 text-sm text-gray-400 hover:text-gray-100 transition-colors"
+          disabled={isSaving}
+        >
+          <ArrowLeft size={15} /> Zurück
+        </button>
+        <Button onClick={handleSave} disabled={isSaving || isPriceInvalid || !description.trim()}>
+          {isSaving ? <Loader2 size={15} className="animate-spin" /> : 'Speichern'}
+        </Button>
+      </div>
+    </div>
   );
 }
 
