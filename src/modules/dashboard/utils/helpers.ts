@@ -72,7 +72,7 @@ export function mergeUnreadChats(accounts: DashboardAccount[]): MergedUnreadChat
     return dateB.getTime() - dateA.getTime();
   });
 
-  return allChats.slice(0, 10);
+  return allChats.slice(0, 30);
 }
 
 /**

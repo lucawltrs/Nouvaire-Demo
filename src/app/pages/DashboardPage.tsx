@@ -125,7 +125,7 @@ export function DashboardPage() {
           account_img_url: account.profile.img_url,
         }))
         .filter((chat) => !removedChatIds.has(`${chat.fourbased_id}:${chat.chat_id}`))
-        .slice(0, 10),
+        .slice(0, 30),
     };
   }, [response, selectedAccountId, removedChatIds]);
 

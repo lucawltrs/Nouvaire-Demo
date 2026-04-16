@@ -192,10 +192,10 @@ export function InboxChatPage() {
 
   const isOwnMessage = (message: FourBasedChatMessage) => message.user_id === fourbased_id;
 
-  // Derive customer_id from messages (first message not sent by us)
+  // Derive customer_id from messages, falling back to activeChat.customer_id
   const customerId = useMemo(
-    () => messages.find(m => m.user_id !== fourbased_id)?.user_id ?? null,
-    [messages, fourbased_id],
+    () => messages.find(m => m.user_id !== fourbased_id)?.user_id ?? activeChat?.customer_id ?? null,
+    [messages, fourbased_id, activeChat],
   );
 
   // Group configured messages by internal.category, sorted by sort_order
@@ -956,23 +956,23 @@ export function InboxChatPage() {
 
       {/* Right panel: pivot info */}
       {(isPivotLoading || pivotData || !!customerId) && (
-        <aside className="hidden md:flex w-56 shrink-0 flex-col gap-2 min-h-0">
+        <aside className="hidden md:flex w-72 shrink-0 flex-col gap-2 min-h-0">
           {/* Pivot info card */}
           {isPivotLoading ? (
-            <Card className="p-3 flex items-center justify-center">
-              <Loader2 size={16} className="animate-spin text-gray-400" />
+            <Card className="p-4 flex items-center justify-center">
+              <Loader2 size={18} className="animate-spin text-gray-400" />
             </Card>
           ) : customerId && (
-            <Card className="p-3 flex flex-col gap-2">
+            <Card className="p-4 flex flex-col gap-3">
               <div className="flex items-center justify-between">
-                <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">
+                <p className="text-base font-semibold uppercase tracking-wide text-gray-400">
                   Kundeninfo
                 </p>
                 {!isEditingPivot ? (
                   <button
                     type="button"
                     onClick={() => setIsEditingPivot(true)}
-                    className="text-[10px] text-[#ED4C27] hover:underline"
+                    className="text-sm text-[#ED4C27] hover:underline"
                   >
                     Bearbeiten
                   </button>
@@ -987,7 +987,7 @@ export function InboxChatPage() {
                         : '');
                       setIsEditingPivot(false);
                     }}
-                    className="text-[10px] text-gray-400 hover:underline"
+                    className="text-sm text-gray-400 hover:underline"
                   >
                     Abbrechen
                   </button>
@@ -996,7 +996,7 @@ export function InboxChatPage() {
               {isEditingPivot ? (
                 <>
                   <div>
-                    <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-0.5">Alias</p>
+                    <p className="text-sm text-gray-500 uppercase tracking-wide mb-1">Alias</p>
                     <Input
                       value={pivotEditAlias}
                       onChange={(e) => setPivotEditAlias(e.target.value)}
@@ -1004,7 +1004,7 @@ export function InboxChatPage() {
                     />
                   </div>
                   <div>
-                    <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-0.5">Notiz</p>
+                    <p className="text-sm text-gray-500 uppercase tracking-wide mb-1">Notiz</p>
                     <Textarea
                       value={pivotEditNote}
                       onChange={(e) => setPivotEditNote(e.target.value)}
@@ -1013,7 +1013,7 @@ export function InboxChatPage() {
                     />
                   </div>
                   <div>
-                    <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-0.5">Nachrichtenpreis (Cents)</p>
+                    <p className="text-sm text-gray-500 uppercase tracking-wide mb-1">Nachrichtenpreis (Cents)</p>
                     <Input
                       type="number"
                       value={pivotEditPrice}
@@ -1029,26 +1029,26 @@ export function InboxChatPage() {
                 <>
                   {pivotData?.alias && (
                     <div>
-                      <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-0.5">Alias</p>
-                      <p className="text-xs text-gray-100 leading-snug">{pivotData.alias}</p>
+                      <p className="text-sm text-gray-500 uppercase tracking-wide mb-1">Alias</p>
+                      <p className="text-base text-gray-100 leading-snug">{pivotData.alias}</p>
                     </div>
                   )}
                   {pivotData?.note && (
                     <div>
-                      <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-0.5">Notiz</p>
-                      <p className="text-xs text-gray-300 leading-snug whitespace-pre-wrap">{pivotData.note}</p>
+                      <p className="text-sm text-gray-500 uppercase tracking-wide mb-1">Notiz</p>
+                      <p className="text-base text-gray-300 leading-snug whitespace-pre-wrap">{pivotData.note}</p>
                     </div>
                   )}
                   {pivotData?.price_override?.data?.is_override && (
                     <div>
-                      <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-0.5">Nachrichtenpreis</p>
-                      <p className="text-xs text-[#ED4C27] leading-snug">
+                      <p className="text-sm text-gray-500 uppercase tracking-wide mb-1">Nachrichtenpreis</p>
+                      <p className="text-base text-[#ED4C27] leading-snug">
                         ${(pivotData.price_override.data.effective_message_price / 100).toFixed(2)}
                       </p>
                     </div>
                   )}
                   {!pivotData?.alias && !pivotData?.note && !pivotData?.price_override?.data?.is_override && (
-                    <p className="text-xs text-gray-500">Keine Infos verfügbar.</p>
+                    <p className="text-base text-gray-500">Keine Infos verfügbar.</p>
                   )}
                 </>
               )}
