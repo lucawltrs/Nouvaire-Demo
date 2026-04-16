@@ -6,7 +6,7 @@ import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
 import { Textarea } from '../../components/ui/Textarea';
 import { Input } from '../../components/ui/Input';
-import { Loader2, User, ArrowLeft, Search, Camera, Film, CheckCircle, Smile, X, ChevronDown, SlidersHorizontal } from 'lucide-react';
+import { Loader2, User, ArrowLeft, Search, Camera, Film, CheckCircle, Smile, X, ChevronDown, SlidersHorizontal, Pencil, SendHorizontal } from 'lucide-react';
 import Picker from '@emoji-mart/react';
 import data from '@emoji-mart/data';
 import { Modal } from '../../components/ui/Modal';
@@ -56,6 +56,11 @@ export function InboxChatPage() {
   const [accountInfo, setAccountInfo] = useState<AccountInfo | null>(null);
   const [isAccountInfoLoading, setIsAccountInfoLoading] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  // Configured messages popup
+  const [openCategoryKey, setOpenCategoryKey] = useState<string | null>(null);
+  const [inlineEditId, setInlineEditId] = useState<string | null>(null);
+  const [inlineEditText, setInlineEditText] = useState('');
+  const cfgPopupRef = useRef<HTMLDivElement>(null);
   const [isVaultModalOpen, setIsVaultModalOpen] = useState(false);
   const [vaultItems, setVaultItems] = useState<CloudAsset[]>([]);
   const [isLoadingVault, setIsLoadingVault] = useState(false);
@@ -344,14 +349,13 @@ export function InboxChatPage() {
     }
   };
 
-  const handleSendMessage = async () => {
-    if (!fourbased_id || !chat_id || !messageInput.trim() || isSending) return;
+  const sendText = async (trimmed: string, fileStackId?: string | null, messagePrice?: number) => {
+    if (!fourbased_id || !chat_id || !trimmed || isSending) return;
 
     const now = new Date();
     const pad = (n: number) => String(n).padStart(2, '0');
     const createdAt = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
     const tempId = `local-${now.getTime()}`;
-    const trimmed = messageInput.trim();
 
     const tempMessage: FourBasedChatMessage = {
       _id: tempId,
@@ -364,13 +368,12 @@ export function InboxChatPage() {
     };
 
     appendLocalMessage(tempMessage);
-    setMessageInput('');
     setIsSending(true);
 
     const sentForChatId = chat_id;
 
     try {
-      await sendChatMessage(fourbased_id, sentForChatId, trimmed);
+      await sendChatMessage(fourbased_id, sentForChatId, trimmed, messagePrice ?? 0, fileStackId ?? null);
       if (currentChatIdRef.current === sentForChatId) {
         await refresh();
         inboxApi.markChatAsRead(fourbased_id, sentForChatId).catch(() => {});
@@ -389,6 +392,13 @@ export function InboxChatPage() {
         textareaRef.current?.focus();
       }
     }
+  };
+
+  const handleSendMessage = async () => {
+    const trimmed = messageInput.trim();
+    if (!trimmed) return;
+    setMessageInput('');
+    await sendText(trimmed);
   };
 
   const handleEmojiSelect = (emoji: { native: string }) => {
@@ -420,6 +430,19 @@ export function InboxChatPage() {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [isEmojiPickerOpen]);
+
+  // Close configured-messages popup when clicking outside
+  useEffect(() => {
+    if (!openCategoryKey) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (cfgPopupRef.current && !cfgPopupRef.current.contains(e.target as Node)) {
+        setOpenCategoryKey(null);
+        setInlineEditId(null);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [openCategoryKey]);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
@@ -632,32 +655,129 @@ export function InboxChatPage() {
 
             {/* Message input */}
             <div className="border-t border-slate-700 shrink-0">
-              {/* Predefined texts chip bar */}
+              {/* Predefined texts — category chip bar */}
               {configuredMessages.length > 0 && (
-                <div className="px-4 pt-2.5 pb-1">
+                <div className="px-4 pt-2.5 pb-1 relative" ref={cfgPopupRef}>
                   <div className="flex gap-1.5 overflow-x-auto scrollbar-hide">
-                    {groupedConfiguredMessages.map(({ category, items }) =>
-                      items.map((pt) => (
-                        <button
-                          key={pt._id}
-                          type="button"
-                          title={pt.message}
-                          onClick={() => {
-                            setMessageInput(pt.message);
-                            textareaRef.current?.focus();
-                          }}
-                          className="shrink-0 flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] text-gray-400 bg-slate-700/60 border border-slate-600/60 hover:border-[#ED4C27] hover:text-gray-200 transition-colors"
-                        >
-                          {category?.color && (
-                            <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: category.color }} />
-                          )}
-                          <span className="max-w-[110px] truncate">
-                            {pt.name || pt.message}
-                          </span>
-                        </button>
-                      ))
-                    )}
+                    {groupedConfiguredMessages.map(({ key, category, items }) => (
+                      <button
+                        key={key}
+                        type="button"
+                        onClick={() => {
+                          setOpenCategoryKey(prev => prev === key ? null : key);
+                          setInlineEditId(null);
+                        }}
+                        className={[
+                          'shrink-0 flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium border transition-colors',
+                          openCategoryKey === key
+                            ? 'bg-[#ED4C27]/15 border-[#ED4C27]/40 text-[#ED4C27]'
+                            : 'text-gray-400 bg-slate-700/60 border-slate-600/60 hover:border-[#ED4C27]/50 hover:text-gray-200',
+                        ].join(' ')}
+                      >
+                        {category?.color
+                          ? <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: category.color }} />
+                          : <span className="w-2 h-2 rounded-full shrink-0 bg-slate-500" />}
+                        {category?.name ?? 'Ohne Kategorie'}
+                        <span className="text-[9px] opacity-60 ml-0.5">{items.length}</span>
+                      </button>
+                    ))}
                   </div>
+
+                  {/* Popup for open category */}
+                  {openCategoryKey && (() => {
+                    const group = groupedConfiguredMessages.find(g => g.key === openCategoryKey);
+                    if (!group) return null;
+                    return (
+                      <div className="absolute bottom-full left-4 right-4 mb-1 z-40 bg-[#0F172A] border border-slate-700 rounded-xl shadow-2xl overflow-hidden">
+                        <div className="flex items-center gap-2 px-3 py-2 border-b border-slate-700/70">
+                          {group.category?.color
+                            ? <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: group.category.color }} />
+                            : <span className="w-2.5 h-2.5 rounded-full shrink-0 bg-slate-500" />}
+                          <span className="text-xs font-semibold text-gray-300 uppercase tracking-wide">
+                            {group.category?.name ?? 'Ohne Kategorie'}
+                          </span>
+                          <span className="ml-auto text-[10px] text-gray-600">{group.items.length}</span>
+                        </div>
+                        <ul className="max-h-64 overflow-y-auto divide-y divide-slate-700/40">
+                          {group.items.map((msg) => {
+                            const isEditing = inlineEditId === msg._id;
+                            return (
+                              <li key={msg._id} className="flex items-start gap-2 px-3 py-2.5 hover:bg-slate-800/50 transition-colors">
+                                {msg.img_url && (
+                                  <div className="w-12 h-12 shrink-0 rounded-lg overflow-hidden bg-slate-800 border border-slate-700">
+                                    <img
+                                      src={unblurUrl(msg.img_url)}
+                                      alt=""
+                                      className="w-full h-full object-cover"
+                                      onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                                    />
+                                  </div>
+                                )}
+                                <div className="flex-1 min-w-0">
+                                  {msg.name && (
+                                    <p className="text-[10px] font-medium text-gray-500 mb-0.5 truncate">{msg.name}</p>
+                                  )}
+                                  {isEditing ? (
+                                    <textarea
+                                      autoFocus
+                                      value={inlineEditText}
+                                      onChange={(e) => setInlineEditText(e.target.value)}
+                                      rows={2}
+                                      className="w-full bg-slate-700 border border-slate-500 rounded px-2 py-1 text-sm text-gray-100 focus:outline-none focus:border-[#ED4C27] resize-none"
+                                    />
+                                  ) : (
+                                    <p className="text-sm text-gray-200 break-words line-clamp-2">{msg.message}</p>
+                                  )}
+                                  {typeof msg.file_stack?.price === 'number' && msg.file_stack.price > 0 && (
+                                    <p className="text-[10px] text-[#ED4C27] mt-0.5">
+                                      ${(msg.file_stack.price / 1.21 / 100).toFixed(2)}
+                                    </p>
+                                  )}
+                                </div>
+                                <div className="flex items-center gap-1 shrink-0 pt-0.5">
+                                  {/* Edit / Cancel button */}
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      if (isEditing) {
+                                        setInlineEditId(null);
+                                      } else {
+                                        setInlineEditId(msg._id);
+                                        setInlineEditText(msg.message);
+                                      }
+                                    }}
+                                    className="flex items-center justify-center w-7 h-7 rounded-lg border border-slate-600 bg-slate-700/80 text-gray-400 hover:text-yellow-400 hover:border-yellow-500/50 transition-colors"
+                                    title={isEditing ? 'Abbrechen' : 'Bearbeiten'}
+                                  >
+                                    {isEditing ? <X size={13} /> : <Pencil size={13} />}
+                                  </button>
+                                  {/* Send button */}
+                                  <button
+                                    type="button"
+                                    title="Senden"
+                                    disabled={isSending}
+                                    onClick={() => {
+                                      const text = isEditing ? inlineEditText.trim() : msg.message;
+                                      if (!text) return;
+                                      setOpenCategoryKey(null);
+                                      setInlineEditId(null);
+                                      sendText(
+                                        text,
+                                        msg.file_stack_id ?? null,
+                                      );
+                                    }}
+                                    className="flex items-center justify-center w-7 h-7 rounded-lg border border-[#ED4C27]/40 bg-[#ED4C27]/10 text-[#ED4C27] hover:bg-[#ED4C27]/20 transition-colors disabled:opacity-50"
+                                  >
+                                    {isSending ? <Loader2 size={13} className="animate-spin" /> : <SendHorizontal size={13} />}
+                                  </button>
+                                </div>
+                              </li>
+                            );
+                          })}
+                        </ul>
+                      </div>
+                    );
+                  })()}
                 </div>
               )}
               <div className="p-4 pt-2.5 flex items-end gap-3">
