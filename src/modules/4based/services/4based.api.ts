@@ -148,6 +148,12 @@ export interface FourBasedChatMessagesResult {
 const getApiUrl = () => getConfig().API_URL;
 const API_BASE = `${getApiUrl()}/4based`;
 
+const getTeamId = (): number => {
+  const match = document.cookie.match(/(?:^|; )auth_team=([^;]*)/);
+  if (!match) throw new Error('No team found in cookie');
+  return JSON.parse(decodeURIComponent(match[1])).team_id;
+};
+
 const getAuthHeaders = () => ({
   Authorization: `Bearer ${localStorage.getItem('auth_token')}`,
   "Content-Type": "application/json",
@@ -373,7 +379,7 @@ export const storeCredentials = async (email: string, password: string) => {
   const response = await fetch(`${API_BASE}/store/credentials`, {
     method: "POST",
     headers: getAuthHeaders(),
-    body: JSON.stringify({ email, password }),
+    body: JSON.stringify({ team_id: getTeamId(), email, password }),
   });
 
   return parseJson(response);
