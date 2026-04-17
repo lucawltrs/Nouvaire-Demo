@@ -1,5 +1,5 @@
 import { useState, FormEvent, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuthStore } from '../../lib/auth/useAuthStore';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
@@ -75,6 +75,15 @@ export function LoginPage() {
             <Button type="submit" className="w-full" isLoading={isLoading}>
               Sign In
             </Button>
+
+            <div className="text-center">
+              <Link
+                to="/forgot-password"
+                className="text-sm text-gray-400 hover:text-gray-200 transition-colors"
+              >
+                Passwort vergessen?
+              </Link>
+            </div>
 
           </form>
         </Card>

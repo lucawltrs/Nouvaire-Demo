@@ -23,6 +23,7 @@ import { FourBasedAccountsPage } from './app/pages/settings/FourBasedAccountsPag
 import { GroupsPage } from './app/pages/settings/GroupsPage';
 import { GeneralSettingsPage } from './app/pages/settings/GeneralSettingsPage';
 import { MyProfilePage } from './app/pages/MyProfilePage';
+import { ForgotPasswordPage } from './app/pages/ForgotPasswordPage';
 
 function App() {
   const checkAuth = useAuthStore((state) => state.checkAuth);
@@ -35,6 +36,7 @@ function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
 
         <Route
           path="/"
