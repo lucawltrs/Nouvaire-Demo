@@ -8,7 +8,6 @@ import { Input } from "../../components/ui/Input";
 import { Badge } from "../../components/ui/Badge";
 import { Card } from "../../components/ui/Card";
 import { PageLoader } from "../../components/ui/PageLoader";
-
 const FourBasedModelsPage: React.FC = () => {
   const { users, unreadByUser, loading, error, loadUsers, addCredentials, syncUsers } = useFourBasedModels();
   const [showModal, setShowModal] = useState(false);
