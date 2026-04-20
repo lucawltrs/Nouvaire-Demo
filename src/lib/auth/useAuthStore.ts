@@ -24,6 +24,7 @@ interface AuthStore {
   isAuthenticated: boolean;
   isCheckingAuth: boolean;
   login: (email: string, password: string) => Promise<void>;
+  loginWithToken: (token: string) => Promise<void>;
   logout: () => void;
   checkAuth: () => Promise<void>;
 }
@@ -74,7 +75,7 @@ const clearTeamCookie = (): void => {
 };
 
 
-export const useAuthStore = create<AuthStore>((set) => ({
+export const useAuthStore = create<AuthStore>((set, get) => ({
   user: null,
   team: isTokenValid() ? getTeamCookie() : null,
   token: isTokenValid() ? localStorage.getItem('auth_token') : null,
@@ -182,6 +183,11 @@ export const useAuthStore = create<AuthStore>((set) => ({
       console.error('Login error:', error);
       throw error;
     }
+  },
+
+  loginWithToken: async (token: string) => {
+    saveToken(token);
+    await get().checkAuth();
   },
 
   logout: () => {
