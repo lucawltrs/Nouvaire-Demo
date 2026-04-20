@@ -513,25 +513,12 @@ export function MainLayout({ children }: MainLayoutProps) {
         {children}
       </main>
 
-      <footer className="mt-auto border-t border-border bg-sidebar">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
-          <p className="text-xs text-gray-400">
-            Developed by{' '}
-            <a
-              href="https://wolters-solutions.de"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-brand-primary hover:text-brand-hover transition-colors font-medium"
-            >
-              Wolters Solutions
-            </a>
-          </p>
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-slate-700 border border-slate-600 text-[11px] font-mono text-gray-400 select-none">
-            <span className="w-1.5 h-1.5 rounded-full bg-brand-primary"></span>
-            v{__APP_VERSION__}
-          </span>
-        </div>
-      </footer>
+      <div className="fixed bottom-4 right-4 z-50">
+        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-slate-800 border border-slate-600 shadow-lg text-[11px] font-mono text-gray-400 select-none">
+          <span className="w-1.5 h-1.5 rounded-full bg-brand-primary"></span>
+          v{__APP_VERSION__}
+        </span>
+      </div>
     </div>
   );
 }
