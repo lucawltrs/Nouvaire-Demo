@@ -1,4 +1,4 @@
-import { UIEvent, useEffect, useRef } from 'react';
+import { UIEvent, useEffect, useRef, useState } from 'react';
 import { FourBasedChatMessage, FourBasedFileStackItem } from '../services/4based.api';
 
 interface ChatMessageListProps {
@@ -18,6 +18,100 @@ function isVideoItem(item: FourBasedFileStackItem): boolean {
   return item.fileStackType === 'video' || (item.type?.startsWith('video/') ?? false);
 }
 
+
+interface MediaCarouselProps {
+  items: FourBasedFileStackItem[];
+  isPurchased: boolean;
+  price: number;
+  previewUrl: string;
+}
+
+function MediaCarousel({ items, isPurchased, price, previewUrl }: MediaCarouselProps) {
+  const [index, setIndex] = useState(0);
+  const current = items[index];
+  const isVideo = current ? isVideoItem(current) : false;
+  const mediaUrl: string = ((current as Record<string, unknown>)?.media_url as string)
+    ?? (((current as Record<string, unknown>)?.source as string[])?.[0])
+    ?? previewUrl;
+  const total = items.length;
+
+  return (
+    <div className="relative mb-2 w-full rounded-lg overflow-hidden border border-gray-700 bg-black">
+      <div className="relative w-full" style={{ aspectRatio: '4/5', maxHeight: '280px' }}>
+        {isVideo ? (
+          <video
+            key={mediaUrl}
+            src={mediaUrl}
+            controls
+            playsInline
+            className="w-full h-full object-contain"
+          />
+        ) : (
+          <img
+            src={mediaUrl || previewUrl}
+            alt={`Media ${index + 1}`}
+            className="w-full h-full object-cover"
+          />
+        )}
+
+        {/* Price badge */}
+        {typeof price === 'number' && (
+          <span className={`absolute bottom-2 left-2 text-xs font-bold px-2 py-0.5 rounded-full flex items-center gap-1 ${
+            isPurchased ? 'bg-green-600/80 text-white' : 'bg-black/60 text-white'
+          }`}>
+            {isPurchased && (
+              <svg xmlns="http://www.w3.org/2000/svg" className="w-3 h-3" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+              </svg>
+            )}
+            ${(price / 1.21 / 100).toFixed(2)}
+          </span>
+        )}
+
+        {/* Counter */}
+        {total > 1 && (
+          <span className="absolute bottom-2 right-2 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-black/60 text-white">
+            {index + 1} / {total}
+          </span>
+        )}
+      </div>
+
+      {/* Navigation */}
+      {total > 1 && (
+        <>
+          <button
+            onClick={() => setIndex(i => Math.max(0, i - 1))}
+            disabled={index === 0}
+            className="absolute left-1 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/80 disabled:opacity-20 text-white rounded-full w-7 h-7 flex items-center justify-center transition-colors"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
+            </svg>
+          </button>
+          <button
+            onClick={() => setIndex(i => Math.min(total - 1, i + 1))}
+            disabled={index === total - 1}
+            className="absolute right-1 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/80 disabled:opacity-20 text-white rounded-full w-7 h-7 flex items-center justify-center transition-colors"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
+            </svg>
+          </button>
+          {/* Dot indicators */}
+          <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1">
+            {items.map((_, i) => (
+              <button
+                key={i}
+                onClick={() => setIndex(i)}
+                className={`w-1.5 h-1.5 rounded-full transition-colors ${i === index ? 'bg-white' : 'bg-white/40'}`}
+              />
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
 
 const getOwnMessageStatus = (message: FourBasedChatMessage) => {
   const receiverStates = Object.values(message.receiver_status ?? {});
@@ -140,40 +234,16 @@ export function ChatMessageList({
                 const allItems: FourBasedFileStackItem[] = fs
                   ? [fs as FourBasedFileStackItem, ...collection]
                   : [];
-                const totalCount = allItems.length;
-                const imageCount = allItems.filter(i => !isVideoItem(i)).length;
-                const videoCount = allItems.filter(i => isVideoItem(i)).length;
                 const isPurchased = !!(message.receiver_user_id && fs?.user_paid?.includes(message.receiver_user_id));
                 const price = fs?.price ?? 0;
 
                 return (
-                  <a href={message.img_preview_link} target="_blank" rel="noopener noreferrer" className="relative block mb-2">
-                    <img
-                      src={message.img_preview_link}
-                      alt="Nachrichten-Vorschau"
-                      className="w-full max-h-56 rounded-lg border border-gray-700 object-cover"
-                    />
-                    <div className="absolute inset-0 flex items-end justify-between p-2 pointer-events-none rounded-lg">
-                      {typeof price === 'number' && (
-                        <span className={`text-xs font-bold px-2 py-0.5 rounded-full flex items-center gap-1 ${
-                          isPurchased ? 'bg-green-600/80 text-white' : 'bg-black/60 text-white'
-                        }`}>
-                          {isPurchased && (
-                            <svg xmlns="http://www.w3.org/2000/svg" className="w-3 h-3" viewBox="0 0 20 20" fill="currentColor">
-                              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                            </svg>
-                          )}
-                          ${(price / 1.21 / 100).toFixed(2)}
-                        </span>
-                      )}
-                      {totalCount > 1 && (
-                        <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-black/60 text-white flex items-center gap-1 ml-auto">
-                          {imageCount > 0 && <span>🖼 {imageCount}</span>}
-                          {videoCount > 0 && <span>🎬 {videoCount}</span>}
-                        </span>
-                      )}
-                    </div>
-                  </a>
+                  <MediaCarousel
+                    items={allItems}
+                    isPurchased={isPurchased}
+                    price={price}
+                    previewUrl={message.img_preview_link}
+                  />
                 );
               })()}
               <p className="whitespace-pre-wrap break-words">{message.message || '-'}</p>
