@@ -1,12 +1,17 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, FormEvent } from 'react';
 import { Clock, AlertCircle, Timer, DollarSign, TrendingUp, Trophy, Lock, CheckCircle2 } from 'lucide-react';
 import { Card } from '../../components/ui/Card';
 import { PageLoader } from '../../components/ui/PageLoader';
+import { Modal } from '../../components/ui/Modal';
+import { Button } from '../../components/ui/Button';
+import { Input } from '../../components/ui/Input';
+import { OtpInput } from '../../components/ui/OtpInput';
 import {
   getSessionOverview,
   type SessionOverviewSession,
 } from '../../modules/work-sessions/services/workSession.api';
 import { useAuthStore } from '../../lib/auth/useAuthStore';
+import { forgotPassword, resetPassword } from '../../lib/auth/authApi';
 
 function formatDateTime(iso: string | null): string {
   if (!iso) return '—';
@@ -27,13 +32,75 @@ function formatDuration(minutes: number | null): string {
   return m === 0 ? `${h}h` : `${h}h ${m}m`;
 }
 
+type PwStep = 'idle' | 'sending' | 'otp' | 'success';
+
 export function MyProfilePage() {
   const { user } = useAuthStore();
+  const loginWithToken = useAuthStore((state) => state.loginWithToken);
 
   const [sessions, setSessions] = useState<SessionOverviewSession[]>([]);
   const [totalRevenue, setTotalRevenue] = useState<string>('$ 0.00');
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Password change modal
+  const [pwModalOpen, setPwModalOpen] = useState(false);
+  const [pwStep, setPwStep] = useState<PwStep>('idle');
+  const [pwOtp, setPwOtp] = useState('');
+  const [pwNew, setPwNew] = useState('');
+  const [pwConfirm, setPwConfirm] = useState('');
+  const [pwLoading, setPwLoading] = useState(false);
+  const [pwError, setPwError] = useState('');
+
+  const openPwModal = () => {
+    setPwStep('idle');
+    setPwOtp('');
+    setPwNew('');
+    setPwConfirm('');
+    setPwError('');
+    setPwModalOpen(true);
+  };
+
+  const closePwModal = () => {
+    setPwModalOpen(false);
+  };
+
+  const handleSendCode = async () => {
+    if (!user?.email) return;
+    setPwLoading(true);
+    setPwError('');
+    try {
+      await forgotPassword(user.email);
+      setPwStep('otp');
+    } catch {
+      setPwError('Fehler beim Senden des Codes. Bitte versuche es erneut.');
+    } finally {
+      setPwLoading(false);
+    }
+  };
+
+  const handlePwSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    if (pwOtp.length < 6) {
+      setPwError('Bitte gib den vollständigen 6-stelligen Code ein.');
+      return;
+    }
+    if (pwNew !== pwConfirm) {
+      setPwError('Die Passwörter stimmen nicht überein.');
+      return;
+    }
+    setPwLoading(true);
+    setPwError('');
+    try {
+      const token = await resetPassword(user!.email, pwOtp, pwNew, pwConfirm);
+      await loginWithToken(token);
+      setPwStep('success');
+    } catch (err) {
+      setPwError(err instanceof Error ? err.message : 'Fehler beim Zurücksetzen.');
+    } finally {
+      setPwLoading(false);
+    }
+  };
 
   const fetchData = useCallback(async () => {
     if (!user?.id) return;
@@ -83,8 +150,89 @@ export function MyProfilePage() {
         <div>
           <h1 className="text-2xl font-bold text-gray-100">{user?.name}</h1>
           <p className="text-sm text-gray-400">{user?.email}</p>
+          <button
+            onClick={openPwModal}
+            className="mt-1 text-xs text-gray-500 hover:text-gray-300 transition-colors"
+          >
+            Passwort ändern
+          </button>
         </div>
       </div>
+
+      {/* Password change modal */}
+      <Modal isOpen={pwModalOpen} onClose={closePwModal} title="Passwort ändern" size="sm">
+        {pwStep === 'idle' && (
+          <div className="space-y-4">
+            <p className="text-sm text-gray-400">
+              Wir senden einen 6-stelligen Code an{' '}
+              <span className="text-gray-300 font-medium">{user?.email}</span>.
+            </p>
+            {pwError && (
+              <div className="bg-red-500/10 border border-red-500/50 text-red-400 px-4 py-3 rounded-lg text-sm">
+                {pwError}
+              </div>
+            )}
+            <div className="flex gap-3 justify-end">
+              <Button variant="ghost" size="sm" onClick={closePwModal}>Abbrechen</Button>
+              <Button size="sm" isLoading={pwLoading} onClick={handleSendCode}>
+                Code senden
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {pwStep === 'otp' && (
+          <form onSubmit={handlePwSubmit} className="space-y-5">
+            <p className="text-sm text-gray-400">
+              Code wurde an <span className="text-gray-300 font-medium">{user?.email}</span> gesendet.
+            </p>
+            {pwError && (
+              <div className="bg-red-500/10 border border-red-500/50 text-red-400 px-4 py-3 rounded-lg text-sm">
+                {pwError}
+              </div>
+            )}
+            <div>
+              <p className="block text-sm font-medium text-gray-300 mb-3">6-stelliger Code</p>
+              <OtpInput value={pwOtp} onChange={setPwOtp} disabled={pwLoading} />
+            </div>
+            <Input
+              label="Neues Passwort"
+              type="password"
+              placeholder="••••••••"
+              value={pwNew}
+              onChange={(e) => setPwNew(e.target.value)}
+              required
+            />
+            <Input
+              label="Passwort bestätigen"
+              type="password"
+              placeholder="••••••••"
+              value={pwConfirm}
+              onChange={(e) => setPwConfirm(e.target.value)}
+              required
+            />
+            <div className="flex gap-3 justify-end">
+              <Button type="button" variant="ghost" size="sm" onClick={closePwModal}>Abbrechen</Button>
+              <Button type="submit" size="sm" isLoading={pwLoading} disabled={pwOtp.length < 6}>
+                Passwort ändern
+              </Button>
+            </div>
+          </form>
+        )}
+
+        {pwStep === 'success' && (
+          <div className="flex flex-col items-center gap-4 py-4 text-center">
+            <div className="w-14 h-14 rounded-full bg-green-500/10 flex items-center justify-center">
+              <CheckCircle2 size={28} className="text-green-400" />
+            </div>
+            <div>
+              <p className="text-base font-semibold text-gray-100 mb-1">Passwort geändert!</p>
+              <p className="text-sm text-gray-400">Dein Passwort wurde erfolgreich aktualisiert.</p>
+            </div>
+            <Button size="sm" onClick={closePwModal}>Schließen</Button>
+          </div>
+        )}
+      </Modal>
 
       {/* Error state */}
       {error && (
