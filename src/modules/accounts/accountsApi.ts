@@ -22,11 +22,54 @@ const fourbasedFetch = async (url: string, options: RequestInit = {}) => {
   return fetch(url, { ...options, headers });
 };
 
-let accountsCache: Account[] | null = null;
+const CACHE_KEY = 'accounts_cache';
+const CACHE_TTL_MS = 24 * 60 * 60 * 1000;
+
+interface AccountsCache {
+  data: Account[];
+  timestamp: number;
+  teamId: number;
+}
+
+// In-memory cache for the current session (avoids localStorage parse overhead)
+let memoryCache: AccountsCache | null = null;
+
+function readCache(teamId: number): Account[] | null {
+  if (memoryCache && memoryCache.teamId === teamId && Date.now() - memoryCache.timestamp < CACHE_TTL_MS) {
+    return memoryCache.data;
+  }
+  try {
+    const raw = localStorage.getItem(CACHE_KEY);
+    if (!raw) return null;
+    const parsed: AccountsCache = JSON.parse(raw);
+    if (parsed.teamId !== teamId || Date.now() - parsed.timestamp > CACHE_TTL_MS) return null;
+    memoryCache = parsed;
+    return parsed.data;
+  } catch {
+    return null;
+  }
+}
+
+function writeCache(teamId: number, data: Account[]) {
+  const entry: AccountsCache = { data, timestamp: Date.now(), teamId };
+  memoryCache = entry;
+  try { localStorage.setItem(CACHE_KEY, JSON.stringify(entry)); } catch { /* quota exceeded */ }
+}
+
+export function invalidateAccountsCache() {
+  memoryCache = null;
+  localStorage.removeItem(CACHE_KEY);
+}
 
 export const accountsApi = {
-  async getAccounts(): Promise<Account[]> {
-    const response = await fourbasedFetch(`${getApiUrl()}/teams/${getTeamId()}/fourbased-users`);
+  async getAccounts(force = false): Promise<Account[]> {
+    const teamId = getTeamId();
+    if (!force) {
+      const cached = readCache(teamId);
+      if (cached) return cached;
+    }
+
+    const response = await fourbasedFetch(`${getApiUrl()}/teams/${teamId}/fourbased-users`);
 
     if (!response.ok) {
       throw new Error('Failed to fetch accounts');
@@ -34,12 +77,12 @@ export const accountsApi = {
 
     const raw = await response.json();
     const accounts: Account[] = raw?.data?.accounts ?? [];
-    accountsCache = accounts;
+    writeCache(teamId, accounts);
     return accounts;
   },
 
   async getAccount(fourbasedId: string): Promise<Account> {
-    const list = accountsCache ?? await accountsApi.getAccounts();
+    const list = await accountsApi.getAccounts();
     const account = list.find((a) => a.fourbased_id === fourbasedId);
 
     if (!account) {
