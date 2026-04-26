@@ -1,7 +1,7 @@
 import { ReactNode, useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../lib/auth/useAuthStore';
-import { LayoutDashboard, LogOut, ChevronDown, MessagesSquare, BarChart3, Users, Settings, Menu, X, Cloud, UserCircle, Square } from 'lucide-react';
+import { LayoutDashboard, LogOut, ChevronDown, MessagesSquare, BarChart3, Users, Settings, Menu, X, Cloud, UserCircle, Square, Send } from 'lucide-react';
 import { useWorkSessionStore } from '../../modules/work-sessions/store/useWorkSessionStore';
 import { WorkSessionModal } from '../../modules/work-sessions/components/WorkSessionModal';
 import { putEndWorkSession } from '../../modules/work-sessions/services/workSession.api';
@@ -182,6 +182,7 @@ export function MainLayout({ children }: MainLayoutProps) {
     { path: '/accounts', label: 'Accounts', icon: Users },
     { path: '/inbox', label: 'Inbox', icon: MessagesSquare },
     { path: '/cloud', label: 'Cloud', icon: Cloud },
+    { path: '/mass-messages', label: 'Mass Messages', icon: Send },
     ...(isAdmin ? [{ path: '/settings', label: 'Settings', icon: Settings }] : []),
   ];
 

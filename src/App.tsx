@@ -24,6 +24,7 @@ import { GroupsPage } from './app/pages/settings/GroupsPage';
 import { GeneralSettingsPage } from './app/pages/settings/GeneralSettingsPage';
 import { MyProfilePage } from './app/pages/MyProfilePage';
 import { ForgotPasswordPage } from './app/pages/ForgotPasswordPage';
+import { MassMessagesPage } from './app/pages/MassMessagesPage';
 
 function App() {
   const checkAuth = useAuthStore((state) => state.checkAuth);
@@ -167,6 +168,16 @@ function App() {
               <ProtectedRoute>
                 <MainLayout>
                   <MyProfilePage />
+                </MainLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/mass-messages"
+            element={
+              <ProtectedRoute>
+                <MainLayout>
+                  <MassMessagesPage />
                 </MainLayout>
               </ProtectedRoute>
             }
