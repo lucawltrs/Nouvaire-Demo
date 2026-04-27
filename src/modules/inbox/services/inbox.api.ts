@@ -67,6 +67,20 @@ export const inboxApi = {
     return [];
   },
 
+  async getChatById(fourbased_id: string, chat_id: string): Promise<ChatListItem | null> {
+    try {
+      const queryParams = new URLSearchParams({ fourbased_id, chat_id });
+      const response = await fourbasedFetch(`${getApiUrl()}/4based/chats/by-id?${queryParams}`);
+      if (!response.ok) return null;
+      const raw = await response.json();
+      const item = raw?.data ?? raw;
+      if (item && item.chat_id) return item as ChatListItem;
+      return null;
+    } catch {
+      return null;
+    }
+  },
+
   async getAccounts(): Promise<InboxAccount[]> {
     const response = await fourbasedFetch(`${getApiUrl()}/teams/${getTeamId()}/fourbased-users`);
     if (!response.ok) {
@@ -102,7 +116,6 @@ export const inboxApi = {
       throw new Error(`Failed to fetch pivot: ${response.status}`);
     }
     const raw = await response.json();
-    console.log('[getPivot] raw response:', JSON.stringify(raw));
     const base: PivotData = raw?.response ?? raw;
     if (raw?.price_override != null && base?.price_override == null) {
       base.price_override = raw.price_override;
