@@ -39,6 +39,7 @@ export function InboxChatPage() {
   const [mobileInfoOpen, setMobileInfoOpen] = useState(false);
   const [chats, setChats] = useState<ChatListItem[]>([]);
   const [isLoadingChats, setIsLoadingChats] = useState(true);
+  const [isFallbackSearching, setIsFallbackSearching] = useState(false);
   const [chatsError, setChatsError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<ChatListItem[] | null>(null);
@@ -117,7 +118,12 @@ export function InboxChatPage() {
             .flatMap((a) => a.chats)
         )
       );
-      setChats(flatChats);
+      // Preserve chats that were injected via fallback search but aren't in the fresh list
+      setChats(prev => {
+        const freshIds = new Set(flatChats.map(c => String(c.chat_id)));
+        const injected = prev.filter(c => !freshIds.has(String(c.chat_id)));
+        return injected.length > 0 ? [...flatChats, ...injected] : flatChats;
+      });
     } catch {
       if (!silent) setChatsError('Chats konnten nicht geladen werden.');
     } finally {
@@ -130,17 +136,25 @@ export function InboxChatPage() {
   }, [loadChats]);
 
   // If the active chat is not in the loaded list (e.g. older than 30 days or beyond limit),
-  // fetch it individually via search by chat_id and inject it into the list.
+  // try getChatById first, then fall back to text search.
   useEffect(() => {
     if (!chat_id || !fourbased_id || isLoadingChats) return;
     const alreadyPresent = chats.some(c => String(c.chat_id) === String(chat_id));
-    if (alreadyPresent) return;
-    inboxApi.searchChats({ query: chat_id, limit: 5, fourbased_id })
-      .then((results) => {
-        const found = results.find(r => String(r.chat_id) === String(chat_id));
-        if (found) setChats(prev => [...prev, found]);
+    if (alreadyPresent) { setIsFallbackSearching(false); return; }
+    setIsFallbackSearching(true);
+    const inject = (found: import('../../../modules/inbox/types').ChatListItem) =>
+      setChats(prev => prev.some(c => String(c.chat_id) === String(found.chat_id)) ? prev : [...prev, found]);
+    inboxApi.getChatById(fourbased_id, chat_id)
+      .then(found => {
+        if (found) { inject(found); return; }
+        return inboxApi.searchChats({ query: chat_id, limit: 5, fourbased_id })
+          .then(results => {
+            const match = results.find(r => String(r.chat_id) === String(chat_id));
+            if (match) inject(match);
+          });
       })
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => setIsFallbackSearching(false));
   }, [chat_id, fourbased_id, isLoadingChats, chats]);
 
   // Debounced API search for chat sidebar
@@ -596,50 +610,67 @@ export function InboxChatPage() {
         ) : (
           <Card className="rounded-2xl flex flex-col flex-1 min-h-0">
             {/* Chat header */}
-            {activeChat && (
-              <div className="p-4 border-b border-slate-700 flex items-center gap-3 shrink-0">
-                <button
-                  type="button"
-                  onClick={() => setMobileView('sidebar')}
-                  className="md:hidden flex items-center justify-center w-8 h-8 rounded-lg border border-slate-600 bg-slate-700 text-gray-400 hover:text-gray-100 transition-colors shrink-0"
-                  aria-label="Zurück zur Chat-Liste"
-                >
-                  <ArrowLeft size={16} />
-                </button>
-                {(pivotData || !!customerId) && (
-                  <button
-                    type="button"
-                    onClick={() => setMobileInfoOpen(true)}
-                    className="md:hidden flex items-center justify-center w-8 h-8 rounded-lg border border-slate-600 bg-slate-700 text-gray-400 hover:text-[#ED4C27] hover:border-[#ED4C27] transition-colors shrink-0"
-                    aria-label="Kundeninfo öffnen"
+            <div className="p-4 border-b border-slate-700 flex items-center gap-3 shrink-0">
+              <button
+                type="button"
+                onClick={() => setMobileView('sidebar')}
+                className="md:hidden flex items-center justify-center w-8 h-8 rounded-lg border border-slate-600 bg-slate-700 text-gray-400 hover:text-gray-100 transition-colors shrink-0"
+                aria-label="Zurück zur Chat-Liste"
+              >
+                <ArrowLeft size={16} />
+              </button>
+              {activeChat ? (
+                <>
+                  {(pivotData || !!customerId) && (
+                    <button
+                      type="button"
+                      onClick={() => setMobileInfoOpen(true)}
+                      className="md:hidden flex items-center justify-center w-8 h-8 rounded-lg border border-slate-600 bg-slate-700 text-gray-400 hover:text-[#ED4C27] hover:border-[#ED4C27] transition-colors shrink-0"
+                      aria-label="Kundeninfo öffnen"
+                    >
+                      <SlidersHorizontal size={16} />
+                    </button>
+                  )}
+                  <AccountAvatar src={activeChat.customer_avatar_url ?? undefined} name={activeChat.customer_name} size="md" isOnline={activeChat.customer_is_online} />
+                  <div className="min-w-0 flex-1">
+                    <h1 className="text-lg font-bold text-gray-100 truncate">{activeChat.customer_name}</h1>
+                  </div>
+                  {/* Profile link */}
+                  <a
+                    href={`https://4based.com/profile/${encodeURIComponent(activeChat.customer_name.replace(/\s+/g, '-'))}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="ml-2 inline-flex items-center justify-center w-9 h-9 rounded-full hover:bg-slate-700 text-[#ED4C27]"
+                    title={`Profil von ${activeChat.customer_name}`}
                   >
-                    <SlidersHorizontal size={16} />
-                  </button>
-                )}
-                <AccountAvatar src={activeChat.customer_avatar_url ?? undefined} name={activeChat.customer_name} size="md" isOnline={activeChat.customer_is_online} />
-                <div className="min-w-0 flex-1">
-                  <h1 className="text-lg font-bold text-gray-100 truncate">{activeChat.customer_name}</h1>
+                    <User size={18} />
+                  </a>
+                  {typeof activeChat.sales_volume === 'number' && (
+                    <span
+                      className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold shrink-0"
+                      style={{ background: 'rgba(237,76,39,0.12)', color: '#ED4C27' }}
+                    >
+                      ${(activeChat.sales_volume / 100).toFixed(2)}
+                    </span>
+                  )}
+                </>
+              ) : (isLoadingChats || isFallbackSearching) ? (
+                <div className="flex items-center gap-3 flex-1 animate-pulse">
+                  <div className="w-10 h-10 rounded-full bg-slate-700 shrink-0" />
+                  <div className="h-5 bg-slate-700 rounded w-40" />
                 </div>
-                {/* Profile link */}
-                <a
-                  href={`https://4based.com/profile/${encodeURIComponent(activeChat.customer_name.replace(/\s+/g, '-'))}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="ml-2 inline-flex items-center justify-center w-9 h-9 rounded-full hover:bg-slate-700 text-[#ED4C27]"
-                  title={`Profil von ${activeChat.customer_name}`}
-                >
-                  <User size={18} />
-                </a>
-                {typeof activeChat.sales_volume === 'number' && (
-                  <span
-                    className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold shrink-0"
-                    style={{ background: 'rgba(237,76,39,0.12)', color: '#ED4C27' }}
-                  >
-                    ${(activeChat.sales_volume / 100).toFixed(2)}
-                  </span>
-                )}
-              </div>
-            )}
+              ) : customerId ? (
+                // Chat not resolved via API — show what we know (alias or user ID)
+                <>
+                  <AccountAvatar src={undefined} name={pivotData?.alias ?? customerId} size="md" />
+                  <div className="min-w-0 flex-1">
+                    <h1 className="text-lg font-bold text-gray-100 truncate">
+                      {pivotData?.alias ?? customerId}
+                    </h1>
+                  </div>
+                </>
+              ) : null}
+            </div>
 
             <ChatMessageList
               key={chat_id}
