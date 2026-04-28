@@ -514,7 +514,7 @@ export function MainLayout({ children }: MainLayoutProps) {
         {children}
       </main>
 
-      <div className="fixed bottom-4 right-4 z-50">
+      <div className="fixed bottom-4 left-4 z-50">
         <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-slate-800 border border-slate-600 shadow-lg text-[11px] font-mono text-gray-400 select-none">
           <span className="w-1.5 h-1.5 rounded-full bg-brand-primary"></span>
           v{__APP_VERSION__}
