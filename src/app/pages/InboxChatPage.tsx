@@ -2,7 +2,6 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { Card } from '../../components/ui/Card';
-import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
 import { Textarea } from '../../components/ui/Textarea';
 import { Input } from '../../components/ui/Input';
@@ -13,6 +12,8 @@ import { Modal } from '../../components/ui/Modal';
 import { cloudApi, unblurUrl } from '../../modules/cloud/cloudApi';
 import type { CloudAsset } from '../../modules/cloud/types';
 import { inboxApi } from '../../modules/inbox/services/inbox.api';
+import { accountsApi } from '../../modules/accounts/accountsApi';
+import type { AccountEmoji } from '../../modules/accounts/types';
 import type { ChatListItem, ConfiguredMessage, ConfiguredMessageCategory, PivotData, AccountInfo } from '../../modules/inbox/types';
 import { ToastContainer } from '../../lib/toast';
 import { useChatMessages } from '../../modules/4based/hooks/useChatMessages';
@@ -56,6 +57,7 @@ export function InboxChatPage() {
   const [isSavingPivot, setIsSavingPivot] = useState(false);
   const [accountInfo, setAccountInfo] = useState<AccountInfo | null>(null);
   const [isAccountInfoLoading, setIsAccountInfoLoading] = useState(false);
+  const [accountEmojis, setAccountEmojis] = useState<AccountEmoji[]>([]);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   // Configured messages popup
   const [openCategoryKey, setOpenCategoryKey] = useState<string | null>(null);
@@ -142,7 +144,7 @@ export function InboxChatPage() {
     const alreadyPresent = chats.some(c => String(c.chat_id) === String(chat_id));
     if (alreadyPresent) { setIsFallbackSearching(false); return; }
     setIsFallbackSearching(true);
-    const inject = (found: import('../../../modules/inbox/types').ChatListItem) =>
+    const inject = (found: ChatListItem) =>
       setChats(prev => prev.some(c => String(c.chat_id) === String(found.chat_id)) ? prev : [...prev, found]);
     inboxApi.getChatById(fourbased_id, chat_id)
       .then(found => {
@@ -197,6 +199,12 @@ export function InboxChatPage() {
     if (!fourbased_id) return;
     inboxApi.getConfiguredMessages(fourbased_id).then(setConfiguredMessages).catch(() => {});
   }, [fourbased_id]);
+
+  useEffect(() => {
+    if (!fourbased_id) return;
+    accountsApi.getAccountEmojis(fourbased_id).then(setAccountEmojis).catch(() => {});
+  }, [fourbased_id]);
+
 
   // Reset sending state when switching chats
   useEffect(() => {
@@ -683,6 +691,22 @@ export function InboxChatPage() {
               formatChatTimestamp={formatChatTimestamp}
               onEditFileStack={setEditingFileStackMessage}
             />
+
+              {accountEmojis.length > 0 && (
+              <div className="px-4 pt-2 pb-1 flex flex-wrap gap-1.5 shrink-0">
+                {accountEmojis.map(e => (
+                  <button
+                    key={e.id}
+                    type="button"
+                    onClick={() => handleEmojiSelect({ native: e.emoji })}
+                    className="w-8 h-8 rounded-lg border border-slate-700 bg-slate-800/60 text-lg flex items-center justify-center hover:border-[#ED4C27] hover:bg-slate-700 transition-colors"
+                    title={e.emoji}
+                  >
+                    {e.emoji}
+                  </button>
+                ))}
+              </div>
+            )}
 
             {/* Message input */}
             <div className="border-t border-slate-700 shrink-0">
@@ -1406,53 +1430,10 @@ function EditFileStackModal({
   const VAT_RATE = 0.21;
   const currentBasePrice = currentPriceWithVat > 0 ? currentPriceWithVat / (1 + VAT_RATE) / 100 : 0;
 
-  const [description, setDescription] = useState(message.message ?? '');
+  const description = message.message ?? '';
   const [priceInput, setPriceInput] = useState(
     currentBasePrice > 0 ? currentBasePrice.toFixed(2) : '',
   );
-  const [isEmojiPickerOpen, setIsEmojiPickerOpen] = useState(false);
-  const [pickerPos, setPickerPos] = useState({ top: 0, left: 0 });
-  const descTextareaRef = useRef<HTMLTextAreaElement>(null);
-  const emojiBtnRef = useRef<HTMLButtonElement>(null);
-
-  useEffect(() => {
-    if (!isEmojiPickerOpen) return;
-    const handleClickOutside = (e: MouseEvent) => {
-      const target = e.target as Node;
-      if (emojiBtnRef.current && emojiBtnRef.current.contains(target)) return;
-      const pickerEl = document.getElementById('edit-fs-emoji-picker-portal');
-      if (pickerEl && pickerEl.contains(target)) return;
-      setIsEmojiPickerOpen(false);
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [isEmojiPickerOpen]);
-
-  const handleEmojiBtnClick = () => {
-    if (!isEmojiPickerOpen && emojiBtnRef.current) {
-      const rect = emojiBtnRef.current.getBoundingClientRect();
-      setPickerPos({ top: rect.top - 440, left: rect.right - 352 });
-    }
-    setIsEmojiPickerOpen(prev => !prev);
-  };
-
-  const handleEmojiSelect = (emoji: { native: string }) => {
-    const textarea = descTextareaRef.current;
-    if (textarea) {
-      const start = textarea.selectionStart ?? description.length;
-      const end = textarea.selectionEnd ?? description.length;
-      const newValue = description.slice(0, start) + emoji.native + description.slice(end);
-      setDescription(newValue);
-      requestAnimationFrame(() => {
-        textarea.focus();
-        const pos = start + emoji.native.length;
-        textarea.setSelectionRange(pos, pos);
-      });
-    } else {
-      setDescription(prev => prev + emoji.native);
-    }
-    setIsEmojiPickerOpen(false);
-  };
 
   const MIN_PRICE = 3.00;
   const basePrice = parseFloat(priceInput || '0') || 0;
