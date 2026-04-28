@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { createPortal } from 'react-dom';
 import {
   ArrowLeft,
@@ -34,7 +34,7 @@ import { Card } from '../../../components/ui/Card';
 import { PageLoader } from '../../../components/ui/PageLoader';
 import { Modal } from '../../../components/ui/Modal';
 import { accountsApi } from '../../../modules/accounts/accountsApi';
-import type { Account } from '../../../modules/accounts/types';
+import type { Account, AccountEmoji } from '../../../modules/accounts/types';
 import { formatCurrency, formatRelativeTime } from '../../../modules/dashboard';
 import { inboxApi } from '../../../modules/inbox/services/inbox.api';
 import type { ConfiguredMessage, ConfiguredMessageCategory, AccountInfo } from '../../../modules/inbox/types';
@@ -46,7 +46,7 @@ import { cloudApi, unblurUrl } from '../../../modules/cloud/cloudApi';
 import type { CloudAsset } from '../../../modules/cloud/types';
 import { createFileStack } from '../../../modules/4based/services/4based.api';
 
-type Tab = 'overview' | 'settings';
+type Tab = 'overview' | 'emojis' | 'settings';
 
 export function AccountDetailPage() {
   const { fourbased_id } = useParams<{ fourbased_id: string }>();
@@ -160,7 +160,7 @@ export function AccountDetailPage() {
 
       {/* Tabs */}
       <div className="flex border-b border-slate-700 gap-1">
-        {(['overview', 'settings'] as Tab[]).map((tab) => (
+        {(['overview', 'emojis', 'settings'] as Tab[]).map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
@@ -177,6 +177,7 @@ export function AccountDetailPage() {
 
       {/* Tab Content */}
       {activeTab === 'overview' && <OverviewTab account={account} />}
+      {activeTab === 'emojis' && <AccountEmojisTab fourbasedId={account.fourbased_id} />}
       {activeTab === 'settings' && <SettingsTab fourbasedId={account.fourbased_id} />}
     </div>
   );
@@ -510,6 +511,17 @@ function KpiCard({ title, value, icon: Icon, gradient, subtitle }: KpiCardProps)
 }
 
 // ============================================================================
+// Emojis Tab
+// ============================================================================
+
+function AccountEmojisTab({ fourbasedId }: { fourbasedId: string }) {
+  const { team } = useAuthStore();
+  const isAdmin = team?.role === 'admin';
+  return <AccountEmojisCard fourbasedId={fourbasedId} isAdmin={isAdmin} />;
+}
+
+
+// ============================================================================
 // Settings Tab
 // ============================================================================
 
@@ -553,6 +565,235 @@ function SettingsTab({ fourbasedId }: { fourbasedId: string }) {
     </div>
   );
 }
+
+// ── Account Emojis Card ──────────────────────────────────────────────────────
+
+function EmojiPickerPopover({
+  onSelect,
+  children,
+}: {
+  value: string;
+  onSelect: (emoji: string) => void;
+  children: React.ReactNode;
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [open]);
+
+  return (
+    <div ref={ref} className="relative">
+      <div onClick={() => setOpen(p => !p)}>{children}</div>
+      {open && (
+        <div className="absolute bottom-12 left-0 z-50">
+          <Picker
+            data={data}
+            onEmojiSelect={(em: { native: string }) => { onSelect(em.native); setOpen(false); }}
+            theme="dark"
+            locale="de"
+            previewPosition="none"
+            skinTonePosition="search"
+          />
+        </div>
+      )}
+    </div>
+  );
+}
+
+function AccountEmojisCard({ fourbasedId, isAdmin }: { fourbasedId: string; isAdmin: boolean }) {
+  const [emojis, setEmojis] = useState<AccountEmoji[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [newEmoji, setNewEmoji] = useState('');
+  const [isAdding, setIsAdding] = useState(false);
+  const [editId, setEditId] = useState<number | null>(null);
+  const [editEmoji, setEditEmoji] = useState('');
+  const [savingId, setSavingId] = useState<number | null>(null);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [mutationError, setMutationError] = useState<string | null>(null);
+
+  const load = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      setEmojis(await accountsApi.getAccountEmojis(fourbasedId));
+    } catch {
+      setError('Emojis konnten nicht geladen werden.');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [fourbasedId]);
+
+  useEffect(() => { load(); }, [load]);
+
+  const handleAdd = async () => {
+    if (!newEmoji.trim()) return;
+    setIsAdding(true);
+    setMutationError(null);
+    try {
+      const created = await accountsApi.createAccountEmoji(fourbasedId, newEmoji.trim());
+      setEmojis(prev => [...prev, created]);
+      setNewEmoji('');
+    } catch {
+      setMutationError('Emoji konnte nicht hinzugefügt werden.');
+    } finally {
+      setIsAdding(false);
+    }
+  };
+
+  const handleUpdate = async (id: number) => {
+    if (!editEmoji.trim()) return;
+    setSavingId(id);
+    setMutationError(null);
+    try {
+      const updated = await accountsApi.updateAccountEmoji(fourbasedId, id, editEmoji.trim());
+      setEmojis(prev => prev.map(e => e.id === id ? updated : e));
+      setEditId(null);
+    } catch {
+      setMutationError('Emoji konnte nicht aktualisiert werden.');
+    } finally {
+      setSavingId(null);
+    }
+  };
+
+  const handleDelete = async (id: number) => {
+    setDeletingId(id);
+    setMutationError(null);
+    try {
+      await accountsApi.deleteAccountEmoji(fourbasedId, id);
+      setEmojis(prev => prev.filter(e => e.id !== id));
+    } catch {
+      setMutationError('Emoji konnte nicht gelöscht werden.');
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
+  return (
+    <Card className="p-6 border border-slate-600">
+      <div className="flex items-center gap-3 mb-5">
+        <div className="w-8 h-8 rounded-lg bg-[#ED4C27]/15 flex items-center justify-center">
+          <Smile size={16} className="text-[#ED4C27]" />
+        </div>
+        <div>
+          <h3 className="text-sm font-semibold text-gray-100">Account Emojis</h3>
+          <p className="text-xs text-gray-500">Emojis für den Chat-Schnellzugriff</p>
+        </div>
+      </div>
+
+      {(error ?? mutationError) && (
+        <div className="mb-4 flex items-center gap-2 text-xs text-red-400 bg-red-900/20 border border-red-800/40 rounded-lg px-3 py-2">
+          <AlertCircle size={13} />
+          {error ?? mutationError}
+        </div>
+      )}
+
+      {isLoading ? (
+        <div className="flex items-center justify-center py-4">
+          <Loader2 size={18} className="animate-spin text-gray-400" />
+        </div>
+      ) : (
+        <>
+          {emojis.length > 0 && (
+            <div className="flex flex-wrap gap-2 mb-4">
+              {emojis.map(e => (
+                editId === e.id ? (
+                  <div key={e.id} className="flex items-center gap-1">
+                    <EmojiPickerPopover value={editEmoji} onSelect={setEditEmoji}>
+                      <button
+                        type="button"
+                        className="w-10 h-10 rounded-lg border border-[#ED4C27] bg-slate-700 text-xl flex items-center justify-center hover:bg-slate-600 transition-colors"
+                      >
+                        {editEmoji || '?'}
+                      </button>
+                    </EmojiPickerPopover>
+                    <button
+                      onClick={() => handleUpdate(e.id)}
+                      disabled={savingId === e.id}
+                      className="p-1.5 text-green-400 hover:text-green-300 disabled:opacity-50 transition-colors"
+                      title="Speichern"
+                    >
+                      {savingId === e.id ? <Loader2 size={13} className="animate-spin" /> : <Save size={13} />}
+                    </button>
+                    <button
+                      onClick={() => setEditId(null)}
+                      className="p-1.5 text-gray-400 hover:text-gray-200 transition-colors"
+                      title="Abbrechen"
+                    >
+                      <X size={13} />
+                    </button>
+                  </div>
+                ) : (
+                  <div key={e.id} className="group relative">
+                    <div className="w-10 h-10 rounded-lg border border-slate-700 bg-slate-800/60 text-xl flex items-center justify-center select-none">
+                      {e.emoji}
+                    </div>
+                    {isAdmin && (
+                      <div className="absolute -top-1.5 -right-1.5 hidden group-hover:flex gap-0.5">
+                        <button
+                          onClick={() => { setEditId(e.id); setEditEmoji(e.emoji); }}
+                          className="w-5 h-5 rounded-full bg-slate-700 border border-slate-600 flex items-center justify-center text-gray-400 hover:text-gray-100 transition-colors"
+                          title="Bearbeiten"
+                        >
+                          <Pencil size={9} />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(e.id)}
+                          disabled={deletingId === e.id}
+                          className="w-5 h-5 rounded-full bg-slate-700 border border-slate-600 flex items-center justify-center text-gray-400 hover:text-red-400 disabled:opacity-50 transition-colors"
+                          title="Löschen"
+                        >
+                          {deletingId === e.id ? <Loader2 size={9} className="animate-spin" /> : <X size={9} />}
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )
+              ))}
+            </div>
+          )}
+
+          {isAdmin && (
+            <div className="flex items-center gap-2">
+              <EmojiPickerPopover value={newEmoji} onSelect={setNewEmoji}>
+                <button
+                  type="button"
+                  className="w-10 h-10 rounded-lg border border-slate-600 bg-slate-800 text-xl flex items-center justify-center hover:border-[#ED4C27] transition-colors"
+                  title="Emoji auswählen"
+                >
+                  {newEmoji || <Plus size={16} className="text-gray-400" />}
+                </button>
+              </EmojiPickerPopover>
+              <button
+                onClick={handleAdd}
+                disabled={isAdding || !newEmoji.trim()}
+                className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-white bg-[#ED4C27] hover:bg-[#D8431F] rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isAdding ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}
+                Hinzufügen
+              </button>
+              {emojis.length === 0 && !isAdding && (
+                <p className="text-xs text-gray-500">Noch keine Emojis hinterlegt.</p>
+              )}
+            </div>
+          )}
+
+          {!isAdmin && emojis.length === 0 && (
+            <p className="text-sm text-gray-500 text-center py-4">Keine Emojis hinterlegt.</p>
+          )}
+        </>
+      )}
+    </Card>
+  );
+}
+
 
 // ── Categories Card (admin only) ─────────────────────────────────────────────
 

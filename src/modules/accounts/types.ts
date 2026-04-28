@@ -1,3 +1,10 @@
+export interface AccountEmoji {
+  id: number;
+  emoji: string;
+  fourbased_user_id: number;
+  team_id: number;
+}
+
 export interface AccountAssignedTo {
   team_user_id: number;
   role: string;

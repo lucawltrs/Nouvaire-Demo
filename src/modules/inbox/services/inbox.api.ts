@@ -1,4 +1,4 @@
-import type { InboxAccount, InboxApiResponse, InboxQueryParams, ChatSearchParams, ChatListItem, PivotData, PredefinedText, ConfiguredMessage, ConfiguredMessageCategory, AccountInfo } from '../types';
+import type { InboxAccount, InboxApiResponse, InboxQueryParams, ChatSearchParams, ChatListItem, PivotData, ConfiguredMessage, ConfiguredMessageCategory, AccountInfo } from '../types';
 
 const getTeamId = (): number => {
   const match = document.cookie.match(/(?:^|; )auth_team=([^;]*)/);
@@ -98,15 +98,6 @@ export const inboxApi = {
       const text = await response.text();
       throw new Error(`Failed to mark as read: ${response.status} - ${text}`);
     }
-  },
-
-  async getPredefinedTexts(fourbasedId: string): Promise<PredefinedText[]> {
-    const response = await fourbasedFetch(`${getApiUrl()}/4based/users/${fourbasedId}/predefined-texts`);
-    if (!response.ok) {
-      throw new Error(`Failed to fetch predefined texts: ${response.status}`);
-    }
-    const raw = await response.json();
-    return Array.isArray(raw) ? raw : (raw?.data ?? []);
   },
 
   async getPivot(fourbasedId: string, customerId: string, chatId?: string): Promise<PivotData> {

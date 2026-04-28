@@ -1,4 +1,4 @@
-import type { Account } from './types';
+import type { Account, AccountEmoji } from './types';
 import { getConfig } from '../../lib/config';
 
 const getApiUrl = () => getConfig().API_URL;
@@ -101,6 +101,44 @@ export const accountsApi = {
       throw new Error('Failed to sync accounts');
     }
   },
+
+  async getAccountEmojis(fourbasedId: string): Promise<AccountEmoji[]> {
+    const response = await fourbasedFetch(
+      `${getApiUrl()}/teams/${getTeamId()}/fourbased-users/${fourbasedId}/account-emojis`,
+    );
+    if (!response.ok) throw new Error('Failed to fetch account emojis');
+    const raw = await response.json();
+    return raw?.data?.data ?? raw?.data ?? [];
+  },
+
+  async createAccountEmoji(fourbasedId: string, emoji: string): Promise<AccountEmoji> {
+    const response = await fourbasedFetch(
+      `${getApiUrl()}/teams/${getTeamId()}/fourbased-users/${fourbasedId}/account-emojis`,
+      { method: 'POST', body: JSON.stringify({ emoji }) },
+    );
+    if (!response.ok) throw new Error('Failed to create emoji');
+    const raw = await response.json();
+    return raw?.data?.data ?? raw?.data ?? raw;
+  },
+
+  async updateAccountEmoji(fourbasedId: string, id: number, emoji: string): Promise<AccountEmoji> {
+    const response = await fourbasedFetch(
+      `${getApiUrl()}/teams/${getTeamId()}/fourbased-users/${fourbasedId}/account-emojis/${id}`,
+      { method: 'PUT', body: JSON.stringify({ emoji }) },
+    );
+    if (!response.ok) throw new Error('Failed to update emoji');
+    const raw = await response.json();
+    return raw?.data?.data ?? raw?.data ?? raw;
+  },
+
+  async deleteAccountEmoji(fourbasedId: string, id: number): Promise<void> {
+    const response = await fourbasedFetch(
+      `${getApiUrl()}/teams/${getTeamId()}/fourbased-users/${fourbasedId}/account-emojis/${id}`,
+      { method: 'DELETE' },
+    );
+    if (!response.ok) throw new Error('Failed to delete emoji');
+  },
+
 
    async addAccount(email: string, password: string): Promise<void> {
     const response = await fourbasedFetch(`${getApiUrl()}/4based/store/credentials`, {
