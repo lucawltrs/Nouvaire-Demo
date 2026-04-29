@@ -58,6 +58,13 @@ export function InboxChatPage() {
   const [accountInfo, setAccountInfo] = useState<AccountInfo | null>(null);
   const [isAccountInfoLoading, setIsAccountInfoLoading] = useState(false);
   const [accountEmojis, setAccountEmojis] = useState<AccountEmoji[]>([]);
+  // Sidebar pagination / infinite scroll
+  const [sidebarHasMore, setSidebarHasMore] = useState(false);
+  const [sidebarLoadingMore, setSidebarLoadingMore] = useState(false);
+  const sidebarOffsetRef = useRef(0);
+  const sidebarCardRef = useRef<HTMLDivElement>(null);
+  const sidebarSentinelRef = useRef<HTMLDivElement>(null);
+
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   // Configured messages popup
   const [openCategoryKey, setOpenCategoryKey] = useState<string | null>(null);
@@ -108,11 +115,16 @@ export function InboxChatPage() {
 
   const filteredChats = searchQuery.trim().length >= 3 ? (searchResults ?? []) : chats;
 
-  const loadChats = useCallback(async (silent = false) => {
+  const SIDEBAR_PAGE_SIZE = 100;
+
+  const loadChats = useCallback(async (options: { silent?: boolean; append?: boolean } = {}) => {
+    const { silent = false, append = false } = options;
     if (!fourbased_id) return;
+    const offset = append ? sidebarOffsetRef.current : 0;
     try {
-      if (!silent) { setIsLoadingChats(true); setChatsError(null); }
-      const data = await inboxApi.getChats({ days: 30, filter: 'all', limit: 100, scope: 'single', fourbased_id });
+      if (!silent && !append) { setIsLoadingChats(true); setChatsError(null); }
+      if (append) setSidebarLoadingMore(true);
+      const data = await inboxApi.getChats({ days: 30, filter: 'all', limit: SIDEBAR_PAGE_SIZE, offset, scope: 'single', fourbased_id });
       const flatChats = data.data.flatMap((entry) =>
         entry.members.flatMap((m) =>
           m.accounts
@@ -120,21 +132,44 @@ export function InboxChatPage() {
             .flatMap((a) => a.chats)
         )
       );
-      // Preserve chats that were injected via fallback search but aren't in the fresh list
-      setChats(prev => {
-        const freshIds = new Set(flatChats.map(c => String(c.chat_id)));
-        const injected = prev.filter(c => !freshIds.has(String(c.chat_id)));
-        return injected.length > 0 ? [...flatChats, ...injected] : flatChats;
-      });
+      const pageHasMore = offset + flatChats.length < data.meta.total_chats;
+      if (append) {
+        setChats((prev) => {
+          const existingIds = new Set(prev.map((c) => String(c.chat_id)));
+          const truly_new = flatChats.filter((c) => !existingIds.has(String(c.chat_id)));
+          return [...prev, ...truly_new];
+        });
+        sidebarOffsetRef.current += flatChats.length;
+        setSidebarHasMore(pageHasMore);
+      } else if (silent) {
+        // Smart merge: update existing, prepend new ones, keep extra loaded pages
+        setChats((prev) => {
+          const freshMap = new Map(flatChats.map((c) => [String(c.chat_id), c]));
+          const prevIds = new Set(prev.map((c) => String(c.chat_id)));
+          const newChats = flatChats.filter((c) => !prevIds.has(String(c.chat_id)));
+          const updated = prev.map((c) => freshMap.get(String(c.chat_id)) ?? c);
+          return newChats.length > 0 ? [...newChats, ...updated] : updated;
+        });
+      } else {
+        // Full reload: preserve injected fallback chats
+        setChats((prev) => {
+          const freshIds = new Set(flatChats.map((c) => String(c.chat_id)));
+          const injected = prev.filter((c) => !freshIds.has(String(c.chat_id)));
+          return injected.length > 0 ? [...flatChats, ...injected] : flatChats;
+        });
+        sidebarOffsetRef.current = flatChats.length;
+        setSidebarHasMore(pageHasMore);
+      }
     } catch {
-      if (!silent) setChatsError('Chats konnten nicht geladen werden.');
+      if (!silent && !append) setChatsError('Chats konnten nicht geladen werden.');
     } finally {
-      if (!silent) setIsLoadingChats(false);
+      if (!silent && !append) setIsLoadingChats(false);
+      if (append) setSidebarLoadingMore(false);
     }
   }, [fourbased_id]);
 
   useEffect(() => {
-    loadChats();
+    loadChats({});
   }, [loadChats]);
 
   // If the active chat is not in the loaded list (e.g. older than 30 days or beyond limit),
@@ -185,9 +220,27 @@ export function InboxChatPage() {
 
   // Silent background refresh for the chat list (every 30 seconds)
   useEffect(() => {
-    const interval = setInterval(() => loadChats(true), 30 * 1000);
+    const interval = setInterval(() => loadChats({ silent: true }), 30 * 1000);
     return () => clearInterval(interval);
   }, [loadChats]);
+
+  // Sidebar infinite scroll
+  const loadMoreSidebarChats = useCallback(() => {
+    if (!sidebarHasMore || sidebarLoadingMore || isLoadingChats) return;
+    loadChats({ append: true });
+  }, [sidebarHasMore, sidebarLoadingMore, isLoadingChats, loadChats]);
+
+  useEffect(() => {
+    const card = sidebarCardRef.current;
+    const sentinel = sidebarSentinelRef.current;
+    if (!card || !sentinel) return;
+    const observer = new IntersectionObserver(
+      (entries) => { if (entries[0].isIntersecting) loadMoreSidebarChats(); },
+      { root: card, threshold: 0 }
+    );
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [loadMoreSidebarChats]);
 
   // Silent background refresh for messages in the active chat (every 30 seconds)
   useEffect(() => {
@@ -554,7 +607,7 @@ export function InboxChatPage() {
         </div>
 
         {/* Chat list */}
-        <Card className="flex-1 overflow-y-auto divide-y divide-slate-700 min-h-0">
+        <Card ref={sidebarCardRef} className="flex-1 overflow-y-auto divide-y divide-slate-700 min-h-0">
           {isLoadingChats ? (
             <div className="flex items-center justify-center h-32">
               <Loader2 size={20} className="animate-spin text-gray-400" />
@@ -570,36 +623,44 @@ export function InboxChatPage() {
               {searchQuery.trim() ? 'Keine Treffer.' : 'Keine Chats gefunden.'}
             </p>
           ) : (
-            filteredChats.map((chat) => {
-              const isActive = chat.chat_id === chat_id;
-              return (
-                <Link
-                  key={chat.chat_id}
-                  to={`/inbox/${chat.fourbased_id}/chat/${chat.chat_id}`}
-                  onClick={() => setMobileView('chat')}
-                  className={`flex items-center gap-3 px-4 py-3 transition-colors hover:bg-slate-700 ${isActive ? 'border-l-4 border-[#ED4C27] bg-orange-900/20' : ''}`}
-                >
-                  <AccountAvatar src={chat.customer_avatar_url ?? undefined} name={chat.customer_name} size="sm" isOnline={chat.customer_is_online} />
-                  <div className="flex-1 min-w-0">
-                    <span className="font-semibold text-sm text-gray-100 truncate block">{chat.customer_name}</span>
-                    <p className="text-xs text-gray-500 truncate">{chat.last_message_preview}</p>
-                  </div>
-                  <div className="flex flex-col items-end gap-1 shrink-0">
-                    {typeof chat.sales_volume === 'number' && (
-                      <span
-                        className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold"
-                        style={{ background: 'rgba(237,76,39,0.12)', color: '#ED4C27' }}
-                      >
-                        ${(chat.sales_volume / 100).toFixed(2)}
-                      </span>
-                    )}
-                    {chat.is_unread && (
-                      <span className="w-2 h-2 rounded-full bg-[#ED4C27]" />
-                    )}
-                  </div>
-                </Link>
-              );
-            })
+            <>
+              {filteredChats.map((chat) => {
+                const isActive = chat.chat_id === chat_id;
+                return (
+                  <Link
+                    key={chat.chat_id}
+                    to={`/inbox/${chat.fourbased_id}/chat/${chat.chat_id}`}
+                    onClick={() => setMobileView('chat')}
+                    className={`flex items-center gap-3 px-4 py-3 transition-colors hover:bg-slate-700 ${isActive ? 'border-l-4 border-[#ED4C27] bg-orange-900/20' : ''}`}
+                  >
+                    <AccountAvatar src={chat.customer_avatar_url ?? undefined} name={chat.customer_name} size="sm" isOnline={chat.customer_is_online} />
+                    <div className="flex-1 min-w-0">
+                      <span className="font-semibold text-sm text-gray-100 truncate block">{chat.customer_name}</span>
+                      <p className="text-xs text-gray-500 truncate">{chat.last_message_preview}</p>
+                    </div>
+                    <div className="flex flex-col items-end gap-1 shrink-0">
+                      {typeof chat.sales_volume === 'number' && (
+                        <span
+                          className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold"
+                          style={{ background: 'rgba(237,76,39,0.12)', color: '#ED4C27' }}
+                        >
+                          ${(chat.sales_volume / 100).toFixed(2)}
+                        </span>
+                      )}
+                      {chat.is_unread && (
+                        <span className="w-2 h-2 rounded-full bg-[#ED4C27]" />
+                      )}
+                    </div>
+                  </Link>
+                );
+              })}
+              {/* Infinite scroll sentinel */}
+              {searchQuery.trim().length < 3 && (
+                <div ref={sidebarSentinelRef} className="flex items-center justify-center py-3">
+                  {sidebarLoadingMore && <Loader2 size={14} className="animate-spin text-gray-500" />}
+                </div>
+              )}
+            </>
           )}
         </Card>
       </aside>

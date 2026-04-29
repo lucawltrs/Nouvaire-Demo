@@ -49,6 +49,11 @@ export const inboxApi = {
   },
 
   async searchChats(params: ChatSearchParams = {}): Promise<ChatListItem[]> {
+    const result = await this.searchChatsPaginated(params);
+    return result.items;
+  },
+
+  async searchChatsPaginated(params: ChatSearchParams = {}): Promise<{ items: ChatListItem[]; hasMore: boolean; total?: number }> {
     const { query, limit = 60, offset = 0, list_names, fourbased_id } = params;
     const queryParams = new URLSearchParams({
       limit: String(limit),
@@ -62,9 +67,14 @@ export const inboxApi = {
       throw new Error(`Failed to search chats: ${response.status}`);
     }
     const raw = await response.json();
-    if (Array.isArray(raw)) return raw as ChatListItem[];
-    if (Array.isArray(raw?.data)) return raw.data as ChatListItem[];
-    return [];
+    let items: ChatListItem[];
+    if (Array.isArray(raw)) {
+      items = raw as ChatListItem[];
+      return { items, hasMore: items.length >= limit };
+    }
+    items = Array.isArray(raw?.data) ? (raw.data as ChatListItem[]) : [];
+    const hasMore = raw?.pagination?.has_more ?? items.length >= limit;
+    return { items, hasMore, total: raw?.pagination?.total };
   },
 
   async getChatById(fourbased_id: string, chat_id: string): Promise<ChatListItem | null> {
