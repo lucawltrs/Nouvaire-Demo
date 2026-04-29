@@ -12,6 +12,7 @@ import {
   MessageSquareOff,
   Search,
   X,
+  ChevronsDown,
 } from 'lucide-react';
 import { inboxApi } from '../../modules/inbox/services/inbox.api';
 import type { ChatListItem, InboxAccount, InboxFilter } from '../../modules/inbox/types';
@@ -43,6 +44,12 @@ export function InboxPage() {
   const [searchResults, setSearchResults] = useState<ChatListItem[] | null>(null);
   const [searchLoading, setSearchLoading] = useState(false);
 
+  // Pagination / infinite scroll
+  const [hasMoreChats, setHasMoreChats] = useState(false);
+  const [loadingMoreChats, setLoadingMoreChats] = useState(false);
+  const chatOffsetRef = useRef(0);
+  const sentinelRef = useRef<HTMLDivElement>(null);
+
   // Per-row loading state (mark as read)
   const [rowLoading, setRowLoading] = useState<Set<string>>(new Set());
   const rowLoadingRef = useRef(rowLoading);
@@ -73,18 +80,22 @@ export function InboxPage() {
   }, []);
 
   const loadChats = useCallback(
-    async (fourbasedId: string, silent = false) => {
+    async (fourbasedId: string, options: { silent?: boolean; append?: boolean } = {}) => {
+      const { silent = false, append = false } = options;
       if (!fourbasedId) return;
       const isAll = fourbasedId === '__all__';
+      const offset = append ? chatOffsetRef.current : 0;
       try {
-        if (!silent) { setChatsLoading(true); setChatsError(null); }
+        if (!silent && !append) { setChatsLoading(true); setChatsError(null); }
+        if (append) setLoadingMoreChats(true);
         let resolved: ChatListItem[] = [];
+        let pageHasMore = false;
         if (filter === 'all') {
           const data = await inboxApi.getChats({
             days: 30,
             filter: 'all',
             limit: PAGE_SIZE,
-            offset: 0,
+            offset,
             scope: isAll ? 'all' : 'single',
             ...(isAll ? {} : { fourbased_id: fourbasedId }),
           });
@@ -95,16 +106,30 @@ export function InboxPage() {
                 .flatMap((a) => a.chats)
             )
           );
+          pageHasMore = offset + resolved.length < data.meta.total_chats;
         } else {
-          resolved = await inboxApi.searchChats({
+          const result = await inboxApi.searchChatsPaginated({
             list_names: filter,
             limit: PAGE_SIZE,
-            offset: 0,
+            offset,
             ...(isAll ? {} : { fourbased_id: fourbasedId }),
           });
+          resolved = result.items;
+          pageHasMore = result.hasMore;
         }
-        setChats(resolved);
-        if (silent) {
+        if (append) {
+          setChats((prev) => [...prev, ...resolved]);
+          chatOffsetRef.current += resolved.length;
+          setHasMoreChats(pageHasMore);
+        } else if (silent) {
+          // Smart merge: update existing chats, prepend truly new ones, keep extra loaded pages
+          setChats((prev) => {
+            const resolvedMap = new Map(resolved.map((c) => [`${c.fourbased_id}:${c.chat_id}`, c]));
+            const prevIds = new Set(prev.map((c) => `${c.fourbased_id}:${c.chat_id}`));
+            const newChats = resolved.filter((c) => !prevIds.has(`${c.fourbased_id}:${c.chat_id}`));
+            const updated = prev.map((c) => resolvedMap.get(`${c.fourbased_id}:${c.chat_id}`) ?? c);
+            return newChats.length > 0 ? [...newChats, ...updated] : updated;
+          });
           newMessageNotifications.check(resolved);
           if (isAll) {
             const unreadCount = filter === 'unread'
@@ -112,11 +137,16 @@ export function InboxPage() {
               : resolved.filter((c) => c.is_unread).length;
             unreadCountStore.set(unreadCount);
           }
+        } else {
+          setChats(resolved);
+          chatOffsetRef.current = resolved.length;
+          setHasMoreChats(pageHasMore);
         }
       } catch {
-        if (!silent) setChatsError('Failed to load chats. Please try again.');
+        if (!silent && !append) setChatsError('Failed to load chats. Please try again.');
       } finally {
-        if (!silent) setChatsLoading(false);
+        if (!silent && !append) setChatsLoading(false);
+        if (append) setLoadingMoreChats(false);
       }
     },
     [filter]
@@ -163,9 +193,26 @@ export function InboxPage() {
   // Silent background refresh for the chat list (every 30 seconds)
   useEffect(() => {
     if (!activeTabId) return;
-    const interval = setInterval(() => loadChats(activeTabId, true), 30 * 1000);
+    const interval = setInterval(() => loadChats(activeTabId, { silent: true }), 30 * 1000);
     return () => clearInterval(interval);
   }, [activeTabId, loadChats]);
+
+  // Infinite scroll: load more when sentinel enters viewport
+  const loadMoreChats = useCallback(() => {
+    if (!hasMoreChats || loadingMoreChats || chatsLoading) return;
+    loadChats(activeTabId, { append: true });
+  }, [hasMoreChats, loadingMoreChats, chatsLoading, activeTabId, loadChats]);
+
+  useEffect(() => {
+    const sentinel = sentinelRef.current;
+    if (!sentinel) return;
+    const observer = new IntersectionObserver(
+      (entries) => { if (entries[0].isIntersecting) loadMoreChats(); },
+      { threshold: 0 }
+    );
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [loadMoreChats]);
 
   // React to chats being marked as read from other pages (e.g. InboxChatPage after reply)
   useEffect(() => {
@@ -351,6 +398,22 @@ export function InboxPage() {
                 );
               })}
             </Card>
+            {/* Infinite scroll sentinel */}
+            {searchQuery.trim().length < 3 && (
+              <div ref={sentinelRef} className="flex items-center justify-center py-4">
+                {loadingMoreChats ? (
+                  <Loader2 size={18} className="animate-spin text-gray-500" />
+                ) : hasMoreChats ? (
+                  <button
+                    onClick={loadMoreChats}
+                    className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-300 transition-colors"
+                  >
+                    <ChevronsDown size={16} />
+                    Mehr laden
+                  </button>
+                ) : null}
+              </div>
+            )}
           </>
         )
       )}
