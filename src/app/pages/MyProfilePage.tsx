@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, FormEvent } from 'react';
-import { Clock, AlertCircle, Timer, DollarSign, TrendingUp, Trophy, Lock, CheckCircle2 } from 'lucide-react';
+import { Clock, AlertCircle, Timer, DollarSign, TrendingUp, Trophy, Lock, CheckCircle2, Play } from 'lucide-react';
 import { Card } from '../../components/ui/Card';
 import { PageLoader } from '../../components/ui/PageLoader';
 import { Modal } from '../../components/ui/Modal';
@@ -8,8 +8,10 @@ import { Input } from '../../components/ui/Input';
 import { OtpInput } from '../../components/ui/OtpInput';
 import {
   getSessionOverview,
+  postStartWorkSession,
   type SessionOverviewSession,
 } from '../../modules/work-sessions/services/workSession.api';
+import { useWorkSessionStore } from '../../modules/work-sessions/store/useWorkSessionStore';
 import { useAuthStore } from '../../lib/auth/useAuthStore';
 import { forgotPassword, resetPassword } from '../../lib/auth/authApi';
 
@@ -35,13 +37,42 @@ function formatDuration(minutes: number | null): string {
 type PwStep = 'idle' | 'sending' | 'otp' | 'success';
 
 export function MyProfilePage() {
-  const { user } = useAuthStore();
+  const { user, token } = useAuthStore();
   const loginWithToken = useAuthStore((state) => state.loginWithToken);
+  const { active, startSession } = useWorkSessionStore();
 
   const [sessions, setSessions] = useState<SessionOverviewSession[]>([]);
   const [totalRevenue, setTotalRevenue] = useState<string>('$ 0.00');
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const [startLoading, setStartLoading] = useState(false);
+  const [startError, setStartError] = useState<string | null>(null);
+
+  const handleStartSession = async () => {
+    setStartLoading(true);
+    setStartError(null);
+    const now = new Date();
+    const tzOffsetMin = now.getTimezoneOffset();
+    const localDate = new Date(now.getTime() - tzOffsetMin * 60000);
+    const sign = tzOffsetMin <= 0 ? '+' : '-';
+    const absMin = Math.abs(tzOffsetMin);
+    const tzStr = `${sign}${String(Math.floor(absMin / 60)).padStart(2, '0')}:${String(absMin % 60).padStart(2, '0')}`;
+    const localStartedAt = localDate.toISOString().slice(0, 23) + tzStr;
+    try {
+      if (token) {
+        const result = await postStartWorkSession(localStartedAt, token);
+        startSession(result.started_at, result.id);
+      } else {
+        startSession(localStartedAt, 0);
+      }
+      fetchData();
+    } catch (err) {
+      setStartError(err instanceof Error ? err.message : 'Schicht konnte nicht gestartet werden.');
+    } finally {
+      setStartLoading(false);
+    }
+  };
 
   // Password change modal
   const [pwModalOpen, setPwModalOpen] = useState(false);
@@ -158,6 +189,40 @@ export function MyProfilePage() {
           </button>
         </div>
       </div>
+
+      {/* Start shift banner – shown when no active session */}
+      {!active && (
+        <Card className="p-4 border border-slate-600">
+          <div className="flex items-center justify-between gap-4 flex-wrap">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-brand-primary/10 rounded-lg">
+                <Clock size={18} className="text-brand-primary" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-gray-200">Keine aktive Schicht</p>
+                <p className="text-xs text-gray-400">Starte jetzt deine Arbeitszeit</p>
+              </div>
+            </div>
+            <div className="flex flex-col items-end gap-1">
+              <button
+                onClick={handleStartSession}
+                disabled={startLoading}
+                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-brand-primary hover:bg-brand-hover text-white text-sm font-medium transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                {startLoading ? (
+                  <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                ) : (
+                  <Play size={14} />
+                )}
+                Schicht jetzt starten
+              </button>
+              {startError && (
+                <p className="text-xs text-red-400">{startError}</p>
+              )}
+            </div>
+          </div>
+        </Card>
+      )}
 
       {/* Password change modal */}
       <Modal isOpen={pwModalOpen} onClose={closePwModal} title="Passwort ändern" size="sm">
