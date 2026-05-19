@@ -450,7 +450,8 @@ export function InboxChatPage() {
     try {
       await sendChatMessage(fourbased_id, sentForChatId, trimmed, messagePrice ?? 0, fileStackId ?? null);
       if (currentChatIdRef.current === sentForChatId) {
-        await refresh();
+        await refreshSilent();
+        removeLocalMessage(tempId);
         inboxApi.markChatAsRead(fourbased_id, sentForChatId).catch(() => {});
         newMessageNotifications.markChatRead(fourbased_id, sentForChatId);
       }
