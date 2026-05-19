@@ -220,7 +220,7 @@ export function MassMessagesPage() {
             <p className="mt-0.5 text-sm text-gray-400">{totalCount} message{totalCount !== 1 ? 's' : ''}</p>
           )}
         </div>
-        {isAdmin && selectedAccountId && (
+        {selectedAccountId && (
           <Button onClick={handleOpenCreate} className="flex items-center gap-2">
             <Plus size={16} />
             New Message
@@ -310,7 +310,7 @@ export function MassMessagesPage() {
               <p className="text-sm text-gray-500">
                 {statusFilter ? `No messages with status "${statusFilter}".` : 'Create your first mass message to get started.'}
               </p>
-              {isAdmin && !statusFilter && (
+              {!statusFilter && (
                 <Button onClick={handleOpenCreate} className="mt-2 flex items-center gap-2">
                   <Plus size={15} />
                   New Message
