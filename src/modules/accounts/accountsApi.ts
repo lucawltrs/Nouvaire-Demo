@@ -140,7 +140,31 @@ export const accountsApi = {
   },
 
 
-   async addAccount(email: string, password: string): Promise<void> {
+  async refreshAccount(fourbasedId: string): Promise<Account> {
+    const teamId = getTeamId();
+    const response = await fourbasedFetch(
+      `${getApiUrl()}/teams/${teamId}/fourbased-users/${fourbasedId}/refresh`,
+      { method: 'POST' },
+    );
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error((err as { message?: string }).message ?? 'Failed to refresh account');
+    }
+    const raw = await response.json();
+    const updated: Account = raw?.data?.account ?? raw?.data ?? raw;
+
+    // Update the cached account in place
+    if (memoryCache) {
+      memoryCache.data = memoryCache.data.map((a) =>
+        a.fourbased_id === fourbasedId ? { ...a, ...updated } : a,
+      );
+      try { localStorage.setItem(CACHE_KEY, JSON.stringify(memoryCache)); } catch { /* quota */ }
+    }
+
+    return updated;
+  },
+
+  async addAccount(email: string, password: string): Promise<void> {
     const response = await fourbasedFetch(`${getApiUrl()}/4based/store/credentials`, {
       method: 'POST',
       body: JSON.stringify({ team_id: getTeamId(), email, password }),
