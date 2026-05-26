@@ -1,10 +1,11 @@
 import { useState, useEffect, useCallback, memo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Users, AlertCircle } from 'lucide-react';
+import { Users, AlertCircle, RefreshCw } from 'lucide-react';
 import { Card } from '../../../components/ui/Card';
 import { PageLoader } from '../../../components/ui/PageLoader';
 import { accountsApi } from '../../../modules/accounts/accountsApi';
 import type { Account } from '../../../modules/accounts/types';
+import { toast } from '../../../lib/toast';
 
 export function AccountsListPage() {
   const [accounts, setAccounts] = useState<Account[]>([]);
@@ -55,6 +56,7 @@ export function AccountsListPage() {
                   <tr className="border-b border-slate-700 bg-slate-800/50">
                     <th className="text-left px-6 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">Account</th>
                     <th className="text-left px-6 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">E-Mail</th>
+                    <th className="px-6 py-3" />
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-700">
@@ -63,6 +65,11 @@ export function AccountsListPage() {
                       key={account.fourbased_id}
                       account={account}
                       onClick={() => navigate(`/accounts/${account.fourbased_id}`)}
+                      onRefresh={(updated) =>
+                        setAccounts((prev) =>
+                          prev.map((a) => (a.fourbased_id === updated.fourbased_id ? updated : a)),
+                        )
+                      }
                     />
                   ))}
                 </tbody>
@@ -82,9 +89,27 @@ export function AccountsListPage() {
 interface AccountRowProps {
   account: Account;
   onClick: () => void;
+  onRefresh: (updated: Account) => void;
 }
 
-const AccountRow = memo(function AccountRow({ account, onClick }: AccountRowProps) {
+const AccountRow = memo(function AccountRow({ account, onClick, onRefresh }: AccountRowProps) {
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const handleRefresh = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (isRefreshing) return;
+    setIsRefreshing(true);
+    try {
+      const updated = await accountsApi.refreshAccount(account.fourbased_id);
+      onRefresh({ ...account, ...updated });
+      toast.success(`${account.name} aktualisiert`);
+    } catch {
+      toast.error(`Aktualisierung von ${account.name} fehlgeschlagen`);
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
   return (
     <tr
       className="hover:bg-slate-700/50 transition-colors cursor-pointer"
@@ -100,6 +125,18 @@ const AccountRow = memo(function AccountRow({ account, onClick }: AccountRowProp
 
       {/* E-Mail */}
       <td className="px-6 py-4 text-gray-400">{account.identifier}</td>
+
+      {/* Refresh */}
+      <td className="px-6 py-4 text-right">
+        <button
+          onClick={handleRefresh}
+          disabled={isRefreshing}
+          title="Account-Daten aktualisieren"
+          className="p-1.5 rounded-md text-gray-500 hover:text-gray-300 hover:bg-slate-600 transition-colors disabled:opacity-40"
+        >
+          <RefreshCw size={14} className={isRefreshing ? 'animate-spin' : ''} />
+        </button>
+      </td>
     </tr>
   );
 });
