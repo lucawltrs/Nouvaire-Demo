@@ -1,3 +1,3 @@
 window.APP_CONFIG = {
-  API_URL: 'https://api.nouvaire.io/api',
+  API_URL: 'https://beta-api.nouvaire.io/api',
 };
