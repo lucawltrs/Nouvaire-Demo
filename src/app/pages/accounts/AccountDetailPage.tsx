@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { createPortal } from 'react-dom';
 import {
   ArrowLeft,
@@ -27,6 +27,7 @@ import {
   Film,
   CheckCircle,
   Smile,
+  TrendingUp,
 } from 'lucide-react';
 import Picker from '@emoji-mart/react';
 import data from '@emoji-mart/data';
@@ -155,6 +156,14 @@ export function AccountDetailPage() {
             </div>
           </div>
 
+          {/* Right: actions */}
+          <Link
+            to={`/accounts/${account.fourbased_id}/forecast`}
+            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium bg-[#ED4C27]/10 border border-[#ED4C27]/30 text-[#ED4C27] hover:bg-[#ED4C27]/20 rounded-lg transition-colors shrink-0"
+          >
+            <TrendingUp size={15} />
+            Revenue Forecast
+          </Link>
         </div>
       </Card>
 

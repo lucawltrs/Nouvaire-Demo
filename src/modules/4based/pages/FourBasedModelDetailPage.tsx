@@ -156,6 +156,7 @@ export function FourBasedModelDetailPage() {
             </Link>
           </div>
         </Card>
+
       </div>
     </div>
   );

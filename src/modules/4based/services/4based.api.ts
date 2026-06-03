@@ -375,6 +375,32 @@ export const fetchUserStatistics = async (
   return parseJson(response) as Promise<FourBasedStatisticsResult>;
 };
 
+export interface RevenueForecastDataPoint {
+  date: string;
+  amount: number;
+}
+
+export interface RevenueForecastResult {
+  historical: RevenueForecastDataPoint[];
+  forecast: RevenueForecastDataPoint[];
+  trend: 'up' | 'down' | 'stable';
+  daily_average: number;
+}
+
+export const getRevenueForecast = async (
+  fourbasedUserId: string,
+  days: number
+): Promise<RevenueForecastResult> => {
+  const teamId = getTeamId();
+  const response = await fetch(
+    `${getApiUrl()}/teams/${teamId}/fourbased-users/${fourbasedUserId}/revenue/forecast?days=${days}`,
+    { method: 'GET', headers: getAuthHeaders() }
+  );
+
+  const json = await parseJson(response) as { data: RevenueForecastResult };
+  return json.data;
+};
+
 export const storeCredentials = async (email: string, password: string) => {
   const response = await fetch(`${API_BASE}/store/credentials`, {
     method: "POST",

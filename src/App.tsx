@@ -11,6 +11,7 @@ import FourBasedModelsPage from './app/pages/FourBasedModelsPage';
 import { FourBasedModelDetailPage } from './modules/4based/pages/FourBasedModelDetailPage';
 import { FourBasedModelStatisticsPage } from './modules/4based/pages/FourBasedModelStatisticsPage';
 import { FourBasedModelChatsPage } from './modules/4based/pages/FourBasedModelChatsPage';
+import { AccountForecastPage } from './app/pages/accounts/AccountForecastPage';
 import { useAuthStore } from './lib/auth/useAuthStore';
 import CloudOverviewPage from './app/pages/cloud/CloudOverviewPage';
 import CloudUserAssetsPage from './app/pages/cloud/CloudUserAssetsPage';
@@ -158,6 +159,16 @@ function App() {
               <ProtectedRoute>
                 <MainLayout>
                   <AccountDetailPage />
+                </MainLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/accounts/:fourbased_id/forecast"
+            element={
+              <ProtectedRoute>
+                <MainLayout>
+                  <AccountForecastPage />
                 </MainLayout>
               </ProtectedRoute>
             }
