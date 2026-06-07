@@ -517,13 +517,14 @@ interface AccountAvatarProps {
   isOnline?: boolean;
 }
 
-function AccountAvatar({ src, name, size = 'md', isOnline }: AccountAvatarProps) {
+const AccountAvatar = memo(function AccountAvatar({ src, name, size = 'md', isOnline }: AccountAvatarProps) {
+  const [failed, setFailed] = useState(false);
   const sizeClass = { xs: 'w-4 h-4', sm: 'w-6 h-6', md: 'w-9 h-9' }[size];
   const iconSize = { xs: 10, sm: 12, md: 16 }[size];
   const textClass = { xs: 'text-[8px]', sm: 'text-[10px]', md: 'text-sm' }[size];
   const dotClass = { xs: 'w-1.5 h-1.5', sm: 'w-2 h-2', md: 'w-2.5 h-2.5' }[size];
 
-  const avatar = !src ? (
+  const avatar = !src || failed ? (
     <div
       className={`${sizeClass} rounded-full bg-slate-700 border border-slate-600 flex items-center justify-center shrink-0 text-gray-400 font-semibold ${textClass}`}
     >
@@ -533,10 +534,9 @@ function AccountAvatar({ src, name, size = 'md', isOnline }: AccountAvatarProps)
     <img
       src={src}
       alt={name}
+      loading="lazy"
       className={`${sizeClass} rounded-full object-cover shrink-0`}
-      onError={(e) => {
-        e.currentTarget.style.display = 'none';
-      }}
+      onError={() => setFailed(true)}
     />
   );
 
@@ -550,7 +550,7 @@ function AccountAvatar({ src, name, size = 'md', isOnline }: AccountAvatarProps)
       />
     </div>
   );
-}
+});
 
 // ============================================================================
 // Empty State

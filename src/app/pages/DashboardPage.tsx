@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef, memo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Card } from '../../components/ui/Card';
 import { PageLoader } from '../../components/ui/PageLoader';
@@ -439,7 +439,7 @@ interface KpiCardProps {
   subtitle: string;
 }
 
-function KpiCard({ title, value, icon: Icon, gradient, subtitle }: KpiCardProps) {
+const KpiCard = memo(function KpiCard({ title, value, icon: Icon, gradient, subtitle }: KpiCardProps) {
   return (
     <Card className="p-4 sm:p-6 border border-slate-600 hover:shadow-lg transition-shadow">
       <div className="flex items-center justify-between mb-3 sm:mb-4">
@@ -452,7 +452,7 @@ function KpiCard({ title, value, icon: Icon, gradient, subtitle }: KpiCardProps)
       <p className="text-xs text-gray-500">{subtitle}</p>
     </Card>
   );
-}
+});
 
 // ============================================================================
 // Latest Chats Section
@@ -464,7 +464,7 @@ interface LatestChatsSectionProps {
   onChatMarkedAsRead: (chatKey: string, unreadCount: number) => void;
 }
 
-function LatestChatsSection({ chats, showAccountName, onChatMarkedAsRead }: LatestChatsSectionProps) {
+const LatestChatsSection = memo(function LatestChatsSection({ chats, showAccountName, onChatMarkedAsRead }: LatestChatsSectionProps) {
   const [loadingChats, setLoadingChats] = useState<Set<string>>(new Set());
   const [replyChat, setReplyChat] = useState<MergedUnreadChat | null>(null);
   const navigate = useNavigate();
@@ -576,7 +576,7 @@ function LatestChatsSection({ chats, showAccountName, onChatMarkedAsRead }: Late
       )}
     </div>
   );
-}
+});
 
 // ============================================================================
 // Reply Popup
@@ -949,23 +949,25 @@ interface AvatarProps {
   size?: 'sm' | 'md' | 'lg';
 }
 
-function Avatar({ src, alt, size = 'md' }: AvatarProps) {
-  const sizeClasses = {
-    sm: 'w-6 h-6',
-    md: 'w-8 h-8',
-    lg: 'w-10 h-10',
-  };
+const avatarSizeClasses = {
+  sm: 'w-6 h-6',
+  md: 'w-8 h-8',
+  lg: 'w-10 h-10',
+} as const;
 
-  const iconSizes = {
-    sm: 14,
-    md: 16,
-    lg: 20,
-  };
+const avatarIconSizes = {
+  sm: 14,
+  md: 16,
+  lg: 20,
+} as const;
 
-  if (!src) {
+const Avatar = memo(function Avatar({ src, alt, size = 'md' }: AvatarProps) {
+  const [failed, setFailed] = useState(false);
+
+  if (!src || failed) {
     return (
-      <div className={`${sizeClasses[size]} rounded-full bg-slate-700 flex items-center justify-center shrink-0`}>
-        <User size={iconSizes[size]} className="text-gray-500" />
+      <div className={`${avatarSizeClasses[size]} rounded-full bg-slate-700 flex items-center justify-center shrink-0`}>
+        <User size={avatarIconSizes[size]} className="text-gray-500" />
       </div>
     );
   }
@@ -974,15 +976,9 @@ function Avatar({ src, alt, size = 'md' }: AvatarProps) {
     <img
       src={src}
       alt={alt}
-      className={`${sizeClasses[size]} rounded-full object-cover shrink-0`}
-      onError={(e) => {
-        // Fallback to icon if image fails to load
-        e.currentTarget.style.display = 'none';
-        const parent = e.currentTarget.parentElement;
-        if (parent) {
-          parent.innerHTML = `<div class="${sizeClasses[size]} rounded-full bg-slate-700 flex items-center justify-center shrink-0"><svg xmlns="http://www.w3.org/2000/svg" width="${iconSizes[size]}" height="${iconSizes[size]}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-gray-500"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg></div>`;
-        }
-      }}
+      loading="lazy"
+      className={`${avatarSizeClasses[size]} rounded-full object-cover shrink-0`}
+      onError={() => setFailed(true)}
     />
   );
-}
+});
