@@ -2,14 +2,12 @@ import { ReactNode, useEffect, useRef, useState, useSyncExternalStore } from 're
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../lib/auth/useAuthStore';
 import { LayoutDashboard, LogOut, ChevronDown, MessagesSquare, BarChart3, Users, Settings, Menu, X, Cloud, UserCircle, Square, Send } from 'lucide-react';
+import { NotificationBell } from '../../components/NotificationBell';
 import { useWorkSessionStore } from '../../modules/work-sessions/store/useWorkSessionStore';
 import { WorkSessionModal } from '../../modules/work-sessions/components/WorkSessionModal';
 import { putEndWorkSession } from '../../modules/work-sessions/services/workSession.api';
 import { unreadCountStore } from '../../lib/unreadCountStore';
 import { dashboardApi } from '../../modules/dashboard/services/dashboard.api';
-import { inboxApi } from '../../modules/inbox/services/inbox.api';
-import { newMessageNotifications } from '../../lib/newMessageNotifications';
-import { NewMessageToastContainer } from '../../components/ui/NewMessageToastContainer';
 
 const APP_TITLE = 'Nouvaire';
 
@@ -22,33 +20,6 @@ function formatElapsed(seconds: number): string {
   }
   return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
 }
-
-const playNotificationSound = () => {
-  try {
-    const ctx = new AudioContext();
-
-    const playTone = (freq: number, startAt: number, duration: number, peakGain: number) => {
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(freq, startAt);
-      gain.gain.setValueAtTime(0, startAt);
-      gain.gain.linearRampToValueAtTime(peakGain, startAt + 0.01);
-      gain.gain.exponentialRampToValueAtTime(0.001, startAt + duration);
-      osc.start(startAt);
-      osc.stop(startAt + duration);
-    };
-
-    playTone(880, ctx.currentTime, 0.35, 0.28);
-    playTone(1175, ctx.currentTime + 0.18, 0.45, 0.22);
-
-    setTimeout(() => ctx.close(), 800);
-  } catch {
-    // AudioContext not available
-  }
-};
 
 interface MainLayoutProps {
   children: ReactNode;
@@ -103,10 +74,12 @@ export function MainLayout({ children }: MainLayoutProps) {
 
   // ── Global unread-chat badge ────────────────────────────────────────────────
   const unreadChats = useSyncExternalStore(unreadCountStore.subscribe, unreadCountStore.get);
-  const prevUnreadRef = useRef<number | null>(null);
 
   useEffect(() => {
     const poll = async () => {
+      // Skip if another page (e.g. DashboardPage) already refreshed the count
+      // recently — avoids firing a duplicate `getDashboard` request in parallel.
+      if (Date.now() - unreadCountStore.getUpdatedAt() < 25_000) return;
       try {
         const data = await dashboardApi.getDashboard(30);
         const total = data.data.reduce((sum, acc) => sum + (acc.kpis.unread_chats ?? 0), 0);
@@ -120,30 +93,7 @@ export function MainLayout({ children }: MainLayoutProps) {
     return () => clearInterval(id);
   }, []);
 
-  // ── Global new-message notifications (polls chats every 15 s) ──────────────
   useEffect(() => {
-    const pollChats = async () => {
-      try {
-        const data = await inboxApi.getChats({ days: 30, filter: 'all', limit: 60, offset: 0, scope: 'all' });
-        const chats = data.data.flatMap((entry) =>
-          entry.members.flatMap((m) => m.accounts.flatMap((a) => a.chats))
-        );
-        newMessageNotifications.check(chats);
-      } catch {
-        // ignore
-      }
-    };
-    pollChats();
-    const id = setInterval(pollChats, 15_000);
-    return () => clearInterval(id);
-  }, []);
-  // ────────────────────────────────────────────────────────────────────────────
-
-  useEffect(() => {
-    if (prevUnreadRef.current !== null && unreadChats > prevUnreadRef.current) {
-      playNotificationSound();
-    }
-    prevUnreadRef.current = unreadChats;
     document.title = unreadChats > 0 ? `(${unreadChats}) | ${APP_TITLE}` : APP_TITLE;
   }, [unreadChats]);
   // ────────────────────────────────────────────────────────────────────────────
@@ -273,7 +223,8 @@ export function MainLayout({ children }: MainLayoutProps) {
             </div>
 
             {/* Desktop User Widget */}
-            <div className="hidden lg:flex items-center shrink-0">
+            <div className="hidden lg:flex items-center gap-2 shrink-0">
+              <NotificationBell />
               <div ref={profileRef} className="relative">
                 <button
                   onClick={() => { setProfileOpen((o) => !o); setSessionError(null); }}
@@ -371,6 +322,7 @@ export function MainLayout({ children }: MainLayoutProps) {
 
             {/* Mobile Menu Button */}
             <div className="lg:hidden flex items-center gap-2">
+              <NotificationBell />
               {/* Compact session indicator for mobile */}
               {active && (
                 <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-brand-primary/10 border border-brand-primary/20 text-brand-primary text-xs font-mono">
@@ -508,7 +460,6 @@ export function MainLayout({ children }: MainLayoutProps) {
       </nav>
 
       <WorkSessionModal />
-      <NewMessageToastContainer />
 
       <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8 w-full">
         {children}

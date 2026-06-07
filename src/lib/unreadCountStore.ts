@@ -7,6 +7,7 @@
 type Listener = () => void;
 
 let _count = 0;
+let _updatedAt = 0;
 const _listeners = new Set<Listener>();
 
 export const unreadCountStore = {
@@ -15,10 +16,16 @@ export const unreadCountStore = {
   },
 
   set(next: number): void {
+    _updatedAt = Date.now();
     if (next !== _count) {
       _count = next;
       _listeners.forEach((fn) => fn());
     }
+  },
+
+  /** Timestamp (ms) of the last write, regardless of which page triggered it. */
+  getUpdatedAt(): number {
+    return _updatedAt;
   },
 
   subscribe(fn: Listener): () => void {
