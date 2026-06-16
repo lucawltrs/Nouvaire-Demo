@@ -63,7 +63,7 @@ export const groupsApi = {
     });
     if (!response.ok) throw new Error('Failed to create group');
     const raw = await response.json();
-    return raw?.group ?? raw;
+    return raw?.message ?? raw;
   },
 
   async assignMember(groupId: number, teamUserId: number): Promise<void> {

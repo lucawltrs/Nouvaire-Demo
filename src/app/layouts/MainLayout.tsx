@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../lib/auth/useAuthStore';
 import { LayoutDashboard, LogOut, ChevronDown, MessagesSquare, BarChart3, Users, Settings, Menu, X, Cloud, UserCircle, Square, Send } from 'lucide-react';
 import { NotificationBell } from '../../components/NotificationBell';
+import { NotificationsProvider } from '../../contexts/NotificationsContext';
 import { useWorkSessionStore } from '../../modules/work-sessions/store/useWorkSessionStore';
 import { WorkSessionModal } from '../../modules/work-sessions/components/WorkSessionModal';
 import { putEndWorkSession } from '../../modules/work-sessions/services/workSession.api';
@@ -137,10 +138,11 @@ export function MainLayout({ children }: MainLayoutProps) {
   ];
 
   return (
+    <NotificationsProvider>
     <div className="min-h-screen bg-page flex flex-col">
       <nav className="bg-sidebar border-b border-border">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
+          <div className="relative flex items-center justify-between h-16">
             {/* Logo */}
             <Link to="/" className="flex items-center gap-1 shrink-0">
               <img src="/assets/logo-free.png" alt="Nouvaire Logo" className="w-10 h-10 sm:w-12 sm:h-12 object-contain" />
@@ -472,5 +474,6 @@ export function MainLayout({ children }: MainLayoutProps) {
         </span>
       </div>
     </div>
+    </NotificationsProvider>
   );
 }
