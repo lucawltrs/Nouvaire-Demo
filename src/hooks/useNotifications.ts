@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { getConfig } from '../lib/config';
-import type { Notification, NotificationsResponse, UnreadCountResponse } from '../modules/notifications/types';
+import type { Notification, NotificationsResponse, NotificationType, UnreadCountResponse } from '../modules/notifications/types';
 
 const POLL_INTERVAL_MS = 5_000;
 
@@ -9,32 +9,45 @@ const POLL_INTERVAL_MS = 5_000;
 // first click/keydown — afterwards .play() works without further interaction.
 const notificationAudio = new Audio('/sounds/notification.mp3');
 notificationAudio.volume = 0.6;
+const coinAudio = new Audio('/sounds/coin.mp3');
+coinAudio.volume = 0.6;
+const saleAudio = new Audio('/sounds/sale-notification.mp3');
+saleAudio.volume = 0.6;
 let audioUnlocked = false;
 
 const unlockAudio = () => {
   if (audioUnlocked) return;
-  notificationAudio
-    .play()
-    .then(() => {
-      notificationAudio.pause();
-      notificationAudio.currentTime = 0;
-      audioUnlocked = true;
-      document.removeEventListener('click', unlockAudio);
-      document.removeEventListener('keydown', unlockAudio);
-    })
-    .catch(() => {});
+  Promise.all(
+    [notificationAudio, coinAudio, saleAudio].map((audio) =>
+      audio
+        .play()
+        .then(() => {
+          audio.pause();
+          audio.currentTime = 0;
+        })
+        .catch(() => {}),
+    ),
+  ).then(() => {
+    audioUnlocked = true;
+    document.removeEventListener('click', unlockAudio);
+    document.removeEventListener('keydown', unlockAudio);
+  });
 };
 document.addEventListener('click', unlockAudio);
 document.addEventListener('keydown', unlockAudio);
 
-const playNotificationSound = () => {
+const playSound = (audio: HTMLAudioElement) => {
   try {
-    notificationAudio.currentTime = 0;
-    notificationAudio.play().catch(() => {});
+    audio.currentTime = 0;
+    audio.play().catch(() => {});
   } catch {
     // ignore — file missing or autoplay blocked
   }
 };
+
+const playNotificationSound = () => playSound(notificationAudio);
+const playCoinSound = () => playSound(coinAudio);
+const playSaleSound = () => playSound(saleAudio);
 
 const notifFetch = async (url: string, options: RequestInit = {}) => {
   const token = localStorage.getItem('auth_token');
@@ -48,23 +61,22 @@ const notifFetch = async (url: string, options: RequestInit = {}) => {
   });
 };
 
-export function useNotifications(teamSlug: string) {
+export function useNotifications(teamSlug: string, type?: NotificationType) {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(false);
-  const [messageToasts, setMessageToasts] = useState<Notification[]>([]);
+  const [toasts, setToasts] = useState<Notification[]>([]);
   const initializedRef = useRef(false);
-  const pausedRef = useRef(false);
   const seenIdsRef = useRef<Set<string> | null>(null);
 
   const apiBase = `${getConfig().API_URL}/teams/${teamSlug}/notifications`;
+  const listUrl = `${apiBase}?limit=20${type ? `&type=${type}` : ''}`;
 
   const fetchNotifications = useCallback(async () => {
-    if (pausedRef.current) return;
     setLoading(true);
     try {
       const [notifRes, countRes] = await Promise.all([
-        notifFetch(`${apiBase}?limit=20`).then((res) => {
+        notifFetch(listUrl).then((res) => {
           if (!res.ok) throw new Error('Failed to fetch notifications');
           return res.json() as Promise<NotificationsResponse>;
         }),
@@ -82,20 +94,38 @@ export function useNotifications(teamSlug: string) {
       } else {
         const newArrivals = notifRes.data.filter((n) => !n.read_at && !seenIds.has(n.id));
         if (newArrivals.length > 0) {
-          playNotificationSound();
-          const newMessages = newArrivals.filter((n) => n.type === 'message');
-          if (newMessages.length > 0) {
-            setMessageToasts((prev) => [...newMessages, ...prev]);
+          if (newArrivals.some((n) => n.type === 'sale')) {
+            playSaleSound();
+          } else if (newArrivals.some((n) => n.type === 'tip')) {
+            playCoinSound();
+          } else {
+            playNotificationSound();
+          }
+          const newToasts = newArrivals.filter((n) => n.type === 'message' || n.type === 'sale' || n.type === 'tip');
+          if (newToasts.length > 0) {
+            setToasts((prev) => [...newToasts, ...prev]);
           }
         }
-        seenIdsRef.current = new Set(notifRes.data.map((n) => n.id));
+        // Accumulate seen ids rather than replacing the set, so notifications
+        // that temporarily fall out of the latest-20 window don't get treated
+        // as "new" again (and re-trigger sounds/toasts) when they reappear.
+        for (const n of notifRes.data) {
+          seenIds.add(n.id);
+        }
+        if (seenIds.size > 200) {
+          const excess = seenIds.size - 200;
+          const it = seenIds.values();
+          for (let i = 0; i < excess; i++) {
+            seenIds.delete(it.next().value as string);
+          }
+        }
       }
     } catch {
       // ignore — keep previous state, retry on next poll
     } finally {
       setLoading(false);
     }
-  }, [apiBase]);
+  }, [apiBase, listUrl]);
 
   const markAsRead = useCallback(async (id: string) => {
     setNotifications((prev) =>
@@ -126,13 +156,16 @@ export function useNotifications(teamSlug: string) {
 
     if (!initializedRef.current) {
       initializedRef.current = true;
-      fetchNotifications();
     }
+    fetchNotifications();
 
     const intervalId = setInterval(fetchNotifications, POLL_INTERVAL_MS);
 
+    // Refetch immediately when the tab regains focus, so the view is up to
+    // date right away instead of waiting for the next interval tick. Polling
+    // itself keeps running in the background (browsers may throttle it, but
+    // we don't pause it — that would silence background notifications/sounds).
     const handleVisibilityChange = () => {
-      pausedRef.current = document.hidden;
       if (!document.hidden) fetchNotifications();
     };
     document.addEventListener('visibilitychange', handleVisibilityChange);
@@ -144,7 +177,7 @@ export function useNotifications(teamSlug: string) {
   }, [teamSlug, fetchNotifications]);
 
   const dismissToast = useCallback((id: string) => {
-    setMessageToasts((prev) => prev.filter((n) => n.id !== id));
+    setToasts((prev) => prev.filter((n) => n.id !== id));
   }, []);
 
   return {
@@ -154,7 +187,7 @@ export function useNotifications(teamSlug: string) {
     fetchNotifications,
     markAsRead,
     markAllAsRead,
-    messageToasts,
+    toasts,
     dismissToast,
   };
 }

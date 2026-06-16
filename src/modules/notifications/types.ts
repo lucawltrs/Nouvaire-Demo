@@ -1,4 +1,4 @@
-export type NotificationType = 'message' | 'sale' | 'follow' | 'like';
+export type NotificationType = 'message' | 'sale' | 'tip' | 'follow' | 'like';
 
 export interface NotificationData {
   chat_id?: string;
@@ -9,6 +9,7 @@ export interface NotificationFourbasedUser {
   id: number;
   name: string;
   fourbased_id: string;
+  media_url?: string;
   [key: string]: unknown;
 }
 

@@ -1,19 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { Bell, Euro, MessageCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { useNotifications } from '../hooks/useNotifications';
-import { NotificationToastContainer } from './NotificationToastContainer';
+import { useNotificationsContext, type NotificationFilter } from '../contexts/NotificationsContext';
 import type { Notification, NotificationType } from '../modules/notifications/types';
-
-const getTeamSlug = (): string | null => {
-  try {
-    const match = document.cookie.match(/(?:^|; )auth_team=([^;]*)/);
-    if (!match) return null;
-    return String(JSON.parse(decodeURIComponent(match[1])).team_id);
-  } catch {
-    return null;
-  }
-};
 
 function relativeTime(dateStr: string): string {
   const diff = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000);
@@ -28,6 +17,13 @@ const TYPE_STYLES: Partial<Record<NotificationType, { icon: typeof Euro; iconCla
   message: { icon: MessageCircle, iconClass: 'text-blue-400', bgClass: 'bg-blue-500/10' },
 };
 
+const FILTER_OPTIONS: { value: NotificationFilter; label: string }[] = [
+  { value: 'all', label: 'Alle' },
+  { value: 'sale', label: 'Verkäufe' },
+  { value: 'tip', label: 'Trinkgelder' },
+  { value: 'message', label: 'Nachrichten' },
+];
+
 function NotificationItem({
   notification,
   onNavigate,
@@ -38,6 +34,7 @@ function NotificationItem({
   const style = TYPE_STYLES[notification.type];
   const Icon = style?.icon ?? Bell;
   const isUnread = !notification.read_at;
+  const avatarUrl = notification.fourbased_user?.media_url;
 
   return (
     <button
@@ -46,9 +43,17 @@ function NotificationItem({
         isUnread ? 'bg-slate-700/30' : ''
       }`}
     >
-      <span className={`flex items-center justify-center w-8 h-8 rounded-full shrink-0 mt-0.5 ${style?.bgClass ?? 'bg-slate-600/20'}`}>
-        <Icon size={16} className={style?.iconClass ?? 'text-gray-400'} />
-      </span>
+      {avatarUrl ? (
+        <img
+          src={avatarUrl}
+          alt=""
+          className="w-8 h-8 rounded-full shrink-0 mt-0.5 object-cover"
+        />
+      ) : (
+        <span className={`flex items-center justify-center w-8 h-8 rounded-full shrink-0 mt-0.5 ${style?.bgClass ?? 'bg-slate-600/20'}`}>
+          <Icon size={16} className={style?.iconClass ?? 'text-gray-400'} />
+        </span>
+      )}
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
           <p className={`text-sm font-medium truncate ${isUnread ? 'text-gray-100' : 'text-gray-300'}`}>
@@ -67,9 +72,8 @@ export function NotificationBell() {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
-  const teamSlug = getTeamSlug();
-  const { notifications, unreadCount, loading, markAsRead, markAllAsRead, messageToasts, dismissToast } =
-    useNotifications(teamSlug ?? '');
+  const { notifications, unreadCount, loading, markAsRead, markAllAsRead, filter, setFilter } =
+    useNotificationsContext();
 
   useEffect(() => {
     if (!open) return;
@@ -82,7 +86,7 @@ export function NotificationBell() {
 
   const handleNotificationClick = (n: Notification) => {
     if (!n.read_at) markAsRead(n.id);
-    if (n.type === 'message') {
+    if (n.type === 'message' || n.type === 'sale') {
       const fourbasedId = n.fourbased_user?.fourbased_id;
       const chatId = n.data?.chat_id;
       if (fourbasedId && chatId) {
@@ -93,8 +97,7 @@ export function NotificationBell() {
   };
 
   return (
-    <div ref={ref} className="relative">
-      <NotificationToastContainer toasts={messageToasts} onDismiss={dismissToast} onOpen={handleNotificationClick} />
+    <div ref={ref}>
       <button
         onClick={() => setOpen((o) => !o)}
         className={`relative p-2 rounded-lg transition-all text-gray-400 hover:text-gray-100 hover:bg-slate-700 ${open ? 'bg-slate-700 text-gray-100' : ''}`}
@@ -109,7 +112,7 @@ export function NotificationBell() {
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full mt-2 w-80 bg-card border border-border rounded-xl shadow-2xl z-50 overflow-hidden">
+        <div className="absolute right-0 top-full mt-2 w-[min(20rem,calc(100vw-2rem))] bg-card border border-border rounded-xl shadow-2xl z-50 overflow-hidden">
           <div className="flex items-center justify-between px-4 py-3 border-b border-border">
             <h3 className="text-sm font-semibold text-gray-100">Notifications</h3>
             {unreadCount > 0 && (
@@ -120,6 +123,22 @@ export function NotificationBell() {
                 Alle als gelesen markieren
               </button>
             )}
+          </div>
+
+          <div className="flex items-center gap-1 px-2 py-2 border-b border-border overflow-x-auto">
+            {FILTER_OPTIONS.map((opt) => (
+              <button
+                key={opt.value}
+                onClick={() => setFilter(opt.value)}
+                className={`shrink-0 px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${
+                  filter === opt.value
+                    ? 'bg-brand-primary text-white'
+                    : 'text-gray-400 hover:text-gray-100 hover:bg-slate-700'
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
           </div>
 
           <div className="max-h-[420px] overflow-y-auto divide-y divide-border">

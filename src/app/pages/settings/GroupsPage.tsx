@@ -72,7 +72,7 @@ export function GroupsPage() {
       });
       toast.success('Group created successfully');
       setIsCreateModalOpen(false);
-      setGroups((prev) => [...prev, newGroup]);
+      setGroups((prev) => [...prev, { ...newGroup, team_users: newGroup.team_users ?? [] }]);
     } catch (err) {
       console.error('Failed to create group:', err);
       toast.error('Failed to create group. Please try again.');
