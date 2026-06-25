@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Clock, Square } from 'lucide-react';
+import { IconClock, IconSquare } from '@tabler/icons-react';
 import { useWorkSessionStore } from '../store/useWorkSessionStore';
 import { putEndWorkSession } from '../services/workSession.api';
 import { useAuthStore } from '../../../lib/auth/useAuthStore';
@@ -70,17 +70,17 @@ export function WorkSessionTimer() {
     <div ref={ref} className="relative">
       <button
         onClick={() => { setOpen((o) => !o); setError(null); }}
-        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-brand-primary/10 border border-brand-primary/30 text-brand-primary text-sm font-mono hover:bg-brand-primary/20 transition-all select-none"
+        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-brand/10 border border-brand/30 text-brand text-sm font-mono hover:bg-brand/20 transition-all select-none"
       >
-        <Clock size={14} className="shrink-0 animate-pulse" />
+        <IconClock size={14} className="shrink-0 animate-pulse" />
         <span>{formatElapsed(elapsed)}</span>
       </button>
 
       {open && (
         <div className="absolute right-0 top-full mt-2 w-56 bg-card border border-border rounded-xl shadow-2xl z-50 overflow-hidden">
           <div className="px-4 py-3 border-b border-border">
-            <p className="text-xs text-gray-400">Aktive Schicht</p>
-            <p className="text-sm font-semibold text-gray-100 font-mono mt-0.5">{formatElapsed(elapsed)}</p>
+            <p className="text-xs text-muted-foreground">Aktive Schicht</p>
+            <p className="text-sm font-semibold text-foreground font-mono mt-0.5">{formatElapsed(elapsed)}</p>
           </div>
 
           {error && (
@@ -93,12 +93,12 @@ export function WorkSessionTimer() {
             <button
               onClick={handleEnd}
               disabled={loading}
-              className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-brand-primary hover:bg-brand-hover text-white text-sm font-medium transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+              className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-brand hover:bg-brand-hover text-white text-sm font-medium transition-all disabled:opacity-60 disabled:cursor-not-allowed"
             >
               {loading ? (
                 <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
               ) : (
-                <Square size={14} />
+                <IconSquare size={14} />
               )}
               Schicht beenden
             </button>

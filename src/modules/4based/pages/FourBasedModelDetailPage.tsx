@@ -79,7 +79,7 @@ export function FourBasedModelDetailPage() {
   if (!account) {
     return (
       <div className="text-center py-12">
-        <p className="text-gray-400">Account nicht gefunden</p>
+        <p className="text-muted-foreground">Account nicht gefunden</p>
         <Link to="/4based/models" className="inline-block mt-4">
           <Button variant="secondary">Zurück zur Liste</Button>
         </Link>
@@ -112,10 +112,10 @@ export function FourBasedModelDetailPage() {
           <img
             src={account.img_url}
             alt={account.name}
-            className="w-20 h-20 rounded-full object-cover border border-gray-700"
+            className="w-20 h-20 rounded-full object-cover border border-border"
           />
           <div className="min-w-0 flex-1">
-            <h1 className="text-3xl font-bold text-gray-100 mb-3">{account.name}</h1>
+            <h1 className="text-3xl font-bold text-foreground mb-3">{account.name}</h1>
             <div className="flex flex-wrap gap-2 mb-4">
               <Badge>{account.identifier}</Badge>
             </div>
@@ -125,8 +125,8 @@ export function FourBasedModelDetailPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card className="p-6 h-full flex flex-col">
-          <h2 className="text-xl font-semibold text-gray-100 mb-4">Statistics</h2>
-          <p className="text-sm text-gray-400 mb-4">Werte für die letzten 30 Tage.</p>
+          <h2 className="text-xl font-semibold text-foreground mb-4">Statistics</h2>
+          <p className="text-sm text-muted-foreground mb-4">Werte für die letzten 30 Tage.</p>
           <div className="mt-auto flex items-center justify-between gap-3">
             <Link to={`/4based/models/${account.fourbased_id}/statistics`}>
               <Button variant="secondary">Zur Statistikseite</Button>
@@ -136,8 +136,8 @@ export function FourBasedModelDetailPage() {
         </Card>
 
         <Card className="p-6 h-full flex flex-col">
-          <h2 className="text-xl font-semibold text-gray-100 mb-4">Chat</h2>
-          <p className="text-sm text-gray-400 mb-4">Alle Unterhaltungen auf einer eigenen Seite.</p>
+          <h2 className="text-xl font-semibold text-foreground mb-4">Chat</h2>
+          <p className="text-sm text-muted-foreground mb-4">Alle Unterhaltungen auf einer eigenen Seite.</p>
           {totalUnreadMessages > 0 ? (
             <div className="mb-4 inline-flex items-center gap-2 px-3 py-2 rounded border border-red-800 bg-red-900/30 w-fit">
               <span className="inline-flex items-center justify-center min-w-6 h-6 px-1 rounded-full bg-red-600 text-white text-xs font-bold">

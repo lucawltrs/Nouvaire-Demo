@@ -1,14 +1,27 @@
-import { ReactNode, useEffect, useRef, useState, useSyncExternalStore } from 'react';
+import { ReactNode, useEffect, useState, useSyncExternalStore } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../lib/auth/useAuthStore';
-import { LayoutDashboard, LogOut, ChevronDown, MessagesSquare, BarChart3, Users, Settings, Menu, X, Cloud, UserCircle, Square, Send } from 'lucide-react';
-import { NotificationBell } from '../../components/NotificationBell';
+import { IconLayoutDashboard, IconLogout, IconMessage, IconUsers, IconSettings, IconCloud, IconUserCircle, IconSquare, IconSend, IconMenu2, IconChevronDown, IconSun, IconMoon, IconChartBar } from '@tabler/icons-react';
 import { NotificationsProvider } from '../../contexts/NotificationsContext';
+import { NotificationBell } from '../../components/NotificationBell';
 import { useWorkSessionStore } from '../../modules/work-sessions/store/useWorkSessionStore';
 import { WorkSessionModal } from '../../modules/work-sessions/components/WorkSessionModal';
 import { putEndWorkSession } from '../../modules/work-sessions/services/workSession.api';
 import { unreadCountStore } from '../../lib/unreadCountStore';
 import { dashboardApi } from '../../modules/dashboard/services/dashboard.api';
+import { useTheme } from '../../contexts/ThemeContext';
+import { cn } from '../../lib/utils';
+import { Avatar, AvatarFallback } from '../../components/ui/avatar';
+import { Separator } from '../../components/ui/separator';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '../../components/ui/dropdown-menu';
+import { Sheet, SheetContent, SheetTrigger } from '../../components/ui/sheet';
 
 const APP_TITLE = 'Nouvaire';
 
@@ -16,41 +29,123 @@ function formatElapsed(seconds: number): string {
   const h = Math.floor(seconds / 3600);
   const m = Math.floor((seconds % 3600) / 60);
   const s = seconds % 60;
-  if (h > 0) {
-    return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
-  }
+  if (h > 0) return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
   return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
 }
 
-interface MainLayoutProps {
-  children: ReactNode;
-}
+interface MainLayoutProps { children: ReactNode }
 
 interface NavItem {
   path: string;
   label: string;
-  icon?: any;
-  children?: { path: string; label: string }[];
+  icon: React.ComponentType<{ size?: number; className?: string }>;
 }
 
-export function MainLayout({ children }: MainLayoutProps) {
+// ── Sidebar Nav ────────────────────────────────────────────────────────────
+
+function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
   const location = useLocation();
+  const { team } = useAuthStore();
+  const isAdmin = team?.role === 'admin';
+
+  const navItems: NavItem[] = [
+    { path: '/',              label: 'Dashboard',     icon: IconLayoutDashboard },
+    { path: '/accounts',      label: 'Accounts',      icon: IconUsers },
+    { path: '/inbox',         label: 'Inbox',         icon: IconMessage },
+    { path: '/cloud',         label: 'Cloud',         icon: IconCloud },
+    { path: '/mass-messages', label: 'Mass Messages', icon: IconSend },
+    { path: '/4based',        label: 'Analytics',     icon: IconChartBar },
+    ...(isAdmin ? [{ path: '/settings', label: 'Settings', icon: IconSettings } as NavItem] : []),
+  ];
+
+  return (
+    <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
+      {navItems.map((item) => {
+        const Icon = item.icon;
+        const isActive =
+          item.path === '/'
+            ? location.pathname === '/'
+            : location.pathname === item.path || location.pathname.startsWith(item.path + '/');
+
+        return (
+          <Link
+            key={item.path}
+            to={item.path}
+            onClick={onNavigate}
+            className={cn(
+              'flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150',
+              isActive
+                ? 'bg-brand/15 text-brand'
+                : 'text-slate-500 hover:text-slate-200 hover:bg-slate-800/50'
+            )}
+          >
+            <span className={cn(
+              'flex items-center justify-center w-8 h-8 rounded-lg shrink-0 transition-all duration-150',
+              isActive ? 'bg-brand/20' : ''
+            )}>
+              <Icon size={17} />
+            </span>
+            {item.label}
+          </Link>
+        );
+      })}
+    </nav>
+  );
+}
+
+// ── Theme Toggle ───────────────────────────────────────────────────────────
+
+function ThemeToggle() {
+  const { theme, toggleTheme } = useTheme();
+  return (
+    <button
+      onClick={toggleTheme}
+      className="h-8 w-8 flex items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+      aria-label="Toggle theme"
+    >
+      {theme === 'dark' ? <IconSun size={16} /> : <IconMoon size={16} />}
+    </button>
+  );
+}
+
+// ── Sidebar Content ────────────────────────────────────────────────────────
+
+function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
+  return (
+    <div className="flex flex-col h-full bg-slate-950">
+      {/* Logo */}
+      <div className="h-14 flex items-center px-4 shrink-0">
+        <Link to="/" onClick={onNavigate} className="flex items-center gap-2.5">
+          <img src="/assets/logo-free.png" alt="Nouvaire" className="h-8 w-auto object-contain" />
+          <span className="text-white font-bold text-xl tracking-tight">Nouvaire</span>
+        </Link>
+      </div>
+
+      <Separator className="bg-slate-800 shrink-0" />
+
+      <SidebarNav onNavigate={onNavigate} />
+
+      {/* Version */}
+      <div className="px-4 py-4 border-t border-slate-800 shrink-0">
+        <span className="inline-flex items-center gap-1.5 text-[11px] font-mono text-slate-500">
+          <span className="w-1.5 h-1.5 rounded-full bg-brand" />
+          v{__APP_VERSION__}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+// ── Main Layout ────────────────────────────────────────────────────────────
+
+export function MainLayout({ children }: MainLayoutProps) {
   const navigate = useNavigate();
-  const { user, team, token, logout } = useAuthStore();
+  const { user, token, logout } = useAuthStore();
   const { init: initWorkSession, syncWithServer, active, startedAt, sessionId, endSession } = useWorkSessionStore();
-  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-
-  // User profile dropdown
-  const [profileOpen, setProfileOpen] = useState(false);
-  const profileRef = useRef<HTMLDivElement>(null);
-
-  // Session end state
   const [sessionLoading, setSessionLoading] = useState(false);
   const [sessionError, setSessionError] = useState<string | null>(null);
-
-  // Elapsed timer
   const [elapsed, setElapsed] = useState(0);
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   useEffect(() => {
     if (!active || !startedAt) { setElapsed(0); return; }
@@ -60,34 +155,16 @@ export function MainLayout({ children }: MainLayoutProps) {
     return () => clearInterval(id);
   }, [active, startedAt]);
 
-  // Close profile dropdown on outside click
-  useEffect(() => {
-    if (!profileOpen) return;
-    const handler = (e: MouseEvent) => {
-      if (profileRef.current && !profileRef.current.contains(e.target as Node)) {
-        setProfileOpen(false);
-        setSessionError(null);
-      }
-    };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, [profileOpen]);
-
-  // ── Global unread-chat badge ────────────────────────────────────────────────
   const unreadChats = useSyncExternalStore(unreadCountStore.subscribe, unreadCountStore.get);
 
   useEffect(() => {
     const poll = async () => {
-      // Skip if another page (e.g. DashboardPage) already refreshed the count
-      // recently — avoids firing a duplicate `getDashboard` request in parallel.
       if (Date.now() - unreadCountStore.getUpdatedAt() < 25_000) return;
       try {
         const data = await dashboardApi.getDashboard(30);
         const total = data.data.reduce((sum, acc) => sum + (acc.kpis.unread_chats ?? 0), 0);
         unreadCountStore.set(total);
-      } catch {
-        // ignore
-      }
+      } catch { /* ignore */ }
     };
     poll();
     const id = setInterval(poll, 30_000);
@@ -97,7 +174,6 @@ export function MainLayout({ children }: MainLayoutProps) {
   useEffect(() => {
     document.title = unreadChats > 0 ? `(${unreadChats}) | ${APP_TITLE}` : APP_TITLE;
   }, [unreadChats]);
-  // ────────────────────────────────────────────────────────────────────────────
 
   useEffect(() => {
     initWorkSession();
@@ -106,10 +182,7 @@ export function MainLayout({ children }: MainLayoutProps) {
     return () => clearInterval(id);
   }, [initWorkSession, syncWithServer]);
 
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
-  };
+  const handleLogout = () => { logout(); navigate('/login'); };
 
   const handleEndSession = async () => {
     if (!token || !sessionId) return;
@@ -118,7 +191,6 @@ export function MainLayout({ children }: MainLayoutProps) {
     try {
       await putEndWorkSession(sessionId, new Date().toISOString(), token);
       endSession();
-      setProfileOpen(false);
     } catch {
       setSessionError('Schicht konnte nicht beendet werden.');
     } finally {
@@ -126,354 +198,118 @@ export function MainLayout({ children }: MainLayoutProps) {
     }
   };
 
-  const isAdmin = team?.role === 'admin';
-
-  const navItems: NavItem[] = [
-    { path: '/', label: 'Dashboard', icon: LayoutDashboard },
-    { path: '/accounts', label: 'Accounts', icon: Users },
-    { path: '/inbox', label: 'Inbox', icon: MessagesSquare },
-    { path: '/cloud', label: 'Cloud', icon: Cloud },
-    { path: '/mass-messages', label: 'Mass Messages', icon: Send },
-    ...(isAdmin ? [{ path: '/settings', label: 'Settings', icon: Settings }] : []),
-  ];
+  const userInitial = user?.name?.charAt(0).toUpperCase() ?? '?';
 
   return (
     <NotificationsProvider>
-    <div className="min-h-screen bg-page flex flex-col">
-      <nav className="bg-sidebar border-b border-border">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="relative flex items-center justify-between h-16">
-            {/* Logo */}
-            <Link to="/" className="flex items-center gap-1 shrink-0">
-              <img src="/assets/logo-free.png" alt="Nouvaire Logo" className="w-10 h-10 sm:w-12 sm:h-12 object-contain" />
-              <span className="text-xl sm:text-2xl font-bold text-gray-100">Nouvaire</span>
-            </Link>
+      <div className="flex h-screen overflow-hidden bg-background">
 
-            {/* Desktop Navigation */}
-            <div className="hidden lg:flex items-center gap-8 flex-1 justify-center">
-              <div className="flex gap-2">
-                {navItems.map((item) => {
-                  const Icon = item.icon;
-                  const isActive = item.children
-                    ? item.children.some(child =>
-                        location.pathname === child.path || location.pathname.startsWith(child.path + '/')
-                      )
-                    : location.pathname === item.path ||
-                      (item.path !== '/' && item.path !== '#' && location.pathname.startsWith(item.path));
-                  const isOpen = openDropdown === item.path;
+        {/* ── Desktop Sidebar ──────────────────────────────── */}
+        <aside className="hidden lg:flex w-64 flex-col shrink-0">
+          <SidebarContent />
+        </aside>
 
-                  if (item.children) {
-                    return (
-                      <div
-                        key={item.path}
-                        className="relative"
-                        onMouseEnter={() => setOpenDropdown(item.path)}
-                        onMouseLeave={() => setOpenDropdown(null)}
-                      >
-                        <button
-                          className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
-                            isActive
-                              ? 'bg-brand-primary hover:bg-brand-hover text-white shadow-md'
-                              : 'text-gray-400 hover:text-gray-100 hover:bg-slate-700'
-                          }`}
-                        >
-                          {Icon && <Icon size={18} />}
-                          <span className="font-medium">{item.label}</span>
-                          <ChevronDown size={16} className={`transition-transform ${isOpen ? 'rotate-180' : ''}`} />
-                        </button>
+        {/* ── Main Content ─────────────────────────────────── */}
+        <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
 
-                        {isOpen && (
-                          <div className="absolute top-full left-0 mt-1 min-w-full bg-card border border-border rounded-lg shadow-lg overflow-hidden z-50 whitespace-nowrap">
-                            {item.children.map((child) => {
-                              const isChildActive = location.pathname === child.path;
-                              return (
-                                <Link
-                                  key={child.path}
-                                  to={child.path}
-                                  className={`block px-4 py-2 transition-all ${
-                                    isChildActive
-                                      ? 'bg-brand-primary hover:bg-brand-hover text-white'
-                                      : 'text-gray-400 hover:text-gray-100 hover:bg-slate-700'
-                                  }`}
-                                >
-                                  {child.label}
-                                </Link>
-                              );
-                            })}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  }
+          {/* Header */}
+          <header className="h-14 bg-card border-b border-border flex items-center px-4 sm:px-6 justify-between shrink-0 z-10">
 
-                  return (
-                    <Link
-                      key={item.path}
-                      to={item.path}
-                      className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
-                        isActive
-                          ? 'bg-brand-primary hover:bg-brand-hover text-white shadow-md'
-                          : 'text-gray-400 hover:text-gray-100 hover:bg-slate-700'
-                      }`}
-                    >
-                      {Icon && <Icon size={18} />}
-                      <span className="font-medium">{item.label}</span>
-                    </Link>
-                  );
-                })}
-              </div>
+            {/* Left: mobile hamburger */}
+            <div className="flex items-center">
+              <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
+                <SheetTrigger asChild>
+                  <button className="lg:hidden h-8 w-8 flex items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-colors">
+                    <IconMenu2 size={18} />
+                  </button>
+                </SheetTrigger>
+                <SheetContent side="left" className="w-64 p-0 border-slate-800">
+                  <SidebarContent onNavigate={() => setMobileOpen(false)} />
+                </SheetContent>
+              </Sheet>
             </div>
 
-            {/* Desktop User Widget */}
-            <div className="hidden lg:flex items-center gap-2 shrink-0">
-              <NotificationBell />
-              <div ref={profileRef} className="relative">
-                <button
-                  onClick={() => { setProfileOpen((o) => !o); setSessionError(null); }}
-                  className={`flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-slate-700 transition-all group ${profileOpen ? 'bg-slate-700' : ''}`}
-                >
-                  {/* Avatar */}
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 transition-all ${
-                    active
-                      ? 'ring-2 ring-brand-primary ring-offset-1 ring-offset-[#1e293b] bg-brand-primary/15'
-                      : 'bg-slate-600 group-hover:bg-slate-500'
-                  }`}>
-                    {active && (
-                      <span className="absolute w-2 h-2 rounded-full bg-brand-primary animate-ping opacity-60" />
-                    )}
-                    <span className="text-xs font-semibold text-gray-300 relative z-10">
-                      {user?.name?.charAt(0).toUpperCase() ?? '?'}
-                    </span>
-                  </div>
-
-                  {/* Text */}
-                  <div className="text-left">
-                    {active ? (
-                      <>
-                        <p className="text-xs text-brand-primary leading-none mb-0.5 flex items-center gap-1">
-                          <span className="w-1.5 h-1.5 rounded-full bg-brand-primary animate-pulse inline-block" />
-                          Aktive Schicht
-                        </p>
-                        <p className="text-sm font-semibold text-gray-100 leading-none font-mono tracking-wide">
-                          {formatElapsed(elapsed)}
-                        </p>
-                      </>
-                    ) : (
-                      <>
-                        <p className="text-xs text-gray-400 leading-none mb-0.5">Signed in as</p>
-                        <p className="text-sm font-medium text-gray-100 leading-none">{user?.name ?? user?.email}</p>
-                      </>
-                    )}
-                  </div>
-
-                  <ChevronDown size={14} className={`text-gray-500 transition-transform ml-1 ${profileOpen ? 'rotate-180' : ''}`} />
-                </button>
-
-                {/* Dropdown */}
-                {profileOpen && (
-                  <div className="absolute right-0 top-full mt-2 w-56 bg-card border border-border rounded-xl shadow-2xl z-50 overflow-hidden">
-                    <div className="px-4 py-3 border-b border-border">
-                      <p className="text-xs font-medium text-gray-100 truncate">{user?.name}</p>
-                      <p className="text-xs text-gray-500 truncate mt-0.5">{user?.email}</p>
-                    </div>
-
-                    <div className="p-2 space-y-0.5">
-                      <Link
-                        to="/profile"
-                        onClick={() => setProfileOpen(false)}
-                        className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-300 hover:text-gray-100 hover:bg-slate-700 transition-colors"
-                      >
-                        <UserCircle size={15} />
-                        Mein Profil
-                      </Link>
-
-                      {active && (
-                        <button
-                          onClick={handleEndSession}
-                          disabled={sessionLoading}
-                          className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-red-400 hover:bg-red-900/20 transition-colors disabled:opacity-60"
-                        >
-                          {sessionLoading
-                            ? <span className="w-3.5 h-3.5 border-2 border-red-400/30 border-t-red-400 rounded-full animate-spin" />
-                            : <Square size={15} />
-                          }
-                          Schicht beenden
-                        </button>
-                      )}
-
-                      {sessionError && (
-                        <p className="text-xs text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2 mx-0">
-                          {sessionError}
-                        </p>
-                      )}
-                    </div>
-
-                    <div className="border-t border-border p-2">
-                      <button
-                        onClick={() => { handleLogout(); setProfileOpen(false); }}
-                        className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-400 hover:text-gray-100 hover:bg-slate-700 transition-colors"
-                      >
-                        <LogOut size={15} />
-                        Logout
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Mobile Menu Button */}
-            <div className="lg:hidden flex items-center gap-2">
-              <NotificationBell />
-              {/* Compact session indicator for mobile */}
+            {/* Right: controls */}
+            <div className="flex items-center gap-1.5">
               {active && (
-                <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-brand-primary/10 border border-brand-primary/20 text-brand-primary text-xs font-mono">
-                  <span className="w-1.5 h-1.5 rounded-full bg-brand-primary animate-pulse" />
+                <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-brand/10 border border-brand/20 text-brand text-xs font-mono mr-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-brand animate-pulse" />
                   {formatElapsed(elapsed)}
                 </div>
               )}
-              <button
-                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                className="p-2 rounded-lg text-gray-400 hover:text-gray-100 hover:bg-slate-700 transition-all"
-              >
-                {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
-              </button>
-            </div>
-          </div>
 
-          {/* Mobile Menu */}
-          {isMobileMenuOpen && (
-            <div className="lg:hidden border-t border-border py-4">
-              <div className="flex flex-col gap-2">
-                {navItems.map((item) => {
-                  const Icon = item.icon;
-                  const isActive = item.children
-                    ? item.children.some(child =>
-                        location.pathname === child.path || location.pathname.startsWith(child.path + '/')
-                      )
-                    : location.pathname === item.path ||
-                      (item.path !== '/' && item.path !== '#' && location.pathname.startsWith(item.path));
+              <ThemeToggle />
+              <NotificationBell />
 
-                  if (item.children) {
-                    return (
-                      <div key={item.path}>
-                        <button
-                          onClick={() => setOpenDropdown(openDropdown === item.path ? null : item.path)}
-                          className={`w-full flex items-center justify-between gap-2 px-4 py-3 rounded-lg transition-all ${
-                            isActive
-                              ? 'bg-brand-primary text-white'
-                              : 'text-gray-400 hover:bg-slate-700'
-                          }`}
-                        >
-                          <div className="flex items-center gap-2">
-                            {Icon && <Icon size={18} />}
-                            <span className="font-medium">{item.label}</span>
-                          </div>
-                          <ChevronDown size={16} className={`transition-transform ${openDropdown === item.path ? 'rotate-180' : ''}`} />
-                        </button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-accent transition-colors ml-0.5">
+                    <Avatar className="h-7 w-7">
+                      <AvatarFallback className={cn(
+                        'text-xs font-semibold',
+                        active ? 'bg-brand/10 text-brand' : 'bg-muted text-muted-foreground'
+                      )}>
+                        {userInitial}
+                      </AvatarFallback>
+                    </Avatar>
+                    <span className="text-sm font-medium text-foreground hidden sm:block max-w-[120px] truncate">
+                      {user?.name ?? user?.email}
+                    </span>
+                    <IconChevronDown size={14} className="text-muted-foreground hidden sm:block" />
+                  </button>
+                </DropdownMenuTrigger>
 
-                        {openDropdown === item.path && (
-                          <div className="ml-4 mt-2 space-y-1">
-                            {item.children.map((child) => {
-                              const isChildActive = location.pathname === child.path;
-                              return (
-                                <Link
-                                  key={child.path}
-                                  to={child.path}
-                                  onClick={() => setIsMobileMenuOpen(false)}
-                                  className={`block px-4 py-2 rounded-lg transition-all ${
-                                    isChildActive
-                                      ? 'bg-brand-primary text-white'
-                                      : 'text-gray-400 hover:bg-slate-700'
-                                  }`}
-                                >
-                                  {child.label}
-                                </Link>
-                              );
-                            })}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  }
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuLabel className="font-normal">
+                    <p className="text-sm font-medium truncate">{user?.name}</p>
+                    <p className="text-xs text-muted-foreground truncate mt-0.5">{user?.email}</p>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
 
-                  return (
-                    <Link
-                      key={item.path}
-                      to={item.path}
-                      onClick={() => setIsMobileMenuOpen(false)}
-                      className={`flex items-center gap-2 px-4 py-3 rounded-lg transition-all ${
-                        isActive
-                          ? 'bg-brand-primary text-white'
-                          : 'text-gray-400 hover:bg-slate-700'
-                      }`}
-                    >
-                      {Icon && <Icon size={18} />}
-                      <span className="font-medium">{item.label}</span>
+                  <DropdownMenuItem asChild>
+                    <Link to="/profile" className="flex items-center gap-2 cursor-pointer">
+                      <IconUserCircle size={15} />
+                      Mein Profil
                     </Link>
-                  );
-                })}
-
-                {/* Mobile User Section */}
-                <div className="pt-4 mt-4 border-t border-border space-y-1">
-                  <Link
-                    to="/profile"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-slate-700 transition-all"
-                  >
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${active ? 'ring-2 ring-brand-primary bg-brand-primary/15' : 'bg-slate-600'}`}>
-                      <span className="text-xs font-semibold text-gray-300">
-                        {user?.name?.charAt(0).toUpperCase() ?? '?'}
-                      </span>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-100 truncate">{user?.name}</p>
-                      <p className="text-xs text-gray-500 truncate">{user?.email}</p>
-                    </div>
-                    <UserCircle size={16} className="text-gray-500 shrink-0" />
-                  </Link>
+                  </DropdownMenuItem>
 
                   {active && (
-                    <button
-                      onClick={handleEndSession}
-                      disabled={sessionLoading}
-                      className="w-full flex items-center gap-2 px-4 py-3 rounded-lg text-red-400 hover:bg-red-900/20 transition-all disabled:opacity-60"
-                    >
-                      {sessionLoading
-                        ? <span className="w-4 h-4 border-2 border-red-400/30 border-t-red-400 rounded-full animate-spin" />
-                        : <Square size={18} />
-                      }
-                      <span className="font-medium">Schicht beenden</span>
-                    </button>
+                    <>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        onClick={handleEndSession}
+                        disabled={sessionLoading}
+                        className="text-destructive focus:text-destructive focus:bg-destructive/10"
+                      >
+                        <IconSquare size={15} className="shrink-0" />
+                        {sessionLoading ? 'Beende Schicht…' : 'Schicht beenden'}
+                      </DropdownMenuItem>
+                      {sessionError && (
+                        <div className="px-2 py-1">
+                          <p className="text-xs text-destructive">{sessionError}</p>
+                        </div>
+                      )}
+                    </>
                   )}
 
-                  <button
-                    onClick={() => { handleLogout(); setIsMobileMenuOpen(false); }}
-                    className="w-full flex items-center gap-2 px-4 py-3 rounded-lg text-gray-400 hover:bg-slate-700 transition-all"
-                  >
-                    <LogOut size={18} />
-                    <span className="font-medium">Logout</span>
-                  </button>
-                </div>
-              </div>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleLogout}>
+                    <IconLogout size={15} />
+                    Logout
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
-          )}
+          </header>
+
+          {/* Page content */}
+          <main className="flex-1 overflow-y-auto p-4 sm:p-6 bg-background">
+            {children}
+          </main>
         </div>
-      </nav>
+      </div>
 
       <WorkSessionModal />
-
-      <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8 w-full">
-        {children}
-      </main>
-
-      <div className="fixed bottom-4 left-4 z-50">
-        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-slate-800 border border-slate-600 shadow-lg text-[11px] font-mono text-gray-400 select-none">
-          <span className="w-1.5 h-1.5 rounded-full bg-brand-primary"></span>
-          v{__APP_VERSION__}
-        </span>
-      </div>
-    </div>
     </NotificationsProvider>
   );
 }

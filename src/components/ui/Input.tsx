@@ -1,30 +1,35 @@
-import { InputHTMLAttributes, forwardRef } from 'react';
+import * as React from "react"
+import { cn } from "@/lib/utils"
 
-interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
-  label?: string;
-  error?: string;
+export interface InputProps extends React.ComponentProps<"input"> {
+  label?: string
+  error?: string
 }
 
-export const Input = forwardRef<HTMLInputElement, InputProps>(
-  ({ label, error, className = '', ...props }, ref) => {
+const Input = React.forwardRef<HTMLInputElement, InputProps>(
+  ({ className, type, label, error, ...props }, ref) => {
     return (
       <div className="w-full">
         {label && (
-          <label className="block text-sm font-medium text-gray-300 mb-1.5">
+          <label className="block text-sm font-medium text-slate-700 mb-1.5">
             {label}
           </label>
         )}
         <input
+          type={type}
+          className={cn(
+            "flex h-9 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
+            error && "border-destructive focus-visible:ring-destructive",
+            className
+          )}
           ref={ref}
-          className={`w-full px-4 py-2 bg-slate-800 border border-border rounded-lg text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all duration-200 ${
-            error ? 'border-red-500 focus:ring-red-500' : ''
-          } ${className}`}
           {...props}
         />
-        {error && <p className="mt-1.5 text-sm text-red-500">{error}</p>}
+        {error && <p className="mt-1.5 text-sm text-destructive">{error}</p>}
       </div>
-    );
+    )
   }
-);
+)
+Input.displayName = "Input"
 
-Input.displayName = 'Input';
+export { Input }

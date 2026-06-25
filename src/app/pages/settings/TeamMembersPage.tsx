@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Users, Shield, AlertCircle, MoreHorizontal, Pencil, Trash2, UserPlus, Clock, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
+import { IconArrowLeft, IconUsers, IconShield, IconAlertCircle, IconDots, IconPencil, IconTrash, IconUserPlus, IconClock, IconArrowsUpDown, IconArrowUp, IconArrowDown } from '@tabler/icons-react';
 import { Card } from '../../../components/ui/Card';
 import { PageLoader } from '../../../components/ui/PageLoader';
 import { Modal } from '../../../components/ui/Modal';
@@ -35,7 +35,7 @@ export function TeamMembersPage() {
   useEffect(() => {
     fetchMembers();
 
-    const POLL_INTERVAL = 5 * 60 * 1000; // 5 minutes
+    const POLL_INTERVAL = 5 * 60 * 1000;
     const interval = setInterval(() => {
       if (!document.hidden) fetchMembers();
     }, POLL_INTERVAL);
@@ -57,26 +57,26 @@ export function TeamMembersPage() {
       <div className="flex items-center gap-4">
         <button
           onClick={() => navigate('/settings')}
-          className="p-2 rounded-lg text-gray-400 hover:text-gray-100 hover:bg-slate-700 transition-all"
+          className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-all"
         >
-          <ArrowLeft size={18} />
+          <IconArrowLeft size={18} />
         </button>
         <div className="flex-1">
           <div className="flex items-center gap-2">
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-100">User Management</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold text-foreground">User Management</h1>
             {team?.team_name && (
-              <span className="hidden sm:inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-700 text-gray-300 border border-slate-600">
+              <span className="hidden sm:inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-muted text-muted-foreground border border-border">
                 {team.team_name}
               </span>
             )}
           </div>
-          <p className="mt-0.5 text-sm text-gray-400">{members.length} member{members.length !== 1 ? 's' : ''} in this team</p>
+          <p className="mt-0.5 text-sm text-muted-foreground">{members.length} member{members.length !== 1 ? 's' : ''} in this team</p>
         </div>
         <button
           onClick={() => setShowAddModal(true)}
-          className="flex items-center gap-2 px-4 py-2 rounded-lg bg-brand-primary hover:bg-brand-hover text-white text-sm font-medium transition-all"
+          className="flex items-center gap-2 px-4 py-2 rounded-lg bg-brand hover:bg-brand-hover text-white text-sm font-medium transition-all"
         >
-          <UserPlus size={16} />
+          <IconUserPlus size={16} />
           Mitglied hinzufügen
         </button>
       </div>
@@ -102,29 +102,29 @@ export function TeamMembersPage() {
             });
         const cycleSort = () =>
           setShiftSort((s) => s === 'none' ? 'desc' : s === 'desc' ? 'asc' : 'none');
-        const SortIcon = shiftSort === 'desc' ? ArrowDown : shiftSort === 'asc' ? ArrowUp : ArrowUpDown;
+        const SortIcon = shiftSort === 'desc' ? IconArrowDown : shiftSort === 'asc' ? IconArrowUp : IconArrowsUpDown;
         return (
-          <Card className="overflow-hidden border border-slate-600">
+          <Card className="overflow-hidden border border-border">
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-slate-700 bg-slate-800/50">
-                    <th className="text-left px-6 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">Name</th>
-                    <th className="text-left px-6 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">Email</th>
-                    <th className="text-left px-6 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">Role</th>
+                  <tr className="border-b border-border bg-muted/50">
+                    <th className="text-left px-6 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide">Name</th>
+                    <th className="text-left px-6 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide">Email</th>
+                    <th className="text-left px-6 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide">Role</th>
                     <th className="px-6 py-3">
                       <button
                         onClick={cycleSort}
-                        className="flex items-center gap-1.5 text-xs font-semibold text-gray-400 uppercase tracking-wide hover:text-gray-200 transition-colors"
+                        className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wide hover:text-foreground transition-colors"
                       >
                         Schicht
-                        <SortIcon size={13} className={shiftSort !== 'none' ? 'text-brand-primary' : ''} />
+                        <SortIcon size={13} className={shiftSort !== 'none' ? 'text-brand' : ''} />
                       </button>
                     </th>
                     <th className="px-6 py-3" />
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-700">
+                <tbody className="divide-y divide-border">
                   {sorted.map((member) => (
                     <MemberRow key={member.id} member={member} />
                   ))}
@@ -143,41 +143,41 @@ function MemberRow({ member }: { member: TeamMember }) {
   const isAdmin = member.role === 'admin';
   return (
     <tr
-      className="hover:bg-slate-700/30 transition-colors cursor-pointer"
+      className="hover:bg-accent/50 transition-colors cursor-pointer"
       onClick={() => navigate(`/settings/members/${member.user_id}`)}
     >
       <td className="px-6 py-4">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center shrink-0">
-            <span className="text-xs font-semibold text-gray-300">
+          <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center shrink-0">
+            <span className="text-xs font-semibold text-foreground">
               {member.user.name.charAt(0).toUpperCase()}
             </span>
           </div>
-          <span className="font-medium text-gray-100">{member.user.name}</span>
+          <span className="font-medium text-foreground">{member.user.name}</span>
         </div>
       </td>
-      <td className="px-6 py-4 text-gray-400">{member.user.email}</td>
+      <td className="px-6 py-4 text-muted-foreground">{member.user.email}</td>
       <td className="px-6 py-4">
         <span
           className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${
             isAdmin
-              ? 'bg-brand-primary/10 text-brand-primary border border-brand-primary/20'
-              : 'bg-slate-700 text-gray-300 border border-slate-600'
+              ? 'bg-brand/10 text-brand border border-brand/20'
+              : 'bg-muted text-muted-foreground border border-border'
           }`}
         >
-          <Shield size={11} />
+          <IconShield size={11} />
           {member.role}
         </span>
       </td>
       <td className="px-6 py-4">
         {member.active_shift ? (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-green-500/10 text-green-400 border border-green-500/20">
-            <Clock size={11} />
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-green-500/10 text-green-500 dark:text-green-400 border border-green-500/20">
+            <IconClock size={11} />
             Aktiv
           </span>
         ) : (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-slate-700 text-gray-500 border border-slate-600">
-            <Clock size={11} />
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-muted text-muted-foreground border border-border">
+            <IconClock size={11} />
             Keine
           </span>
         )}
@@ -221,29 +221,29 @@ function ActionsMenu() {
       <button
         ref={btnRef}
         onClick={handleOpen}
-        className="p-1.5 rounded-lg text-gray-400 hover:text-gray-100 hover:bg-slate-700 transition-all"
+        className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-all"
       >
-        <MoreHorizontal size={16} />
+        <IconDots size={16} />
       </button>
 
       {open && createPortal(
         <div
           style={{ position: 'absolute', top: pos.top, right: pos.right }}
-          className="w-40 bg-card border border-slate-600 rounded-lg shadow-xl overflow-hidden z-[9999]"
+          className="w-40 bg-popover border border-border rounded-lg shadow-xl overflow-hidden z-[9999]"
           onMouseDown={(e) => e.stopPropagation()}
         >
           <button
-            className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-gray-300 hover:bg-slate-700 hover:text-gray-100 transition-colors"
+            className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-foreground hover:bg-accent transition-colors"
             onClick={() => setOpen(false)}
           >
-            <Pencil size={14} />
+            <IconPencil size={14} />
             Edit Role
           </button>
           <button
-            className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-red-400 hover:bg-red-900/20 hover:text-red-300 transition-colors"
+            className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-destructive hover:bg-destructive/10 transition-colors"
             onClick={() => setOpen(false)}
           >
-            <Trash2 size={14} />
+            <IconTrash size={14} />
             Remove
           </button>
         </div>,
@@ -255,10 +255,10 @@ function ActionsMenu() {
 
 function EmptyState() {
   return (
-    <Card className="p-12 border border-slate-600">
+    <Card className="p-12 border border-border">
       <div className="text-center">
-        <Users className="w-12 h-12 mx-auto mb-3 text-gray-600" />
-        <p className="text-gray-400 font-medium">No members found</p>
+        <IconUsers className="w-12 h-12 mx-auto mb-3 text-muted-foreground/40" />
+        <p className="text-muted-foreground font-medium">No members found</p>
       </div>
     </Card>
   );
@@ -266,16 +266,16 @@ function EmptyState() {
 
 function ErrorState({ error, onRetry }: { error: string; onRetry: () => void }) {
   return (
-    <Card className="p-12 border border-slate-600">
+    <Card className="p-12 border border-border">
       <div className="text-center max-w-md mx-auto">
-        <div className="w-16 h-16 rounded-full bg-red-900/30 flex items-center justify-center mx-auto mb-4">
-          <AlertCircle className="w-8 h-8 text-red-500" />
+        <div className="w-16 h-16 rounded-full bg-destructive/10 flex items-center justify-center mx-auto mb-4">
+          <IconAlertCircle className="w-8 h-8 text-destructive" />
         </div>
-        <h3 className="text-lg font-semibold text-gray-100 mb-2">Error loading members</h3>
-        <p className="text-gray-400 mb-6">{error}</p>
+        <h3 className="text-lg font-semibold text-foreground mb-2">Error loading members</h3>
+        <p className="text-muted-foreground mb-6">{error}</p>
         <button
           onClick={onRetry}
-          className="px-6 py-2 bg-[#ED4C27] hover:bg-[#D8431F] text-white font-medium rounded-lg transition-colors"
+          className="px-6 py-2 bg-brand hover:bg-brand-hover text-white font-medium rounded-lg transition-colors"
         >
           Retry
         </button>
@@ -327,7 +327,7 @@ function AddMemberModal({ isOpen, onClose, onSuccess }: { isOpen: boolean; onClo
         <Input label="Passwort bestätigen" name="password_confirmation" type="password" value={form.password_confirmation} onChange={handleChange} placeholder="••••••••" required />
 
         {error && (
-          <p className="text-xs text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2">{error}</p>
+          <p className="text-xs text-destructive bg-destructive/10 border border-destructive/20 rounded-lg px-3 py-2">{error}</p>
         )}
 
         <div className="flex gap-2 pt-1">
@@ -335,16 +335,16 @@ function AddMemberModal({ isOpen, onClose, onSuccess }: { isOpen: boolean; onClo
             type="button"
             onClick={handleClose}
             disabled={loading}
-            className="flex-1 px-4 py-2 rounded-lg border border-border text-gray-400 hover:text-gray-100 hover:bg-slate-700 text-sm font-medium transition-all disabled:opacity-60"
+            className="flex-1 px-4 py-2 rounded-lg border border-border text-muted-foreground hover:text-foreground hover:bg-accent text-sm font-medium transition-all disabled:opacity-60"
           >
             Abbrechen
           </button>
           <button
             type="submit"
             disabled={loading}
-            className="flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-brand-primary hover:bg-brand-hover text-white text-sm font-medium transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+            className="flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-brand hover:bg-brand-hover text-white text-sm font-medium transition-all disabled:opacity-60 disabled:cursor-not-allowed"
           >
-            {loading ? <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <UserPlus size={15} />}
+            {loading ? <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <IconUserPlus size={15} />}
             Hinzufügen
           </button>
         </div>

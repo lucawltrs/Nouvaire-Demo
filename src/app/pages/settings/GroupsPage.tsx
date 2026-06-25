@@ -1,12 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Layers, AlertCircle, Plus, UserPlus, X } from 'lucide-react';
+import { IconArrowLeft, IconStack2, IconAlertCircle, IconPlus, IconUserPlus, IconX } from '@tabler/icons-react';
 import { Card } from '../../../components/ui/Card';
 import { PageLoader } from '../../../components/ui/PageLoader';
 import { Modal } from '../../../components/ui/Modal';
 import { Input } from '../../../components/ui/Input';
 import { Textarea } from '../../../components/ui/Textarea';
-import { Select } from '../../../components/ui/Select';
+import { SelectField as Select } from '../../../components/ui/SelectField';
 import { Button } from '../../../components/ui/Button';
 import { useAuthStore } from '../../../lib/auth/useAuthStore';
 import { ToastContainer, toast } from '../../../lib/toast';
@@ -113,27 +113,27 @@ export function GroupsPage() {
         <div className="flex items-center gap-4">
           <button
             onClick={() => navigate('/settings')}
-            className="p-2 rounded-lg text-gray-400 hover:text-gray-100 hover:bg-slate-700 transition-all"
+            className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-all"
           >
-            <ArrowLeft size={18} />
+            <IconArrowLeft size={18} />
           </button>
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-2xl sm:text-3xl font-bold text-gray-100">Groups</h1>
+              <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Groups</h1>
               {team?.team_name && (
-                <span className="hidden sm:inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-700 text-gray-300 border border-slate-600">
+                <span className="hidden sm:inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-muted text-foreground border border-border">
                   {team.team_name}
                 </span>
               )}
             </div>
-            <p className="mt-0.5 text-sm text-gray-400">
+            <p className="mt-0.5 text-sm text-muted-foreground">
               {groups.length} group{groups.length !== 1 ? 's' : ''}
             </p>
           </div>
         </div>
 
         <Button onClick={handleOpenCreate} className="flex items-center gap-2">
-          <Plus size={16} />
+          <IconPlus size={16} />
           New Group
         </Button>
       </div>
@@ -142,47 +142,47 @@ export function GroupsPage() {
       {isLoading ? (
         <PageLoader message="Loading groups..." subtitle="Fetching team groups" />
       ) : error ? (
-        <Card className="p-6 border border-slate-600">
+        <Card className="p-6 border border-border">
           <div className="flex items-center gap-3 text-red-400">
-            <AlertCircle size={18} />
+            <IconAlertCircle size={18} />
             <p className="text-sm">{error}</p>
           </div>
         </Card>
       ) : groups.length === 0 ? (
-        <Card className="p-10 border border-slate-600 flex flex-col items-center gap-3 text-center">
-          <div className="w-12 h-12 rounded-full bg-brand-primary/10 flex items-center justify-center">
-            <Layers size={22} className="text-brand-primary" />
+        <Card className="p-10 border border-border flex flex-col items-center gap-3 text-center">
+          <div className="w-12 h-12 rounded-full bg-brand/10 flex items-center justify-center">
+            <IconStack2 size={22} className="text-brand" />
           </div>
-          <p className="text-gray-300 font-medium">No groups yet</p>
-          <p className="text-sm text-gray-500">Create your first group to get started.</p>
+          <p className="text-foreground font-medium">No groups yet</p>
+          <p className="text-sm text-muted-foreground">Create your first group to get started.</p>
           <Button onClick={handleOpenCreate} className="mt-2 flex items-center gap-2">
-            <Plus size={15} />
+            <IconPlus size={15} />
             New Group
           </Button>
         </Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           {groups.map((group) => (
-            <Card key={group.id} className="p-5 border border-slate-600 flex flex-col gap-4">
+            <Card key={group.id} className="p-5 border border-border flex flex-col gap-4">
               {/* Group header */}
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-3 min-w-0">
-                  <div className="w-9 h-9 rounded-lg bg-brand-primary/10 flex items-center justify-center shrink-0">
-                    <Layers size={16} className="text-brand-primary" />
+                  <div className="w-9 h-9 rounded-lg bg-brand/10 flex items-center justify-center shrink-0">
+                    <IconStack2 size={16} className="text-brand" />
                   </div>
                   <div className="min-w-0">
-                    <p className="text-sm font-semibold text-gray-100 truncate">{group.name}</p>
+                    <p className="text-sm font-semibold text-foreground truncate">{group.name}</p>
                     {group.description && (
-                      <p className="text-xs text-gray-400 mt-0.5 line-clamp-2">{group.description}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{group.description}</p>
                     )}
                   </div>
                 </div>
                 <button
                   onClick={() => setAddMemberTarget(group)}
-                  className="p-1.5 rounded-lg text-gray-400 hover:text-brand-primary hover:bg-brand-primary/10 transition-all shrink-0"
+                  className="p-1.5 rounded-lg text-muted-foreground hover:text-brand hover:bg-brand/10 transition-all shrink-0"
                   title="Add member"
                 >
-                  <UserPlus size={15} />
+                  <IconUserPlus size={15} />
                 </button>
               </div>
 
@@ -190,28 +190,28 @@ export function GroupsPage() {
               {group.team_users.length > 0 ? (
                 <ul className="space-y-1.5">
                   {group.team_users.map((tu) => (
-                    <li key={tu.id} className="flex items-center justify-between gap-2 px-2 py-1.5 rounded-lg bg-slate-800/60">
+                    <li key={tu.id} className="flex items-center justify-between gap-2 px-2 py-1.5 rounded-lg bg-muted/60">
                       <div className="flex items-center gap-2 min-w-0">
-                        <div className="w-6 h-6 rounded-full bg-brand-primary/20 flex items-center justify-center shrink-0">
-                          <span className="text-[10px] font-semibold text-brand-primary">
+                        <div className="w-6 h-6 rounded-full bg-brand/20 flex items-center justify-center shrink-0">
+                          <span className="text-[10px] font-semibold text-brand">
                             {tu.user.name.charAt(0).toUpperCase()}
                           </span>
                         </div>
-                        <span className="text-xs text-gray-300 truncate">{tu.user.name}</span>
-                        <span className="text-[10px] text-gray-500 capitalize shrink-0">{tu.role}</span>
+                        <span className="text-xs text-foreground truncate">{tu.user.name}</span>
+                        <span className="text-[10px] text-muted-foreground capitalize shrink-0">{tu.role}</span>
                       </div>
                       <button
                         onClick={() => setRemoveMemberTarget({ group, member: tu })}
-                        className="p-1 rounded text-gray-600 hover:text-red-400 transition-all shrink-0"
+                        className="p-1 rounded text-muted-foreground hover:text-red-400 transition-all shrink-0"
                         title="Remove from group"
                       >
-                        <X size={13} />
+                        <IconX size={13} />
                       </button>
                     </li>
                   ))}
                 </ul>
               ) : (
-                <p className="text-xs text-gray-500 italic">No members yet</p>
+                <p className="text-xs text-muted-foreground italic">No members yet</p>
               )}
             </Card>
           ))}
@@ -228,7 +228,7 @@ export function GroupsPage() {
         <div className="p-4 sm:p-6 space-y-4">
           <Input
             label="Name"
-            placeholder="e.g. VIP Users"
+            placeholder="e.g. VIP IconUsers"
             value={form.name}
             onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
             error={formErrors.name}
@@ -266,9 +266,9 @@ export function GroupsPage() {
         size="sm"
       >
         <div className="p-4 sm:p-6 space-y-4">
-          <p className="text-sm text-gray-400">
-            Remove <span className="text-gray-200 font-medium">{removeMemberTarget?.member.user.name}</span> from{' '}
-            <span className="text-gray-200 font-medium">{removeMemberTarget?.group.name}</span>?
+          <p className="text-sm text-muted-foreground">
+            Remove <span className="text-foreground font-medium">{removeMemberTarget?.member.user.name}</span> from{' '}
+            <span className="text-foreground font-medium">{removeMemberTarget?.group.name}</span>?
           </p>
           <div className="flex justify-end gap-3 pt-2">
             <Button variant="secondary" onClick={() => setRemoveMemberTarget(null)} disabled={isRemoving}>
@@ -359,7 +359,7 @@ function AddMemberModal({ group, onClose, onSaved }: AddMemberModalProps) {
 
         {error && (
           <p className="text-sm text-red-400 flex items-center gap-1.5">
-            <AlertCircle size={14} /> {error}
+            <IconAlertCircle size={14} /> {error}
           </p>
         )}
 

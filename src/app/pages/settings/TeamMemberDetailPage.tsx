@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Clock, AlertCircle, Calendar, Timer, StopCircle, X, DollarSign } from 'lucide-react';
+import { IconArrowLeft, IconClock, IconAlertCircle, IconCalendar, IconClockHour3, IconPlayerStop, IconCurrencyDollar, IconX } from '@tabler/icons-react';
 import { Card } from '../../../components/ui/Card';
 import { PageLoader } from '../../../components/ui/PageLoader';
 import { teamApi, type TeamMember } from '../../../modules/shared/services/teamApi';
@@ -96,7 +96,7 @@ export function TeamMemberDetailPage() {
 
     try {
       const members = await teamApi.getMembers();
-      const found = members.find((m) => m.user_id === id || m.id === id);
+      const found = members.find((m) => m.user_id === id);
       setMember(found ?? null);
     } catch {
       setError('Mitglied konnte nicht geladen werden.');
@@ -133,23 +133,23 @@ export function TeamMemberDetailPage() {
 
   if (error || !member) {
     return (
-      <Card className="p-12 border border-slate-600 max-w-lg mx-auto mt-12">
+      <Card className="p-12 border border-border max-w-lg mx-auto mt-12">
         <div className="text-center">
-          <div className="w-16 h-16 rounded-full bg-red-900/30 flex items-center justify-center mx-auto mb-4">
-            <AlertCircle className="w-8 h-8 text-red-500" />
+          <div className="w-16 h-16 rounded-full bg-destructive/10 flex items-center justify-center mx-auto mb-4">
+            <IconAlertCircle className="w-8 h-8 text-destructive" />
           </div>
-          <h3 className="text-lg font-semibold text-gray-100 mb-2">Fehler beim Laden</h3>
-          <p className="text-gray-400 mb-6">{error ?? 'Mitglied nicht gefunden'}</p>
+          <h3 className="text-lg font-semibold text-foreground mb-2">Fehler beim Laden</h3>
+          <p className="text-muted-foreground mb-6">{error ?? 'Mitglied nicht gefunden'}</p>
           <div className="flex justify-center gap-3">
             <button
               onClick={() => navigate('/settings/members')}
-              className="px-4 py-2 text-sm text-gray-300 border border-slate-600 rounded-lg hover:bg-slate-700 transition-colors"
+              className="px-4 py-2 text-sm text-muted-foreground border border-border rounded-lg hover:bg-accent transition-colors"
             >
               Zurück zur Übersicht
             </button>
             <button
               onClick={fetchData}
-              className="px-4 py-2 text-sm bg-[#ED4C27] hover:bg-[#D8431F] text-white font-medium rounded-lg transition-colors"
+              className="px-4 py-2 text-sm bg-brand hover:bg-brand-hover text-white font-medium rounded-lg transition-colors"
             >
               Erneut versuchen
             </button>
@@ -167,129 +167,129 @@ export function TeamMemberDetailPage() {
       <div className="flex items-center gap-4">
         <button
           onClick={() => navigate('/settings/members')}
-          className="p-2 rounded-lg text-gray-400 hover:text-gray-100 hover:bg-slate-700 transition-all"
+          className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-all"
         >
-          <ArrowLeft size={18} />
+          <IconArrowLeft size={18} />
         </button>
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center shrink-0">
-            <span className="text-sm font-semibold text-gray-300">
+          <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center shrink-0">
+            <span className="text-sm font-semibold text-foreground">
               {member.user.name.charAt(0).toUpperCase()}
             </span>
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-gray-100">{member.user.name}</h1>
-            <p className="text-sm text-gray-400">{member.user.email}</p>
+            <h1 className="text-2xl font-bold text-foreground">{member.user.name}</h1>
+            <p className="text-sm text-muted-foreground">{member.user.email}</p>
           </div>
         </div>
       </div>
 
       {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-        <Card className="p-4 border border-slate-600">
+        <Card className="p-4 border border-border">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-brand-primary/10 rounded-lg">
-              <Clock size={18} className="text-brand-primary" />
+            <div className="p-2 bg-brand/10 rounded-lg">
+              <IconClock size={18} className="text-brand" />
             </div>
             <div>
-              <p className="text-xs text-gray-400">Gesamtschichten</p>
-              <p className="text-xl font-bold text-gray-100">{sessions.length}</p>
+              <p className="text-xs text-muted-foreground">Gesamtschichten</p>
+              <p className="text-xl font-bold text-foreground">{sessions.length}</p>
             </div>
           </div>
         </Card>
-        <Card className="p-4 border border-slate-600">
+        <Card className="p-4 border border-border">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-brand-primary/10 rounded-lg">
-              <Timer size={18} className="text-brand-primary" />
+            <div className="p-2 bg-brand/10 rounded-lg">
+              <IconClockHour3 size={18} className="text-brand" />
             </div>
             <div>
-              <p className="text-xs text-gray-400">Gesamtarbeitszeit</p>
-              <p className="text-xl font-bold text-gray-100">{formatDuration(totalMinutes)}</p>
+              <p className="text-xs text-muted-foreground">Gesamtarbeitszeit</p>
+              <p className="text-xl font-bold text-foreground">{formatDuration(totalMinutes)}</p>
             </div>
           </div>
         </Card>
-        <Card className="p-4 border border-slate-600">
+        <Card className="p-4 border border-border">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-green-500/10 rounded-lg">
-              <DollarSign size={18} className="text-green-400" />
+              <IconCurrencyDollar size={18} className="text-green-500 dark:text-green-400" />
             </div>
             <div>
-              <p className="text-xs text-gray-400">Gesamtumsatz</p>
-              <p className="text-xl font-bold text-green-400">{totalRevenue}</p>
+              <p className="text-xs text-muted-foreground">Gesamtumsatz</p>
+              <p className="text-xl font-bold text-green-500 dark:text-green-400">{totalRevenue}</p>
             </div>
           </div>
         </Card>
-        <Card className="p-4 border border-slate-600">
+        <Card className="p-4 border border-border">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-brand-primary/10 rounded-lg">
-              <Calendar size={18} className="text-brand-primary" />
+            <div className="p-2 bg-brand/10 rounded-lg">
+              <IconCalendar size={18} className="text-brand" />
             </div>
             <div>
-              <p className="text-xs text-gray-400">Rolle</p>
-              <p className="text-base font-semibold text-gray-100 capitalize">{member.role}</p>
+              <p className="text-xs text-muted-foreground">Rolle</p>
+              <p className="text-base font-semibold text-foreground capitalize">{member.role}</p>
             </div>
           </div>
         </Card>
       </div>
 
       {/* Work Sessions Table */}
-      <Card className="overflow-hidden border border-slate-600">
-        <div className="px-6 py-4 border-b border-slate-700">
-          <h2 className="text-base font-semibold text-gray-100">Arbeitszeiten</h2>
+      <Card className="overflow-hidden border border-border">
+        <div className="px-6 py-4 border-b border-border">
+          <h2 className="text-base font-semibold text-foreground">Arbeitszeiten</h2>
         </div>
 
         {isLoadingSessions ? (
           <div className="flex items-center justify-center py-16">
-            <span className="w-6 h-6 border-2 border-slate-600 border-t-brand-primary rounded-full animate-spin" />
+            <span className="w-6 h-6 border-2 border-border border-t-brand rounded-full animate-spin" />
           </div>
         ) : sessions.length === 0 ? (
           <div className="text-center py-16">
-            <Clock className="w-10 h-10 mx-auto mb-3 text-gray-600" />
-            <p className="text-gray-400">Keine Arbeitszeiten gefunden</p>
+            <IconClock className="w-10 h-10 mx-auto mb-3 text-muted-foreground/40" />
+            <p className="text-muted-foreground">Keine Arbeitszeiten gefunden</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="bg-slate-800/50">
-                  <th className="text-left px-6 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">#</th>
-                  <th className="text-left px-6 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">Start</th>
-                  <th className="text-left px-6 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">Ende</th>
-                  <th className="text-left px-6 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">Dauer</th>
-                  <th className="text-left px-6 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">Status</th>
-                  <th className="text-left px-6 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">
+                <tr className="bg-muted/50 border-b border-border">
+                  <th className="text-left px-6 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide">#</th>
+                  <th className="text-left px-6 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide">Start</th>
+                  <th className="text-left px-6 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide">Ende</th>
+                  <th className="text-left px-6 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide">Dauer</th>
+                  <th className="text-left px-6 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide">Status</th>
+                  <th className="text-left px-6 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
                     Umsatz{chatterPercentage !== null ? ` (${chatterPercentage}%)` : ''}
                   </th>
                   <th className="px-6 py-3" />
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-700">
+              <tbody className="divide-y divide-border">
                 {sessions.map((session, index) => (
-                  <tr key={session.id} className="hover:bg-slate-700/30 transition-colors">
-                    <td className="px-6 py-4 text-gray-500 text-xs">{index + 1}</td>
-                    <td className="px-6 py-4 text-gray-300">{formatDateTime(session.started_at)}</td>
-                    <td className="px-6 py-4 text-gray-300">{formatDateTime(session.ended_at)}</td>
-                    <td className="px-6 py-4 text-gray-300">{formatDuration(session.duration)}</td>
+                  <tr key={session.id} className="hover:bg-accent/50 transition-colors">
+                    <td className="px-6 py-4 text-muted-foreground text-xs">{index + 1}</td>
+                    <td className="px-6 py-4 text-foreground">{formatDateTime(session.started_at)}</td>
+                    <td className="px-6 py-4 text-foreground">{formatDateTime(session.ended_at)}</td>
+                    <td className="px-6 py-4 text-foreground">{formatDuration(session.duration)}</td>
                     <td className="px-6 py-4">
                       {session.is_active ? (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-brand-primary/10 text-brand-primary border border-brand-primary/20">
-                          <span className="w-1.5 h-1.5 rounded-full bg-brand-primary animate-pulse" />
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-brand/10 text-brand border border-brand/20">
+                          <span className="w-1.5 h-1.5 rounded-full bg-brand animate-pulse" />
                           Aktiv
                         </span>
                       ) : (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-900/30 text-green-400 border border-green-800/40">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-500/10 text-green-500 dark:text-green-400 border border-green-500/30">
                           Beendet
                         </span>
                       )}
                     </td>
-                    <td className="px-6 py-4 text-green-400 font-medium">{session.revenue}</td>
+                    <td className="px-6 py-4 text-green-500 dark:text-green-400 font-medium">{session.revenue}</td>
                     <td className="px-6 py-4 text-right">
                       {session.is_active && (
                         <button
                           onClick={() => openAdminEndModal(session)}
-                          className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium text-red-400 border border-red-800/40 hover:bg-red-900/20 transition-colors"
+                          className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium text-destructive border border-destructive/30 hover:bg-destructive/10 transition-colors"
                         >
-                          <StopCircle size={13} />
+                          <IconPlayerStop size={13} />
                           Admin-Beenden
                         </button>
                       )}
@@ -307,48 +307,48 @@ export function TeamMemberDetailPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
           <div className="bg-card border border-border rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden">
             {/* Header */}
-            <div className="bg-slate-800 px-6 py-4 border-b border-border flex items-center justify-between">
+            <div className="bg-muted px-6 py-4 border-b border-border flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="flex items-center justify-center w-9 h-9 rounded-full bg-red-500/10">
-                  <StopCircle size={18} className="text-red-400" />
+                <div className="flex items-center justify-center w-9 h-9 rounded-full bg-destructive/10">
+                  <IconPlayerStop size={18} className="text-destructive" />
                 </div>
                 <div>
-                  <h2 className="text-sm font-semibold text-gray-100">Schicht admin-seitig beenden</h2>
-                  <p className="text-xs text-gray-400 mt-0.5">Session #{adminEndSession.id}</p>
+                  <h2 className="text-sm font-semibold text-foreground">Schicht admin-seitig beenden</h2>
+                  <p className="text-xs text-muted-foreground mt-0.5">Session #{adminEndSession.id}</p>
                 </div>
               </div>
               <button
                 onClick={closeAdminEndModal}
-                className="p-1.5 rounded-lg text-gray-400 hover:text-gray-100 hover:bg-slate-700 transition-all"
+                className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-all"
               >
-                <X size={16} />
+                <IconX size={16} />
               </button>
             </div>
 
             {/* Body */}
             <div className="px-6 py-5 space-y-4">
               <div>
-                <label className="block text-xs font-medium text-gray-400 mb-1.5">Endzeitpunkt</label>
+                <label className="block text-xs font-medium text-muted-foreground mb-1.5">Endzeitpunkt</label>
                 <input
                   type="datetime-local"
                   value={adminEndedAt}
                   onChange={(e) => setAdminEndedAt(e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg bg-slate-800 border border-slate-600 text-gray-100 text-sm focus:outline-none focus:border-brand-primary transition-colors"
+                  className="w-full px-3 py-2 rounded-lg bg-muted border border-border text-foreground text-sm focus:outline-none focus:border-brand transition-colors"
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-400 mb-1.5">Admin-Notiz</label>
+                <label className="block text-xs font-medium text-muted-foreground mb-1.5">Admin-Notiz</label>
                 <textarea
                   value={adminNote}
                   onChange={(e) => setAdminNote(e.target.value)}
                   placeholder="z. B. Vom Admin beendet wegen Inaktivität."
                   rows={3}
-                  className="w-full px-3 py-2 rounded-lg bg-slate-800 border border-slate-600 text-gray-100 text-sm placeholder-gray-500 focus:outline-none focus:border-brand-primary transition-colors resize-none"
+                  className="w-full px-3 py-2 rounded-lg bg-muted border border-border text-foreground text-sm placeholder-muted-foreground focus:outline-none focus:border-brand transition-colors resize-none"
                 />
               </div>
 
               {adminEndError && (
-                <p className="text-xs text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2">
+                <p className="text-xs text-destructive bg-destructive/10 border border-destructive/20 rounded-lg px-3 py-2">
                   {adminEndError}
                 </p>
               )}
@@ -359,19 +359,19 @@ export function TeamMemberDetailPage() {
               <button
                 onClick={closeAdminEndModal}
                 disabled={adminEndLoading}
-                className="px-4 py-2 rounded-lg text-sm text-gray-300 border border-slate-600 hover:bg-slate-700 transition-colors disabled:opacity-60"
+                className="px-4 py-2 rounded-lg text-sm text-muted-foreground border border-border hover:bg-accent transition-colors disabled:opacity-60"
               >
                 Abbrechen
               </button>
               <button
                 onClick={handleAdminEnd}
                 disabled={adminEndLoading || !adminEndedAt}
-                className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-red-600 hover:bg-red-700 text-white transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-destructive hover:bg-destructive/90 text-destructive-foreground transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 {adminEndLoading ? (
                   <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                 ) : (
-                  <StopCircle size={15} />
+                  <IconPlayerStop size={15} />
                 )}
                 Schicht beenden
               </button>

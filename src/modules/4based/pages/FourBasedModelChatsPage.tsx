@@ -183,7 +183,7 @@ export function FourBasedModelChatsPage() {
   if (!account) {
     return (
       <div className="text-center py-12">
-        <p className="text-gray-400">Account nicht gefunden</p>
+        <p className="text-muted-foreground">Account nicht gefunden</p>
         <Link to="/4based/models" className="inline-block mt-4">
           <Button variant="secondary">Zurück zur Liste</Button>
         </Link>
@@ -215,17 +215,17 @@ export function FourBasedModelChatsPage() {
           <img
             src={account.img_url}
             alt={account.name}
-            className="w-14 h-14 rounded-full object-cover border border-gray-700"
+            className="w-14 h-14 rounded-full object-cover border border-border"
           />
           <div className="min-w-0">
-            <h1 className="text-3xl font-bold text-gray-100">{account.name} Chats</h1>
+            <h1 className="text-3xl font-bold text-foreground">{account.name} Chats</h1>
           </div>
         </div>
       </Card>
 
       <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <p className="text-sm text-gray-400">Ungelesene Nachrichten</p>
+          <p className="text-sm text-muted-foreground">Ungelesene Nachrichten</p>
           <span className="inline-flex items-center justify-center min-w-7 h-7 px-2 rounded-full bg-red-600 text-white text-sm font-bold">
             {unreadSummary.totalUnreadMessages}
           </span>
@@ -253,11 +253,11 @@ export function FourBasedModelChatsPage() {
 
       {chats.length === 0 ? (
         <Card className="p-6">
-          <p className="text-gray-400">Keine Chats vorhanden.</p>
+          <p className="text-muted-foreground">Keine Chats vorhanden.</p>
         </Card>
       ) : filteredChats.length === 0 ? (
         <Card className="p-6">
-          <p className="text-gray-400">Keine Chats zur Suche gefunden.</p>
+          <p className="text-muted-foreground">Keine Chats zur Suche gefunden.</p>
         </Card>
       ) : (
         <div className="space-y-5">
@@ -280,24 +280,24 @@ export function FourBasedModelChatsPage() {
                     <img
                       src={chat.img_url}
                       alt={getChatPartnerName(chat)}
-                      className="w-11 h-11 rounded-full object-cover border border-gray-700"
+                      className="w-11 h-11 rounded-full object-cover border border-border"
                     />
                   ) : (
-                    <div className="w-11 h-11 rounded-full border border-gray-700 bg-gray-800" />
+                    <div className="w-11 h-11 rounded-full border border-border bg-muted" />
                   )}
 
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2 min-w-0">
                       {unreadCount > 0 && <span className="w-2 h-2 rounded-full bg-yellow-400 shrink-0" aria-hidden="true" />}
-                      <p className="text-sm font-semibold text-gray-100 truncate">{getChatPartnerName(chat)}</p>
+                      <p className="text-sm font-semibold text-foreground truncate">{getChatPartnerName(chat)}</p>
                       <Badge size="sm" variant="default">{formattedSalesVolume}</Badge>
                     </div>
-                    <p className={`text-sm truncate ${unreadCount > 0 ? 'text-gray-200 font-medium' : 'text-gray-400'}`}>
+                    <p className={`text-sm truncate ${unreadCount > 0 ? 'text-foreground font-medium' : 'text-muted-foreground'}`}>
                       {chat.last_message?.message ?? 'Keine letzte Nachricht'}
                     </p>
                   </div>
 
-                  <div className="flex items-center gap-2 text-xs text-gray-500 whitespace-nowrap">
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground whitespace-nowrap">
                     {unreadCount > 0 && (
                       <span className="inline-flex items-center justify-center min-w-6 h-6 px-1 rounded-full bg-red-600 text-white text-xs font-bold">
                         {unreadCount}

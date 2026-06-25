@@ -5,7 +5,7 @@ import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Textarea } from '../../components/ui/Textarea';
 import { Input } from '../../components/ui/Input';
-import { Loader2, User, ArrowLeft, Search, Camera, Film, CheckCircle, Smile, X, ChevronDown, SlidersHorizontal, Pencil, SendHorizontal } from 'lucide-react';
+import { IconLoader2, IconUser, IconArrowLeft, IconSearch, IconCamera, IconMovie, IconCircleCheck, IconMoodSmile, IconChevronDown, IconAdjustmentsHorizontal, IconPencil, IconSend, IconX } from '@tabler/icons-react';
 import Picker from '@emoji-mart/react';
 import data from '@emoji-mart/data';
 import { Modal } from '../../components/ui/Modal';
@@ -571,25 +571,25 @@ export function InboxChatPage() {
           <button
             type="button"
             onClick={() => navigate('/inbox')}
-            className="flex items-center justify-center w-9 h-9 rounded-lg border border-slate-600 bg-card shadow-sm text-gray-400 hover:text-gray-100 hover:bg-slate-700 transition-colors shrink-0"
+            className="flex items-center justify-center w-9 h-9 rounded-lg border border-border bg-card shadow-sm text-muted-foreground hover:text-foreground hover:bg-muted transition-colors shrink-0"
             aria-label="Zurück zur Übersicht"
           >
-            <ArrowLeft size={16} />
+            <IconArrowLeft size={16} />
           </button>
-          <div className="flex items-center gap-3 px-3 py-2 rounded-xl bg-card border border-slate-600 shadow-sm flex-1 min-w-0">
+          <div className="flex items-center gap-3 px-3 py-2 rounded-xl bg-card border border-border shadow-sm flex-1 min-w-0">
             <AccountAvatar src={accountImgUrl} name={accountName ?? ''} size="md" />
             <div className="min-w-0 flex-1">
-              <p className="text-xs text-gray-400 font-medium uppercase tracking-wide leading-none mb-0.5">
+              <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide leading-none mb-0.5">
                 Ausgewählter Account
               </p>
-              <p className="font-bold text-sm text-gray-100 truncate">{accountName}</p>
+              <p className="font-bold text-sm text-foreground truncate">{accountName}</p>
             </div>
           </div>
         </div>
 
         {/* Chat search */}
         <div className="relative shrink-0">
-          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+          <IconSearch size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
           <Input
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
@@ -599,28 +599,28 @@ export function InboxChatPage() {
           {searchQuery && (
             <button
               onClick={() => setSearchQuery('')}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-100 transition-colors"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
               aria-label="Clear search"
             >
-              <X size={12} />
+              <IconX size={12} />
             </button>
           )}
         </div>
 
         {/* Chat list */}
-        <Card ref={sidebarCardRef} className="flex-1 overflow-y-auto divide-y divide-slate-700 min-h-0">
+        <Card ref={sidebarCardRef} className="flex-1 overflow-y-auto divide-y divide-border min-h-0">
           {isLoadingChats ? (
             <div className="flex items-center justify-center h-32">
-              <Loader2 size={20} className="animate-spin text-gray-400" />
+              <IconLoader2 size={20} className="animate-spin text-muted-foreground" />
             </div>
           ) : chatsError ? (
             <p className="text-red-500 text-sm p-4">{chatsError}</p>
           ) : searchLoading ? (
             <div className="flex items-center justify-center h-32">
-              <Loader2 size={20} className="animate-spin text-gray-400" />
+              <IconLoader2 size={20} className="animate-spin text-muted-foreground" />
             </div>
           ) : filteredChats.length === 0 ? (
-            <p className="text-gray-400 text-sm p-4">
+            <p className="text-muted-foreground text-sm p-4">
               {searchQuery.trim() ? 'Keine Treffer.' : 'Keine Chats gefunden.'}
             </p>
           ) : (
@@ -632,12 +632,12 @@ export function InboxChatPage() {
                     key={chat.chat_id}
                     to={`/inbox/${chat.fourbased_id}/chat/${chat.chat_id}`}
                     onClick={() => setMobileView('chat')}
-                    className={`flex items-center gap-3 px-4 py-3 transition-colors hover:bg-slate-700 ${isActive ? 'border-l-4 border-[#ED4C27] bg-orange-900/20' : ''}`}
+                    className={`flex items-center gap-3 px-4 py-3 transition-colors hover:bg-muted ${isActive ? 'border-l-4 border-brand bg-orange-900/20' : ''}`}
                   >
                     <AccountAvatar src={chat.customer_avatar_url ?? undefined} name={chat.customer_name} size="sm" isOnline={chat.customer_is_online} />
                     <div className="flex-1 min-w-0">
-                      <span className="font-semibold text-sm text-gray-100 truncate block">{chat.customer_name}</span>
-                      <p className="text-xs text-gray-500 truncate">{chat.last_message_preview}</p>
+                      <span className="font-semibold text-sm text-foreground truncate block">{chat.customer_name}</span>
+                      <p className="text-xs text-muted-foreground truncate">{chat.last_message_preview}</p>
                     </div>
                     <div className="flex flex-col items-end gap-1 shrink-0">
                       {typeof chat.sales_volume === 'number' && (
@@ -649,7 +649,7 @@ export function InboxChatPage() {
                         </span>
                       )}
                       {chat.is_unread && (
-                        <span className="w-2 h-2 rounded-full bg-[#ED4C27]" />
+                        <span className="w-2 h-2 rounded-full bg-brand" />
                       )}
                     </div>
                   </Link>
@@ -658,7 +658,7 @@ export function InboxChatPage() {
               {/* Infinite scroll sentinel */}
               {searchQuery.trim().length < 3 && (
                 <div ref={sidebarSentinelRef} className="flex items-center justify-center py-3">
-                  {sidebarLoadingMore && <Loader2 size={14} className="animate-spin text-gray-500" />}
+                  {sidebarLoadingMore && <IconLoader2 size={14} className="animate-spin text-muted-foreground" />}
                 </div>
               )}
             </>
@@ -671,23 +671,23 @@ export function InboxChatPage() {
         <ToastContainer />
         {isInitialLoading ? (
           <div className="flex items-center justify-center flex-1">
-            <Loader2 size={32} className="animate-spin text-gray-400" />
+            <IconLoader2 size={32} className="animate-spin text-muted-foreground" />
           </div>
         ) : messagesError ? (
           <div className="flex items-center justify-center flex-1 text-red-500">{messagesError}</div>
         ) : !activeChat && !isLoadingChats && messages.length === 0 ? (
-          <div className="flex items-center justify-center flex-1 text-gray-400">Chat nicht gefunden.</div>
+          <div className="flex items-center justify-center flex-1 text-muted-foreground">Chat nicht gefunden.</div>
         ) : (
           <Card className="rounded-2xl flex flex-col flex-1 min-h-0">
             {/* Chat header */}
-            <div className="p-4 border-b border-slate-700 flex items-center gap-3 shrink-0">
+            <div className="p-4 border-b border-border flex items-center gap-3 shrink-0">
               <button
                 type="button"
                 onClick={() => setMobileView('sidebar')}
-                className="md:hidden flex items-center justify-center w-8 h-8 rounded-lg border border-slate-600 bg-slate-700 text-gray-400 hover:text-gray-100 transition-colors shrink-0"
+                className="md:hidden flex items-center justify-center w-8 h-8 rounded-lg border border-border bg-muted text-muted-foreground hover:text-foreground transition-colors shrink-0"
                 aria-label="Zurück zur Chat-Liste"
               >
-                <ArrowLeft size={16} />
+                <IconArrowLeft size={16} />
               </button>
               {activeChat ? (
                 <>
@@ -695,25 +695,25 @@ export function InboxChatPage() {
                     <button
                       type="button"
                       onClick={() => setMobileInfoOpen(true)}
-                      className="md:hidden flex items-center justify-center w-8 h-8 rounded-lg border border-slate-600 bg-slate-700 text-gray-400 hover:text-[#ED4C27] hover:border-[#ED4C27] transition-colors shrink-0"
+                      className="md:hidden flex items-center justify-center w-8 h-8 rounded-lg border border-border bg-muted text-muted-foreground hover:text-brand hover:border-brand transition-colors shrink-0"
                       aria-label="Kundeninfo öffnen"
                     >
-                      <SlidersHorizontal size={16} />
+                      <IconAdjustmentsHorizontal size={16} />
                     </button>
                   )}
                   <AccountAvatar src={activeChat.customer_avatar_url ?? undefined} name={activeChat.customer_name} size="md" isOnline={activeChat.customer_is_online} />
                   <div className="min-w-0 flex-1">
-                    <h1 className="text-lg font-bold text-gray-100 truncate">{activeChat.customer_name}</h1>
+                    <h1 className="text-lg font-bold text-foreground truncate">{activeChat.customer_name}</h1>
                   </div>
                   {/* Profile link */}
                   <a
                     href={`https://4based.com/profile/${encodeURIComponent(activeChat.customer_name.replace(/\s+/g, '-'))}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="ml-2 inline-flex items-center justify-center w-9 h-9 rounded-full hover:bg-slate-700 text-[#ED4C27]"
+                    className="ml-2 inline-flex items-center justify-center w-9 h-9 rounded-full hover:bg-muted text-brand"
                     title={`Profil von ${activeChat.customer_name}`}
                   >
-                    <User size={18} />
+                    <IconUser size={18} />
                   </a>
                   {typeof activeChat.sales_volume === 'number' && (
                     <span
@@ -726,15 +726,15 @@ export function InboxChatPage() {
                 </>
               ) : (isLoadingChats || isFallbackSearching) ? (
                 <div className="flex items-center gap-3 flex-1 animate-pulse">
-                  <div className="w-10 h-10 rounded-full bg-slate-700 shrink-0" />
-                  <div className="h-5 bg-slate-700 rounded w-40" />
+                  <div className="w-10 h-10 rounded-full bg-muted shrink-0" />
+                  <div className="h-5 bg-muted rounded w-40" />
                 </div>
               ) : customerId ? (
                 // Chat not resolved via API — show what we know (alias or user ID)
                 <>
                   <AccountAvatar src={undefined} name={pivotData?.alias ?? customerId} size="md" />
                   <div className="min-w-0 flex-1">
-                    <h1 className="text-lg font-bold text-gray-100 truncate">
+                    <h1 className="text-lg font-bold text-foreground truncate">
                       {pivotData?.alias ?? customerId}
                     </h1>
                   </div>
@@ -761,7 +761,7 @@ export function InboxChatPage() {
                     key={e.id}
                     type="button"
                     onClick={() => handleEmojiSelect({ native: e.emoji })}
-                    className="w-8 h-8 rounded-lg border border-slate-700 bg-slate-800/60 text-lg flex items-center justify-center hover:border-[#ED4C27] hover:bg-slate-700 transition-colors"
+                    className="w-8 h-8 rounded-lg border border-border bg-muted/60 text-lg flex items-center justify-center hover:border-brand hover:bg-muted transition-colors"
                     title={e.emoji}
                   >
                     {e.emoji}
@@ -771,7 +771,7 @@ export function InboxChatPage() {
             )}
 
             {/* Message input */}
-            <div className="border-t border-slate-700 shrink-0">
+            <div className="border-t border-border shrink-0">
               {/* Predefined texts — category chip bar */}
               {configuredMessages.length > 0 && (
                 <div className="px-4 pt-2.5 pb-1 relative" ref={cfgPopupRef}>
@@ -787,8 +787,8 @@ export function InboxChatPage() {
                         className={[
                           'shrink-0 flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium border transition-colors',
                           openCategoryKey === key
-                            ? 'bg-[#ED4C27]/15 border-[#ED4C27]/40 text-[#ED4C27]'
-                            : 'text-gray-400 bg-slate-700/60 border-slate-600/60 hover:border-[#ED4C27]/50 hover:text-gray-200',
+                            ? 'bg-brand/15 border-brand/40 text-brand'
+                            : 'text-muted-foreground bg-accent/60 border-border/60 hover:border-brand/50 hover:text-foreground',
                         ].join(' ')}
                       >
                         {category?.color
@@ -805,23 +805,23 @@ export function InboxChatPage() {
                     const group = groupedConfiguredMessages.find(g => g.key === openCategoryKey);
                     if (!group) return null;
                     return (
-                      <div className="absolute bottom-full left-4 right-4 mb-1 z-40 bg-[#0F172A] border border-slate-700 rounded-xl shadow-2xl overflow-hidden">
-                        <div className="flex items-center gap-2 px-3 py-2 border-b border-slate-700/70">
+                      <div className="absolute bottom-full left-4 right-4 mb-1 z-40 bg-card border border-border rounded-xl shadow-2xl overflow-hidden">
+                        <div className="flex items-center gap-2 px-3 py-2 border-b border-border/70">
                           {group.category?.color
                             ? <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: group.category.color }} />
                             : <span className="w-2.5 h-2.5 rounded-full shrink-0 bg-slate-500" />}
-                          <span className="text-xs font-semibold text-gray-300 uppercase tracking-wide">
+                          <span className="text-xs font-semibold text-foreground uppercase tracking-wide">
                             {group.category?.name ?? 'Ohne Kategorie'}
                           </span>
-                          <span className="ml-auto text-[10px] text-gray-600">{group.items.length}</span>
+                          <span className="ml-auto text-[10px] text-muted-foreground">{group.items.length}</span>
                         </div>
-                        <ul className="max-h-64 overflow-y-auto divide-y divide-slate-700/40">
+                        <ul className="max-h-64 overflow-y-auto divide-y divide-border/40">
                           {group.items.map((msg) => {
                             const isEditing = inlineEditId === msg._id;
                             return (
-                              <li key={msg._id} className="flex items-start gap-2 px-3 py-2.5 hover:bg-slate-800/50 transition-colors">
+                              <li key={msg._id} className="flex items-start gap-2 px-3 py-2.5 hover:bg-muted/50 transition-colors">
                                 {msg.img_url && (
-                                  <div className="w-12 h-12 shrink-0 rounded-lg overflow-hidden bg-slate-800 border border-slate-700">
+                                  <div className="w-12 h-12 shrink-0 rounded-lg overflow-hidden bg-muted border border-border">
                                     <img
                                       src={unblurUrl(msg.img_url)}
                                       alt=""
@@ -832,7 +832,7 @@ export function InboxChatPage() {
                                 )}
                                 <div className="flex-1 min-w-0">
                                   {msg.name && (
-                                    <p className="text-[10px] font-medium text-gray-500 mb-0.5 truncate">{msg.name}</p>
+                                    <p className="text-[10px] font-medium text-muted-foreground mb-0.5 truncate">{msg.name}</p>
                                   )}
                                   {isEditing ? (
                                     <textarea
@@ -840,13 +840,13 @@ export function InboxChatPage() {
                                       value={inlineEditText}
                                       onChange={(e) => setInlineEditText(e.target.value)}
                                       rows={2}
-                                      className="w-full bg-slate-700 border border-slate-500 rounded px-2 py-1 text-sm text-gray-100 focus:outline-none focus:border-[#ED4C27] resize-none"
+                                      className="w-full bg-muted border border-slate-500 rounded px-2 py-1 text-sm text-foreground focus:outline-none focus:border-brand resize-none"
                                     />
                                   ) : (
-                                    <p className="text-sm text-gray-200 break-words line-clamp-2">{msg.message}</p>
+                                    <p className="text-sm text-foreground break-words line-clamp-2">{msg.message}</p>
                                   )}
                                   {typeof msg.file_stack?.price === 'number' && msg.file_stack.price > 0 && (
-                                    <p className="text-[10px] text-[#ED4C27] mt-0.5">
+                                    <p className="text-[10px] text-brand mt-0.5">
                                       ${(msg.file_stack.price / 1.21 / 100).toFixed(2)}
                                     </p>
                                   )}
@@ -863,12 +863,12 @@ export function InboxChatPage() {
                                         setInlineEditText(msg.message);
                                       }
                                     }}
-                                    className="flex items-center justify-center w-7 h-7 rounded-lg border border-slate-600 bg-slate-700/80 text-gray-400 hover:text-yellow-400 hover:border-yellow-500/50 transition-colors"
+                                    className="flex items-center justify-center w-7 h-7 rounded-lg border border-border bg-muted/80 text-muted-foreground hover:text-yellow-400 hover:border-yellow-500/50 transition-colors"
                                     title={isEditing ? 'Abbrechen' : 'Bearbeiten'}
                                   >
-                                    {isEditing ? <X size={13} /> : <Pencil size={13} />}
+                                    {isEditing ? <IconX size={13} /> : <IconPencil size={13} />}
                                   </button>
-                                  {/* Send button */}
+                                  {/* IconSend button */}
                                   <button
                                     type="button"
                                     title="Senden"
@@ -883,9 +883,9 @@ export function InboxChatPage() {
                                         msg.file_stack_id ?? null,
                                       );
                                     }}
-                                    className="flex items-center justify-center w-7 h-7 rounded-lg border border-[#ED4C27]/40 bg-[#ED4C27]/10 text-[#ED4C27] hover:bg-[#ED4C27]/20 transition-colors disabled:opacity-50"
+                                    className="flex items-center justify-center w-7 h-7 rounded-lg border border-brand/40 bg-brand/10 text-brand hover:bg-brand/20 transition-colors disabled:opacity-50"
                                   >
-                                    {isSending ? <Loader2 size={13} className="animate-spin" /> : <SendHorizontal size={13} />}
+                                    {isSending ? <IconLoader2 size={13} className="animate-spin" /> : <IconSend size={13} />}
                                   </button>
                                 </div>
                               </li>
@@ -912,10 +912,10 @@ export function InboxChatPage() {
                       <button
                         type="button"
                         onClick={() => setIsEmojiPickerOpen(prev => !prev)}
-                        className="flex items-center justify-center w-10 h-10 rounded-lg border border-slate-600 bg-slate-700 text-gray-400 hover:text-[#ED4C27] hover:border-[#ED4C27] transition-colors"
+                        className="flex items-center justify-center w-10 h-10 rounded-lg border border-border bg-muted text-muted-foreground hover:text-brand hover:border-brand transition-colors"
                         title="Emoji einfügen"
                       >
-                        <Smile size={18} />
+                        <IconMoodSmile size={18} />
                       </button>
                       {isEmojiPickerOpen && (
                         <div className="absolute bottom-12 right-0 z-50">
@@ -933,10 +933,10 @@ export function InboxChatPage() {
                     <button
                       type="button"
                       onClick={handleOpenVault}
-                      className="flex items-center justify-center w-10 h-10 rounded-lg border border-slate-600 bg-slate-700 text-gray-400 hover:text-[#ED4C27] hover:border-[#ED4C27] transition-colors"
+                      className="flex items-center justify-center w-10 h-10 rounded-lg border border-border bg-muted text-muted-foreground hover:text-brand hover:border-brand transition-colors"
                       title="Vault öffnen"
                     >
-                      <Camera size={18} />
+                      <IconCamera size={18} />
                     </button>
                   </div>
                   <Button onClick={handleSendMessage} disabled={!messageInput.trim() || isSending}>
@@ -1047,12 +1047,12 @@ export function InboxChatPage() {
 
         {isLoadingVault && vaultItems.length === 0 ? (
           <div className="flex items-center justify-center h-48">
-            <Loader2 size={28} className="animate-spin text-gray-400" />
+            <IconLoader2 size={28} className="animate-spin text-muted-foreground" />
           </div>
         ) : vaultError ? (
           <p className="text-red-500 text-sm">{vaultError}</p>
         ) : vaultItems.length === 0 ? (
-          <p className="text-gray-400 text-sm">Keine Inhalte gefunden.</p>
+          <p className="text-muted-foreground text-sm">Keine Inhalte gefunden.</p>
         ) : (
           <>
             <div className="grid grid-cols-4 gap-2">
@@ -1075,7 +1075,7 @@ export function InboxChatPage() {
                   onClick={() => fetchVault(vaultOffset, activeVaultFolder, vaultFileType, vaultSold, vaultSent)}
                   disabled={isLoadingVault}
                 >
-                  {isLoadingVault ? <Loader2 size={16} className="animate-spin" /> : 'Mehr laden'}
+                  {isLoadingVault ? <IconLoader2 size={16} className="animate-spin" /> : 'Mehr laden'}
                 </Button>
               </div>
             )}
@@ -1086,25 +1086,25 @@ export function InboxChatPage() {
 
         {/* Sticky footer for step 1 when items are selected */}
         {vaultStep === 1 && selectedVaultItems.length > 0 && (
-          <div className="sticky bottom-0 left-0 right-0 mt-4 pt-4 border-t border-slate-700 bg-card flex items-center justify-between gap-4">
+          <div className="sticky bottom-0 left-0 right-0 mt-4 pt-4 border-t border-border bg-card flex items-center justify-between gap-4">
             <div className="flex items-center gap-3 min-w-0 flex-1 overflow-x-auto pb-1">
               {selectedVaultItems.map(item => (
                 <div key={item._id} className="relative shrink-0">
                   <img
                     src={unblurUrl(item.img_url)}
                     alt=""
-                    className="w-16 h-16 rounded-xl object-cover border border-slate-600"
+                    className="w-16 h-16 rounded-xl object-cover border border-border"
                   />
                   <button
                     type="button"
                     onClick={() => setSelectedVaultItems(prev => prev.filter(s => s._id !== item._id))}
-                    className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-slate-900 border border-slate-600 flex items-center justify-center text-gray-400 hover:text-red-400 transition-colors"
+                    className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-card border border-border flex items-center justify-center text-muted-foreground hover:text-red-400 transition-colors"
                   >
-                    <X size={11} />
+                    <IconX size={11} />
                   </button>
                 </div>
               ))}
-              <span className="text-sm text-gray-400 shrink-0 ml-1">
+              <span className="text-sm text-muted-foreground shrink-0 ml-1">
                 {selectedVaultItems.length} ausgewählt
               </span>
             </div>
@@ -1122,46 +1122,46 @@ export function InboxChatPage() {
             onClick={() => setMobileInfoOpen(false)}
           />
           {/* Sheet */}
-          <div className="relative bg-[#0F172A] border-t border-slate-700 rounded-t-2xl max-h-[75vh] flex flex-col overflow-hidden">
+          <div className="relative bg-card border-t border-border rounded-t-2xl max-h-[75vh] flex flex-col overflow-hidden">
             {/* Handle + close */}
-            <div className="flex items-center justify-between px-4 py-3 border-b border-slate-700 shrink-0">
-              <h2 className="text-sm font-semibold text-gray-100">Infos &amp; Texte</h2>
+            <div className="flex items-center justify-between px-4 py-3 border-b border-border shrink-0">
+              <h2 className="text-sm font-semibold text-foreground">Infos &amp; Texte</h2>
               <button
                 type="button"
                 onClick={() => setMobileInfoOpen(false)}
-                className="flex items-center justify-center w-8 h-8 rounded-lg text-gray-400 hover:text-gray-100 transition-colors"
+                className="flex items-center justify-center w-8 h-8 rounded-lg text-muted-foreground hover:text-foreground transition-colors"
                 aria-label="Schließen"
               >
-                <ChevronDown size={18} />
+                <IconChevronDown size={18} />
               </button>
             </div>
             <div className="overflow-y-auto flex-1 p-4 flex flex-col gap-4">
               {isPivotLoading ? (
                 <div className="flex items-center justify-center py-4">
-                  <Loader2 size={16} className="animate-spin text-gray-400" />
+                  <IconLoader2 size={16} className="animate-spin text-muted-foreground" />
                 </div>
               ) : customerId && (
                 <div>
                   <div className="flex items-center justify-between mb-2">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">Kundeninfo</p>
+                    <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Kundeninfo</p>
                     {!isEditingPivot ? (
-                      <button type="button" onClick={() => setIsEditingPivot(true)} className="text-[10px] text-[#ED4C27] hover:underline">Bearbeiten</button>
+                      <button type="button" onClick={() => setIsEditingPivot(true)} className="text-[10px] text-brand hover:underline">Bearbeiten</button>
                     ) : (
-                      <button type="button" onClick={() => { setPivotEditAlias(pivotData?.alias ?? ''); setPivotEditNote(pivotData?.note ?? ''); setPivotEditPrice(pivotData?.price_override?.data?.is_override ? String(pivotData.price_override.data.effective_message_price) : ''); setIsEditingPivot(false); }} className="text-[10px] text-gray-400 hover:underline">Abbrechen</button>
+                      <button type="button" onClick={() => { setPivotEditAlias(pivotData?.alias ?? ''); setPivotEditNote(pivotData?.note ?? ''); setPivotEditPrice(pivotData?.price_override?.data?.is_override ? String(pivotData.price_override.data.effective_message_price) : ''); setIsEditingPivot(false); }} className="text-[10px] text-muted-foreground hover:underline">Abbrechen</button>
                     )}
                   </div>
                   {isEditingPivot ? (
                     <div className="flex flex-col gap-2">
                       <div>
-                        <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-0.5">Alias</p>
+                        <p className="text-[10px] text-muted-foreground uppercase tracking-wide mb-0.5">Alias</p>
                         <Input value={pivotEditAlias} onChange={(e) => setPivotEditAlias(e.target.value)} placeholder="Alias eingeben…" />
                       </div>
                       <div>
-                        <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-0.5">Notiz</p>
+                        <p className="text-[10px] text-muted-foreground uppercase tracking-wide mb-0.5">Notiz</p>
                         <Textarea value={pivotEditNote} onChange={(e) => setPivotEditNote(e.target.value)} placeholder="Notiz eingeben…" rows={3} />
                       </div>
                       <div>
-                        <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-0.5">Nachrichtenpreis (Cents)</p>
+                        <p className="text-[10px] text-muted-foreground uppercase tracking-wide mb-0.5">Nachrichtenpreis (Cents)</p>
                         <Input type="number" value={pivotEditPrice} onChange={(e) => setPivotEditPrice(e.target.value)} placeholder="z.B. 6" />
                       </div>
                       <Button size="sm" onClick={handleSavePivot} disabled={isSavingPivot}>
@@ -1172,26 +1172,26 @@ export function InboxChatPage() {
                     <div className="flex flex-col gap-2">
                       {pivotData?.alias && (
                         <div>
-                          <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-0.5">Alias</p>
-                          <p className="text-xs text-gray-100 leading-snug">{pivotData.alias}</p>
+                          <p className="text-[10px] text-muted-foreground uppercase tracking-wide mb-0.5">Alias</p>
+                          <p className="text-xs text-foreground leading-snug">{pivotData.alias}</p>
                         </div>
                       )}
                       {pivotData?.note && (
                         <div>
-                          <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-0.5">Notiz</p>
-                          <p className="text-xs text-gray-300 leading-snug whitespace-pre-wrap">{pivotData.note}</p>
+                          <p className="text-[10px] text-muted-foreground uppercase tracking-wide mb-0.5">Notiz</p>
+                          <p className="text-xs text-foreground leading-snug whitespace-pre-wrap">{pivotData.note}</p>
                         </div>
                       )}
                       {pivotData?.price_override?.data?.is_override && (
                         <div>
-                          <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-0.5">Nachrichtenpreis</p>
-                          <p className="text-xs text-[#ED4C27] leading-snug">
+                          <p className="text-[10px] text-muted-foreground uppercase tracking-wide mb-0.5">Nachrichtenpreis</p>
+                          <p className="text-xs text-brand leading-snug">
                             ${(pivotData.price_override.data.effective_message_price / 100).toFixed(2)}
                           </p>
                         </div>
                       )}
                       {!pivotData?.alias && !pivotData?.note && !pivotData?.price_override?.data?.is_override && (
-                        <p className="text-xs text-gray-500">Keine Infos verfügbar.</p>
+                        <p className="text-xs text-muted-foreground">Keine Infos verfügbar.</p>
                       )}
                     </div>
                   )}
@@ -1210,19 +1210,19 @@ export function InboxChatPage() {
           {/* Pivot info card */}
           {isPivotLoading ? (
             <Card className="p-4 flex items-center justify-center">
-              <Loader2 size={18} className="animate-spin text-gray-400" />
+              <IconLoader2 size={18} className="animate-spin text-muted-foreground" />
             </Card>
           ) : customerId && (
             <Card className="p-4 flex flex-col gap-3">
               <div className="flex items-center justify-between">
-                <p className="text-base font-semibold uppercase tracking-wide text-gray-400">
+                <p className="text-base font-semibold uppercase tracking-wide text-muted-foreground">
                   Kundeninfo
                 </p>
                 {!isEditingPivot ? (
                   <button
                     type="button"
                     onClick={() => setIsEditingPivot(true)}
-                    className="text-sm text-[#ED4C27] hover:underline"
+                    className="text-sm text-brand hover:underline"
                   >
                     Bearbeiten
                   </button>
@@ -1237,7 +1237,7 @@ export function InboxChatPage() {
                         : '');
                       setIsEditingPivot(false);
                     }}
-                    className="text-sm text-gray-400 hover:underline"
+                    className="text-sm text-muted-foreground hover:underline"
                   >
                     Abbrechen
                   </button>
@@ -1246,7 +1246,7 @@ export function InboxChatPage() {
               {isEditingPivot ? (
                 <>
                   <div>
-                    <p className="text-sm text-gray-500 uppercase tracking-wide mb-1">Alias</p>
+                    <p className="text-sm text-muted-foreground uppercase tracking-wide mb-1">Alias</p>
                     <Input
                       value={pivotEditAlias}
                       onChange={(e) => setPivotEditAlias(e.target.value)}
@@ -1254,7 +1254,7 @@ export function InboxChatPage() {
                     />
                   </div>
                   <div>
-                    <p className="text-sm text-gray-500 uppercase tracking-wide mb-1">Notiz</p>
+                    <p className="text-sm text-muted-foreground uppercase tracking-wide mb-1">Notiz</p>
                     <Textarea
                       value={pivotEditNote}
                       onChange={(e) => setPivotEditNote(e.target.value)}
@@ -1263,7 +1263,7 @@ export function InboxChatPage() {
                     />
                   </div>
                   <div>
-                    <p className="text-sm text-gray-500 uppercase tracking-wide mb-1">Nachrichtenpreis (Cents)</p>
+                    <p className="text-sm text-muted-foreground uppercase tracking-wide mb-1">Nachrichtenpreis (Cents)</p>
                     <Input
                       type="number"
                       value={pivotEditPrice}
@@ -1279,101 +1279,101 @@ export function InboxChatPage() {
                 <>
                   {pivotData?.alias && (
                     <div>
-                      <p className="text-sm text-gray-500 uppercase tracking-wide mb-1">Alias</p>
-                      <p className="text-base text-gray-100 leading-snug">{pivotData.alias}</p>
+                      <p className="text-sm text-muted-foreground uppercase tracking-wide mb-1">Alias</p>
+                      <p className="text-base text-foreground leading-snug">{pivotData.alias}</p>
                     </div>
                   )}
                   {pivotData?.note && (
                     <div>
-                      <p className="text-sm text-gray-500 uppercase tracking-wide mb-1">Notiz</p>
-                      <p className="text-base text-gray-300 leading-snug whitespace-pre-wrap">{pivotData.note}</p>
+                      <p className="text-sm text-muted-foreground uppercase tracking-wide mb-1">Notiz</p>
+                      <p className="text-base text-foreground leading-snug whitespace-pre-wrap">{pivotData.note}</p>
                     </div>
                   )}
                   {pivotData?.price_override?.data?.is_override && (
                     <div>
-                      <p className="text-sm text-gray-500 uppercase tracking-wide mb-1">Nachrichtenpreis</p>
-                      <p className="text-base text-[#ED4C27] leading-snug">
+                      <p className="text-sm text-muted-foreground uppercase tracking-wide mb-1">Nachrichtenpreis</p>
+                      <p className="text-base text-brand leading-snug">
                         ${(pivotData.price_override.data.effective_message_price / 100).toFixed(2)}
                       </p>
                     </div>
                   )}
                   {!pivotData?.alias && !pivotData?.note && !pivotData?.price_override?.data?.is_override && (
-                    <p className="text-base text-gray-500">Keine Infos verfügbar.</p>
+                    <p className="text-base text-muted-foreground">Keine Infos verfügbar.</p>
                   )}
                 </>
               )}
             </Card>
           )}
 
-          {/* Account Info card – read-only */}
+          {/* Account IconInfoCircle card – read-only */}
           {isAccountInfoLoading ? (
             <Card className="p-3 flex items-center justify-center">
-              <Loader2 size={16} className="animate-spin text-gray-400" />
+              <IconLoader2 size={16} className="animate-spin text-muted-foreground" />
             </Card>
           ) : (
             <Card className="p-3 flex flex-col gap-2">
-              <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">Account Info</p>
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Account IconInfoCircle</p>
               {accountInfo ? (
                 <div className="grid grid-cols-2 gap-x-3 gap-y-2">
                   {accountInfo.name && (
                     <div>
-                      <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-0.5">Name</p>
-                      <p className="text-xs text-gray-100 leading-snug">{accountInfo.name}</p>
+                      <p className="text-[10px] text-muted-foreground uppercase tracking-wide mb-0.5">Name</p>
+                      <p className="text-xs text-foreground leading-snug">{accountInfo.name}</p>
                     </div>
                   )}
                   {accountInfo.age != null && (
                     <div>
-                      <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-0.5">Alter</p>
-                      <p className="text-xs text-gray-100 leading-snug">{accountInfo.age}</p>
+                      <p className="text-[10px] text-muted-foreground uppercase tracking-wide mb-0.5">Alter</p>
+                      <p className="text-xs text-foreground leading-snug">{accountInfo.age}</p>
                     </div>
                   )}
                   {accountInfo.origin && (
                     <div>
-                      <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-0.5">Herkunft</p>
-                      <p className="text-xs text-gray-100 leading-snug">{accountInfo.origin}</p>
+                      <p className="text-[10px] text-muted-foreground uppercase tracking-wide mb-0.5">Herkunft</p>
+                      <p className="text-xs text-foreground leading-snug">{accountInfo.origin}</p>
                     </div>
                   )}
                   {accountInfo.occupation && (
                     <div>
-                      <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-0.5">Beruf</p>
-                      <p className="text-xs text-gray-100 leading-snug">{accountInfo.occupation}</p>
+                      <p className="text-[10px] text-muted-foreground uppercase tracking-wide mb-0.5">Beruf</p>
+                      <p className="text-xs text-foreground leading-snug">{accountInfo.occupation}</p>
                     </div>
                   )}
                   {accountInfo.bra_size && (
                     <div>
-                      <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-0.5">BH-Größe</p>
-                      <p className="text-xs text-gray-100 leading-snug">{accountInfo.bra_size}</p>
+                      <p className="text-[10px] text-muted-foreground uppercase tracking-wide mb-0.5">BH-Größe</p>
+                      <p className="text-xs text-foreground leading-snug">{accountInfo.bra_size}</p>
                     </div>
                   )}
                   {accountInfo.taboos && accountInfo.taboos.length > 0 && (
                     <div className="col-span-2">
-                      <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-0.5">Taboos</p>
+                      <p className="text-[10px] text-muted-foreground uppercase tracking-wide mb-0.5">Taboos</p>
                       <div className="flex flex-wrap gap-1">
                         {accountInfo.taboos.map((t) => (
-                          <span key={t} className="text-[10px] bg-slate-700 text-gray-300 rounded px-1.5 py-0.5">{t}</span>
+                          <span key={t} className="text-[10px] bg-muted text-foreground rounded px-1.5 py-0.5">{t}</span>
                         ))}
                       </div>
                     </div>
                   )}
                   {accountInfo.hobbies && accountInfo.hobbies.length > 0 && (
                     <div className="col-span-2">
-                      <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-0.5">Hobbys</p>
+                      <p className="text-[10px] text-muted-foreground uppercase tracking-wide mb-0.5">Hobbys</p>
                       <div className="flex flex-wrap gap-1">
                         {accountInfo.hobbies.map((h) => (
-                          <span key={h} className="text-[10px] bg-slate-700 text-gray-300 rounded px-1.5 py-0.5">{h}</span>
+                          <span key={h} className="text-[10px] bg-muted text-foreground rounded px-1.5 py-0.5">{h}</span>
                         ))}
                       </div>
                     </div>
                   )}
                   {accountInfo.notes && (
                     <div className="col-span-2">
-                      <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-0.5">Notizen</p>
-                      <p className="text-xs text-gray-300 leading-snug whitespace-pre-wrap">{accountInfo.notes}</p>
+                      <p className="text-[10px] text-muted-foreground uppercase tracking-wide mb-0.5">Notizen</p>
+                      <p className="text-xs text-foreground leading-snug whitespace-pre-wrap">{accountInfo.notes}</p>
                     </div>
                   )}
                 </div>
               ) : (
-                <p className="text-xs text-gray-500">Keine Account Infos hinterlegt.</p>
+                <p className="text-xs text-muted-foreground">Keine Account Infos hinterlegt.</p>
               )}
             </Card>
           )}
@@ -1390,8 +1390,8 @@ function AccountAvatar({ src, name, size = 'md', isOnline }: { src?: string; nam
   const dotClass = { sm: 'w-2 h-2', md: 'w-2.5 h-2.5' }[size];
 
   const avatar = !src ? (
-    <div className={`${sizeClass} rounded-full bg-slate-700 border border-slate-600 flex items-center justify-center shrink-0 text-gray-400 font-semibold text-xs`}>
-      {(name ?? '').split(' ').slice(0, 2).map((w) => w[0]?.toUpperCase() ?? '').join('') || <User size={iconSize} />}
+    <div className={`${sizeClass} rounded-full bg-muted border border-border flex items-center justify-center shrink-0 text-muted-foreground font-semibold text-xs`}>
+      {(name ?? '').split(' ').slice(0, 2).map((w) => w[0]?.toUpperCase() ?? '').join('') || <IconUser size={iconSize} />}
     </div>
   ) : (
     <img src={src} alt={name} className={`${sizeClass} rounded-full object-cover shrink-0`} onError={e => { e.currentTarget.style.display = 'none'; }} />
@@ -1402,7 +1402,7 @@ function AccountAvatar({ src, name, size = 'md', isOnline }: { src?: string; nam
   return (
     <div className="relative shrink-0">
       {avatar}
-      <span className={`absolute bottom-0 right-0 ${dotClass} rounded-full bg-green-500 ring-2 ring-[#0F172A]`} />
+      <span className={`absolute bottom-0 right-0 ${dotClass} rounded-full bg-green-500 ring-2 ring-card`} />
     </div>
   );
 }
@@ -1443,8 +1443,8 @@ function VaultThumbnail({
       tabIndex={0}
       onClick={() => onSelect?.(item)}
       onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') onSelect?.(item); }}
-      className={`relative aspect-square rounded-lg overflow-hidden bg-slate-800 border-2 transition-all cursor-pointer group ${
-        isSelected ? 'border-[#ED4C27] ring-2 ring-[#ED4C27]/40' : 'border-slate-700 hover:border-slate-500'
+      className={`relative aspect-square rounded-lg overflow-hidden bg-muted border-2 transition-all cursor-pointer group ${
+        isSelected ? 'border-brand ring-2 ring-brand/40' : 'border-border hover:border-slate-500'
       }`}
     >
       <img
@@ -1457,17 +1457,17 @@ function VaultThumbnail({
       {isVideo && (
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
           <div className="w-9 h-9 rounded-full bg-black/60 flex items-center justify-center">
-            <Film size={16} className="text-white" />
+            <IconMovie size={16} className="text-white" />
           </div>
         </div>
       )}
       {isSelected && (
         <div className="absolute top-1.5 right-1.5 pointer-events-none">
-          <CheckCircle size={18} className="text-[#ED4C27] drop-shadow" fill="white" />
+          <IconCircleCheck size={18} className="text-brand drop-shadow" fill="white" />
         </div>
       )}
       {typeof item.price === 'number' && item.price > 0 && (
-        <span className="absolute bottom-1 right-1 text-[10px] font-semibold px-1.5 py-0.5 rounded bg-black/70 text-[#ED4C27]">
+        <span className="absolute bottom-1 right-1 text-[10px] font-semibold px-1.5 py-0.5 rounded bg-black/70 text-brand">
           ${(item.price / 100).toFixed(2)}
         </span>
       )}
@@ -1516,7 +1516,7 @@ function EditFileStackModal({
       <div className="flex gap-5 items-start">
         {/* Preview */}
         {message.img_preview_link && (
-          <div className="relative w-48 shrink-0 rounded-xl overflow-hidden bg-slate-800 border border-slate-700 aspect-square">
+          <div className="relative w-48 shrink-0 rounded-xl overflow-hidden bg-muted border border-border aspect-square">
             <img
               src={message.img_preview_link}
               alt="Vorschau"
@@ -1529,9 +1529,9 @@ function EditFileStackModal({
         <div className="flex flex-col gap-4 flex-1 min-w-0">
           {/* Price */}
           <div>
-            <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-1">Preis ($)</p>
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wide mb-1">Preis ($)</p>
             <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm pointer-events-none">$</span>
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm pointer-events-none">$</span>
               <Input
                 value={priceInput}
                 onChange={(e) => setPriceInput(e.target.value.replace(/[^0-9.]/g, ''))}
@@ -1543,20 +1543,20 @@ function EditFileStackModal({
               <p className="text-[10px] text-red-400 mt-1">Mindestpreis: $3.00</p>
             )}
             {basePrice >= MIN_PRICE && (
-              <div className="mt-2 rounded-lg bg-slate-800/60 border border-slate-700 p-2.5 flex flex-col gap-1.5 text-[11px]">
+              <div className="mt-2 rounded-lg bg-muted/60 border border-border p-2.5 flex flex-col gap-1.5 text-[11px]">
                 <div>
-                  <span className="text-gray-500">Deine Provision:</span>
-                  <span className="text-gray-300 ml-1">
+                  <span className="text-muted-foreground">Deine Provision:</span>
+                  <span className="text-foreground ml-1">
                     ${basePrice.toFixed(2)} × 70% = <span className="text-green-400 font-semibold">${creatorAmount.toFixed(2)}</span>
                   </span>
                 </div>
                 <div>
-                  <span className="text-gray-500">Preis für User:</span>
-                  <span className="text-gray-300 ml-1">
-                    ${basePrice.toFixed(2)} + ${vatAmount.toFixed(2)} <span className="text-gray-500">(MwSt.)</span> = <span className="text-[#ED4C27] font-semibold">${userPrice.toFixed(2)}</span>
+                  <span className="text-muted-foreground">Preis für IconUser:</span>
+                  <span className="text-foreground ml-1">
+                    ${basePrice.toFixed(2)} + ${vatAmount.toFixed(2)} <span className="text-muted-foreground">(MwSt.)</span> = <span className="text-brand font-semibold">${userPrice.toFixed(2)}</span>
                   </span>
                 </div>
-                <p className="text-gray-600 leading-tight">
+                <p className="text-muted-foreground leading-tight">
                   Die MwSt. wird direkt abgeführt.
                 </p>
               </div>
@@ -1565,17 +1565,17 @@ function EditFileStackModal({
         </div>
       </div>
 
-      <div className="flex items-center justify-between pt-3 border-t border-slate-700">
+      <div className="flex items-center justify-between pt-3 border-t border-border">
         <button
           type="button"
           onClick={onCancel}
-          className="flex items-center gap-2 text-sm text-gray-400 hover:text-gray-100 transition-colors"
+          className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
           disabled={isSaving}
         >
           Abbrechen
         </button>
         <Button onClick={handleSave} disabled={isSaving || isPriceInvalid || !description.trim()}>
-          {isSaving ? <Loader2 size={15} className="animate-spin" /> : 'Speichern'}
+          {isSaving ? <IconLoader2 size={15} className="animate-spin" /> : 'Speichern'}
         </Button>
       </div>
     </div>
@@ -1664,7 +1664,7 @@ function VaultSendStep({
     <div className="flex flex-col gap-5">
       <div className="flex gap-5 items-start">
         {/* Preview */}
-        <div className="relative w-48 shrink-0 rounded-xl overflow-hidden bg-slate-800 border border-slate-700 aspect-square">
+        <div className="relative w-48 shrink-0 rounded-xl overflow-hidden bg-muted border border-border aspect-square">
           <img
             src={unblurUrl(firstItem.img_url)}
             alt={firstItem.description ?? firstItem._id}
@@ -1673,7 +1673,7 @@ function VaultSendStep({
           {isVideo && (
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
               <div className="w-12 h-12 rounded-full bg-black/60 flex items-center justify-center">
-                <Film size={22} className="text-white" />
+                <IconMovie size={22} className="text-white" />
               </div>
             </div>
           )}
@@ -1688,7 +1688,7 @@ function VaultSendStep({
         <div className="flex flex-col gap-4 flex-1 min-w-0">
           {/* Description */}
           <div>
-            <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-1">
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wide mb-1">
               Beschreibung <span className="text-red-400">*</span>
             </p>
             <Textarea
@@ -1703,10 +1703,10 @@ function VaultSendStep({
                 ref={emojiBtnRef}
                 type="button"
                 onClick={handleEmojiBtnClick}
-                className="flex items-center justify-center w-8 h-8 rounded-lg border border-slate-600 bg-slate-700 text-gray-400 hover:text-[#ED4C27] hover:border-[#ED4C27] transition-colors"
+                className="flex items-center justify-center w-8 h-8 rounded-lg border border-border bg-muted text-muted-foreground hover:text-brand hover:border-brand transition-colors"
                 title="Emoji einfügen"
               >
-                <Smile size={15} />
+                <IconMoodSmile size={15} />
               </button>
               {isEmojiPickerOpen && createPortal(
                 <div
@@ -1729,9 +1729,9 @@ function VaultSendStep({
 
           {/* Price */}
           <div>
-            <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-1">Preis ($)</p>
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wide mb-1">Preis ($)</p>
             <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm pointer-events-none">$</span>
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm pointer-events-none">$</span>
               <Input
                 value={priceInput}
                 onChange={(e) => setPriceInput(e.target.value.replace(/[^0-9.]/g, ''))}
@@ -1743,20 +1743,20 @@ function VaultSendStep({
               <p className="text-[10px] text-red-400 mt-1">Mindestpreis: $3.00</p>
             )}
             {basePrice >= MIN_PRICE && (
-              <div className="mt-2 rounded-lg bg-slate-800/60 border border-slate-700 p-2.5 flex flex-col gap-1.5 text-[11px]">
+              <div className="mt-2 rounded-lg bg-muted/60 border border-border p-2.5 flex flex-col gap-1.5 text-[11px]">
                 <div>
-                  <span className="text-gray-500">Deine Provision:</span>
-                  <span className="text-gray-300 ml-1">
+                  <span className="text-muted-foreground">Deine Provision:</span>
+                  <span className="text-foreground ml-1">
                     ${basePrice.toFixed(2)} × 70% = <span className="text-green-400 font-semibold">${creatorAmount.toFixed(2)}</span>
                   </span>
                 </div>
                 <div>
-                  <span className="text-gray-500">Preis für User:</span>
-                  <span className="text-gray-300 ml-1">
-                    ${basePrice.toFixed(2)} + ${vatAmount.toFixed(2)} <span className="text-gray-500">(MwSt.)</span> = <span className="text-[#ED4C27] font-semibold">${userPrice.toFixed(2)}</span>
+                  <span className="text-muted-foreground">Preis für IconUser:</span>
+                  <span className="text-foreground ml-1">
+                    ${basePrice.toFixed(2)} + ${vatAmount.toFixed(2)} <span className="text-muted-foreground">(MwSt.)</span> = <span className="text-brand font-semibold">${userPrice.toFixed(2)}</span>
                   </span>
                 </div>
-                <p className="text-gray-600 leading-tight">
+                <p className="text-muted-foreground leading-tight">
                   Die MwSt. wird direkt abgeführt.
                 </p>
               </div>
@@ -1765,17 +1765,17 @@ function VaultSendStep({
         </div>
       </div>
 
-      <div className="flex items-center justify-between pt-3 border-t border-slate-700">
+      <div className="flex items-center justify-between pt-3 border-t border-border">
         <button
           type="button"
           onClick={onBack}
-          className="flex items-center gap-2 text-sm text-gray-400 hover:text-gray-100 transition-colors"
+          className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
           disabled={isSending}
         >
-          <ArrowLeft size={15} /> Zurück
+          <IconArrowLeft size={15} /> Zurück
         </button>
         <Button onClick={handleSend} disabled={isSending || isPriceInvalid || !description.trim()}>
-          {isSending ? <Loader2 size={15} className="animate-spin" /> : 'Senden'}
+          {isSending ? <IconLoader2 size={15} className="animate-spin" /> : 'Senden'}
         </Button>
       </div>
     </div>

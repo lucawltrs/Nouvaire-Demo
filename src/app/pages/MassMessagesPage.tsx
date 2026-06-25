@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Send, Plus, AlertCircle, ChevronLeft, ChevronRight, Users, Trash2 } from 'lucide-react';
+import { IconSend, IconPlus, IconAlertCircle, IconChevronLeft, IconChevronRight, IconUsers, IconTrash } from '@tabler/icons-react';
 import { Card } from '../../components/ui/Card';
 import { PageLoader } from '../../components/ui/PageLoader';
 import { Modal } from '../../components/ui/Modal';
@@ -209,20 +209,20 @@ export function MassMessagesPage() {
       <div className="flex items-center justify-between">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-100">Mass Messages</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Mass Messages</h1>
             {team?.team_name && (
-              <span className="hidden sm:inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-700 text-gray-300 border border-slate-600">
+              <span className="hidden sm:inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-muted text-foreground border border-border">
                 {team.team_name}
               </span>
             )}
           </div>
           {selectedAccountId && totalCount > 0 && (
-            <p className="mt-0.5 text-sm text-gray-400">{totalCount} message{totalCount !== 1 ? 's' : ''}</p>
+            <p className="mt-0.5 text-sm text-muted-foreground">{totalCount} message{totalCount !== 1 ? 's' : ''}</p>
           )}
         </div>
         {selectedAccountId && (
           <Button onClick={handleOpenCreate} className="flex items-center gap-2">
-            <Plus size={16} />
+            <IconPlus size={16} />
             New Message
           </Button>
         )}
@@ -232,7 +232,7 @@ export function MassMessagesPage() {
       {accountsLoading ? (
         <div className="flex gap-3 overflow-x-auto pb-1">
           {[...Array(3)].map((_, i) => (
-            <div key={i} className="shrink-0 w-40 h-20 rounded-xl bg-slate-800 border border-slate-700 animate-pulse" />
+            <div key={i} className="shrink-0 w-40 h-20 rounded-xl bg-muted border border-border animate-pulse" />
           ))}
         </div>
       ) : (
@@ -245,25 +245,25 @@ export function MassMessagesPage() {
                 onClick={() => handleAccountChange(account.fourbased_id)}
                 className={`shrink-0 flex items-center gap-3 px-4 py-3 rounded-xl border transition-all text-left ${
                   isSelected
-                    ? 'bg-brand-primary/15 border-brand-primary text-gray-100 shadow-md shadow-brand-primary/10'
-                    : 'bg-slate-800 border-slate-700 text-gray-400 hover:border-slate-500 hover:text-gray-200'
+                    ? 'bg-brand/15 border-brand text-foreground shadow-md shadow-brand/10'
+                    : 'bg-muted border-border text-muted-foreground hover:border-slate-500 hover:text-foreground'
                 }`}
               >
                 {account.img_url ? (
                   <img src={account.img_url} alt={account.name} className="w-9 h-9 rounded-full object-cover shrink-0" />
                 ) : (
                   <div className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 text-sm font-semibold ${
-                    isSelected ? 'bg-brand-primary/30 text-brand-primary' : 'bg-slate-700 text-gray-300'
+                    isSelected ? 'bg-brand/30 text-brand' : 'bg-muted text-foreground'
                   }`}>
                     {account.name.charAt(0).toUpperCase()}
                   </div>
                 )}
                 <div className="min-w-0">
-                  <p className={`text-sm font-medium truncate max-w-[120px] ${isSelected ? 'text-gray-100' : 'text-gray-300'}`}>
+                  <p className={`text-sm font-medium truncate max-w-[120px] ${isSelected ? 'text-foreground' : 'text-foreground'}`}>
                     {account.name}
                   </p>
                   {account.followers != null && (
-                    <p className="text-xs text-gray-500 mt-0.5">{account.followers.toLocaleString()} followers</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">{account.followers.toLocaleString()} followers</p>
                   )}
                 </div>
               </button>
@@ -283,8 +283,8 @@ export function MassMessagesPage() {
                 onClick={() => handleStatusFilter(tab.value as MassMessageStatus | '')}
                 className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
                   statusFilter === tab.value
-                    ? 'bg-brand-primary text-white'
-                    : 'text-gray-400 hover:text-gray-100 hover:bg-slate-700'
+                    ? 'bg-brand text-white'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-muted'
                 }`}
               >
                 {tab.label}
@@ -295,78 +295,78 @@ export function MassMessagesPage() {
           {listLoading ? (
             <PageLoader message="Loading messages…" subtitle="Fetching mass messages" />
           ) : listError ? (
-            <Card className="p-6 border border-slate-600">
+            <Card className="p-6 border border-border">
               <div className="flex items-center gap-3 text-red-400">
-                <AlertCircle size={18} />
+                <IconAlertCircle size={18} />
                 <p className="text-sm">{listError}</p>
               </div>
             </Card>
           ) : messages.length === 0 ? (
-            <Card className="p-10 border border-slate-600 flex flex-col items-center gap-3 text-center">
-              <div className="w-12 h-12 rounded-full bg-brand-primary/10 flex items-center justify-center">
-                <Send size={22} className="text-brand-primary" />
+            <Card className="p-10 border border-border flex flex-col items-center gap-3 text-center">
+              <div className="w-12 h-12 rounded-full bg-brand/10 flex items-center justify-center">
+                <IconSend size={22} className="text-brand" />
               </div>
-              <p className="text-gray-300 font-medium">No mass messages yet</p>
-              <p className="text-sm text-gray-500">
+              <p className="text-foreground font-medium">No mass messages yet</p>
+              <p className="text-sm text-muted-foreground">
                 {statusFilter ? `No messages with status "${statusFilter}".` : 'Create your first mass message to get started.'}
               </p>
               {!statusFilter && (
                 <Button onClick={handleOpenCreate} className="mt-2 flex items-center gap-2">
-                  <Plus size={15} />
+                  <IconPlus size={15} />
                   New Message
                 </Button>
               )}
             </Card>
           ) : (
-            <Card className="overflow-hidden border border-slate-600">
+            <Card className="overflow-hidden border border-border">
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="border-b border-border bg-slate-800/50">
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Message</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Status</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Recipients</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Views</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Scheduled / Sent</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Created</th>
+                    <tr className="border-b border-border bg-muted/50">
+                      <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Message</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Status</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Recipients</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Views</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Scheduled / Sent</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Created</th>
                       {isAdmin && <th className="px-4 py-3" />}
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border">
                     {messages.map((msg) => (
-                      <tr key={msg._id} className="hover:bg-slate-800/40 transition-colors">
+                      <tr key={msg._id} className="hover:bg-muted/40 transition-colors">
                         <td className="px-4 py-3 max-w-xs">
-                          <p className="text-gray-100 truncate" title={msg.message}>{msg.message}</p>
+                          <p className="text-foreground truncate" title={msg.message}>{msg.message}</p>
                           {msg.filter && msg.filter.length > 0 && (
-                            <p className="text-xs text-gray-500 mt-0.5 truncate">{msg.filter.join(', ')}</p>
+                            <p className="text-xs text-muted-foreground mt-0.5 truncate">{msg.filter.join(', ')}</p>
                           )}
                         </td>
                         <td className="px-4 py-3 whitespace-nowrap">
-                          {msg.status ? statusBadge(msg.status) : <span className="text-gray-500 text-xs">—</span>}
+                          {msg.status ? statusBadge(msg.status) : <span className="text-muted-foreground text-xs">—</span>}
                         </td>
                         <td className="px-4 py-3 whitespace-nowrap">
-                          <div className="flex items-center gap-1.5 text-gray-300">
-                            <Users size={13} className="text-gray-500" />
+                          <div className="flex items-center gap-1.5 text-foreground">
+                            <IconUsers size={13} className="text-muted-foreground" />
                             {msg.recipient_count != null ? msg.recipient_count.toLocaleString() : '—'}
                           </div>
                         </td>
-                        <td className="px-4 py-3 whitespace-nowrap text-gray-300">
+                        <td className="px-4 py-3 whitespace-nowrap text-foreground">
                           {msg.viewed_count != null ? msg.viewed_count.toLocaleString() : '—'}
                         </td>
-                        <td className="px-4 py-3 whitespace-nowrap text-gray-400 text-xs">
+                        <td className="px-4 py-3 whitespace-nowrap text-muted-foreground text-xs">
                           {formatDate(msg.to_be_posted_at)}
                         </td>
-                        <td className="px-4 py-3 whitespace-nowrap text-gray-400 text-xs">
+                        <td className="px-4 py-3 whitespace-nowrap text-muted-foreground text-xs">
                           {formatDate(msg.created_at)}
                         </td>
                         {isAdmin && (
                           <td className="px-4 py-3 whitespace-nowrap text-right">
                             <button
                               onClick={() => setDeleteTarget(msg)}
-                              className="p-1.5 rounded-lg text-gray-600 hover:text-red-400 hover:bg-red-900/20 transition-all"
+                              className="p-1.5 rounded-lg text-muted-foreground hover:text-red-400 hover:bg-red-900/20 transition-all"
                               title="Delete"
                             >
-                              <Trash2 size={14} />
+                              <IconTrash size={14} />
                             </button>
                           </td>
                         )}
@@ -379,23 +379,23 @@ export function MassMessagesPage() {
               {/* Pagination */}
               {totalCount > PAGE_LIMIT && (
                 <div className="flex items-center justify-between px-4 py-3 border-t border-border">
-                  <p className="text-sm text-gray-400">
+                  <p className="text-sm text-muted-foreground">
                     Page {currentPage} of {totalPages}
                   </p>
                   <div className="flex gap-2">
                     <button
                       onClick={() => setOffset((o) => Math.max(0, o - PAGE_LIMIT))}
                       disabled={offset === 0}
-                      className="p-1.5 rounded-lg text-gray-400 hover:text-gray-100 hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                      className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted disabled:opacity-40 disabled:cursor-not-allowed transition-all"
                     >
-                      <ChevronLeft size={16} />
+                      <IconChevronLeft size={16} />
                     </button>
                     <button
                       onClick={() => setOffset((o) => o + PAGE_LIMIT)}
                       disabled={offset + PAGE_LIMIT >= totalCount}
-                      className="p-1.5 rounded-lg text-gray-400 hover:text-gray-100 hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                      className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted disabled:opacity-40 disabled:cursor-not-allowed transition-all"
                     >
-                      <ChevronRight size={16} />
+                      <IconChevronRight size={16} />
                     </button>
                   </div>
                 </div>
@@ -407,8 +407,8 @@ export function MassMessagesPage() {
 
       {/* No account selected state */}
       {!selectedAccountId && !accountsLoading && accounts.length > 0 && (
-        <div className="flex flex-col items-center gap-3 text-center py-16 text-gray-500">
-          <Send size={32} className="text-slate-600" />
+        <div className="flex flex-col items-center gap-3 text-center py-16 text-muted-foreground">
+          <IconSend size={32} className="text-slate-600" />
           <p className="text-sm">Select an account above to view its mass messages.</p>
         </div>
       )}
@@ -421,11 +421,11 @@ export function MassMessagesPage() {
         size="sm"
       >
         <div className="p-4 sm:p-6 space-y-4">
-          <p className="text-sm text-gray-400">
+          <p className="text-sm text-muted-foreground">
             Delete this mass message?
           </p>
           {deleteTarget && (
-            <p className="text-sm text-gray-200 bg-slate-800 rounded-lg px-3 py-2 line-clamp-3">
+            <p className="text-sm text-foreground bg-muted rounded-lg px-3 py-2 line-clamp-3">
               "{deleteTarget.message}"
             </p>
           )}
@@ -458,7 +458,7 @@ export function MassMessagesPage() {
 
           {/* Target group filters */}
           <div>
-            <p className="text-sm font-medium text-gray-300 mb-2">Target Group</p>
+            <p className="text-sm font-medium text-foreground mb-2">Target Group</p>
             <div className="space-y-2">
               {FILTER_OPTIONS.map((opt) => (
                 <label key={opt.value} className="flex items-center gap-3 cursor-pointer group">
@@ -466,9 +466,9 @@ export function MassMessagesPage() {
                     type="checkbox"
                     checked={form.filter.includes(opt.value)}
                     onChange={() => toggleFilter(opt.value)}
-                    className="w-4 h-4 rounded border-slate-600 bg-slate-800 text-brand-primary focus:ring-brand-500 focus:ring-offset-slate-900"
+                    className="w-4 h-4 rounded border-border bg-muted text-brand focus:ring-brand-500 focus:ring-offset-slate-900"
                   />
-                  <span className="text-sm text-gray-300 group-hover:text-gray-100 transition-colors">{opt.label}</span>
+                  <span className="text-sm text-foreground group-hover:text-foreground transition-colors">{opt.label}</span>
                 </label>
               ))}
             </div>
@@ -479,13 +479,13 @@ export function MassMessagesPage() {
 
           {/* User Lists */}
           {userListsLoading ? (
-            <div className="flex items-center gap-2 text-xs text-gray-500">
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <span className="w-3 h-3 border border-gray-600 border-t-gray-400 rounded-full animate-spin" />
               Loading user lists…
             </div>
           ) : userLists.length > 0 && (
             <div>
-              <p className="text-sm font-medium text-gray-300 mb-2">User Lists</p>
+              <p className="text-sm font-medium text-foreground mb-2">User Lists</p>
               <div className="space-y-2 max-h-36 overflow-y-auto pr-1">
                 {userLists.map((list) => (
                   <label key={list._id} className="flex items-center gap-3 cursor-pointer group">
@@ -498,9 +498,9 @@ export function MassMessagesPage() {
                           ? f.include_user_list.filter((id) => id !== list._id)
                           : [...f.include_user_list, list._id],
                       }))}
-                      className="w-4 h-4 rounded border-slate-600 bg-slate-800 text-brand-primary focus:ring-brand-500 focus:ring-offset-slate-900"
+                      className="w-4 h-4 rounded border-border bg-muted text-brand focus:ring-brand-500 focus:ring-offset-slate-900"
                     />
-                    <span className="text-sm text-gray-300 group-hover:text-gray-100 transition-colors">{list.name}</span>
+                    <span className="text-sm text-foreground group-hover:text-foreground transition-colors">{list.name}</span>
                   </label>
                 ))}
               </div>
@@ -515,12 +515,12 @@ export function MassMessagesPage() {
             onChange={(e) => setForm((f) => ({ ...f, to_be_posted_at: e.target.value }))}
           />
           {!form.to_be_posted_at && (
-            <p className="-mt-3 text-xs text-gray-500">Leave empty to send immediately.</p>
+            <p className="-mt-3 text-xs text-muted-foreground">Leave empty to send immediately.</p>
           )}
 
           {formError && (
             <p className="text-sm text-red-400 flex items-center gap-1.5">
-              <AlertCircle size={14} /> {formError}
+              <IconAlertCircle size={14} /> {formError}
             </p>
           )}
 
@@ -529,7 +529,7 @@ export function MassMessagesPage() {
               Cancel
             </Button>
             <Button onClick={handleCreate} disabled={isSubmitting} className="flex items-center gap-2">
-              <Send size={14} />
+              <IconSend size={14} />
               {isSubmitting ? 'Sending…' : 'Create'}
             </Button>
           </div>

@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { Euro, Gift, MessageCircle, X } from 'lucide-react';
+import { IconCurrencyEuro, IconGift, IconMessageCircle, IconX } from '@tabler/icons-react';
 import type { Notification } from '../modules/notifications/types';
 
 const TOAST_DURATION_MS = 8_000;
@@ -32,27 +32,27 @@ function Toast({
         />
       ) : isMessage ? (
         <span className="flex items-center justify-center w-9 h-9 rounded-full bg-blue-500/10 shrink-0">
-          <MessageCircle size={18} className="text-blue-400" />
+          <IconMessageCircle size={18} className="text-blue-400" />
         </span>
       ) : isSale ? (
         <span className="flex items-center justify-center w-9 h-9 rounded-full bg-emerald-500/10 shrink-0">
-          <Euro size={18} className="text-emerald-400" />
+          <IconCurrencyEuro size={18} className="text-emerald-400" />
         </span>
       ) : (
         <span className="flex items-center justify-center w-9 h-9 rounded-full bg-amber-500/10 shrink-0">
-          <Gift size={18} className="text-amber-400" />
+          <IconGift size={18} className="text-amber-400" />
         </span>
       )}
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-gray-100 truncate">{notification.title}</p>
-        <p className="text-xs text-gray-400 mt-0.5 line-clamp-2">{notification.body}</p>
+        <p className="text-sm font-medium text-foreground truncate">{notification.title}</p>
+        <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{notification.body}</p>
         {(isMessage || isSale) && (
           <button
             onClick={() => {
               onDismiss(notification.id);
               onOpen(notification);
             }}
-            className="text-xs text-brand-primary hover:underline mt-2 transition-colors"
+            className="text-xs text-brand hover:underline mt-2 transition-colors"
           >
             Chat öffnen
           </button>
@@ -60,10 +60,10 @@ function Toast({
       </div>
       <button
         onClick={() => onDismiss(notification.id)}
-        className="p-1 -m-1 rounded-md text-gray-500 hover:text-gray-300 hover:bg-slate-700/50 transition-colors shrink-0"
+        className="p-1 -m-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-accent/50 transition-colors shrink-0"
         aria-label="Schließen"
       >
-        <X size={14} />
+        <IconX size={14} />
       </button>
     </div>
   );

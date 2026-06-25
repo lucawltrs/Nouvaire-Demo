@@ -103,7 +103,7 @@ const FourBasedPage: React.FC = () => {
           <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-[#06b6d4] via-[#22d3ee] to-[#3b82f6]">
             4Based Dashboard
           </h1>
-          <p className="mt-2 text-gray-400">Übersicht aller Accounts</p>
+          <p className="mt-2 text-muted-foreground">Übersicht aller Accounts</p>
         </div>
         <Link to="/4based/models">
           <Button>Alle Accounts</Button>
@@ -112,25 +112,25 @@ const FourBasedPage: React.FC = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <Card className="p-6" glow>
-          <p className="text-gray-400 text-sm font-medium">Accounts</p>
+          <p className="text-muted-foreground text-sm font-medium">Accounts</p>
           <p className="text-3xl font-bold text-cyan-400 mt-2">{accounts.length}</p>
         </Card>
 
         <Card className="p-6" glow>
-          <p className="text-gray-400 text-sm font-medium">Gesamtumsatz (Netto)</p>
+          <p className="text-muted-foreground text-sm font-medium">Gesamtumsatz (Netto)</p>
           <p className="text-3xl font-bold text-cyan-400 mt-2">
             ${(getTotalNettoAmount() / 100).toFixed(2)}
           </p>
         </Card>
 
         <Card className="p-6" glow>
-          <p className="text-gray-400 text-sm font-medium">Ungelesene Nachrichten</p>
+          <p className="text-muted-foreground text-sm font-medium">Ungelesene Nachrichten</p>
           <p className="text-3xl font-bold text-cyan-400 mt-2">{getTotalUnreadMessages()}</p>
         </Card>
       </div>
 
       <div>
-        <h2 className="text-xl font-bold text-gray-100 mb-4">Account Übersicht</h2>
+        <h2 className="text-xl font-bold text-foreground mb-4">Account Übersicht</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {dashboards.map(({ account, dashboardData }) => (
             <Link key={account.fourbased_id} to={`/4based/models/${account.fourbased_id}`}>

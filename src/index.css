@@ -3,87 +3,131 @@
 @tailwind utilities;
 
 @layer base {
-  body {
-    @apply bg-page text-gray-100;
+  :root {
+    /* Brand orange — rgb(237, 76, 39) */
+    --brand: 14 83% 54%;
+    --brand-foreground: 0 0% 100%;
+
+    /* Light mode */
+    --background: 0 0% 100%;
+    --foreground: 222 47% 11%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+
+    --primary: 14 83% 54%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 222 47% 11%;
+
+    --muted: 210 40% 96%;
+    --muted-foreground: 215 16% 47%;
+
+    --accent: 210 40% 96%;
+    --accent-foreground: 222 47% 11%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 214 15% 80%;
+    --input: 214 15% 80%;
+    --ring: 14 83% 54%;
+    --radius: 0.5rem;
+
+    /* Sidebar (always dark) */
+    --sidebar-bg: 222 47% 6%;
+    --sidebar-border: 222 47% 11%;
+    --sidebar-text: 215 20% 65%;
+    --sidebar-active-bg: 222 47% 11%;
+    --sidebar-active-text: 0 0% 100%;
+    --sidebar-hover-bg: 222 47% 11%;
   }
 
-  /* Custom scrollbar – thin & themed */
+  .dark {
+    --background: 222 47% 11%;
+    --foreground: 210 20% 92%;
+
+    --card: 219 36% 16%;
+    --card-foreground: 210 20% 92%;
+
+    --popover: 219 36% 16%;
+    --popover-foreground: 210 20% 92%;
+
+    --primary: 14 83% 54%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 220 20% 22%;
+    --secondary-foreground: 210 20% 88%;
+
+    --muted: 220 20% 22%;
+    --muted-foreground: 215 15% 58%;
+
+    --accent: 220 20% 22%;
+    --accent-foreground: 210 20% 92%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 220 15% 22%;
+    --input: 220 15% 22%;
+    --ring: 14 83% 54%;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+
+  /* Custom scrollbar */
   * {
     scrollbar-width: thin;
-    scrollbar-color: rgb(51 65 85) transparent;
+    scrollbar-color: hsl(var(--border)) transparent;
   }
 
-  *::-webkit-scrollbar {
-    width: 4px;
-    height: 4px;
-  }
-
-  *::-webkit-scrollbar-track {
-    background: transparent;
-  }
-
+  *::-webkit-scrollbar { width: 4px; height: 4px; }
+  *::-webkit-scrollbar-track { background: transparent; }
   *::-webkit-scrollbar-thumb {
-    background-color: rgb(51 65 85);
+    background-color: hsl(var(--border));
     border-radius: 9999px;
   }
-
-  *::-webkit-scrollbar-thumb:hover {
-    background-color: rgb(71 85 105);
-  }
-
-  *::-webkit-scrollbar-corner {
-    background: transparent;
-  }
+  *::-webkit-scrollbar-thumb:hover { background-color: hsl(var(--muted-foreground)); }
+  *::-webkit-scrollbar-corner { background: transparent; }
 }
 
 @keyframes slide-in {
-  from {
-    transform: translateX(100%);
-    opacity: 0;
-  }
-  to {
-    transform: translateX(0);
-    opacity: 1;
-  }
+  from { transform: translateX(100%); opacity: 0; }
+  to   { transform: translateX(0);    opacity: 1; }
 }
 
-.animate-slide-in {
-  animation: slide-in 0.3s ease-out;
-}
+.animate-slide-in { animation: slide-in 0.3s ease-out; }
 
+/* Markdown prose */
 .prose-brand {
-  --tw-prose-body: theme('colors.gray.300');
-  --tw-prose-headings: theme('colors.gray.100');
-  --tw-prose-links: theme('colors.brand.500');
-  --tw-prose-bold: theme('colors.gray.100');
-  --tw-prose-code: theme('colors.brand.500');
-  --tw-prose-pre-bg: theme('colors.slate.800');
-  --tw-prose-pre-code: theme('colors.gray.100');
-  --tw-prose-quotes: theme('colors.gray.300');
-  --tw-prose-quote-borders: theme('colors.brand.500');
+  --tw-prose-body:         hsl(var(--muted-foreground));
+  --tw-prose-headings:     hsl(var(--foreground));
+  --tw-prose-links:        hsl(var(--primary));
+  --tw-prose-bold:         hsl(var(--foreground));
+  --tw-prose-code:         hsl(var(--primary));
+  --tw-prose-pre-bg:       hsl(var(--muted));
+  --tw-prose-pre-code:     hsl(var(--foreground));
+  --tw-prose-quotes:       hsl(var(--muted-foreground));
+  --tw-prose-quote-borders:hsl(var(--primary));
 }
 
-.prose-brand h1,
-.prose-brand h2,
-.prose-brand h3,
-.prose-brand h4,
-.prose-brand h5,
-.prose-brand h6 {
-  @apply text-gray-100 font-bold;
+.prose-brand h1,.prose-brand h2,.prose-brand h3,
+.prose-brand h4,.prose-brand h5,.prose-brand h6 {
+  @apply font-bold;
+  color: hsl(var(--foreground));
 }
 
-.prose-brand a {
-  @apply text-brand-500 hover:text-brand-600 transition-colors;
-}
-
-.prose-brand code {
-  @apply bg-slate-800 px-1.5 py-0.5 rounded text-brand-500;
-}
-
-.prose-brand pre {
-  @apply bg-slate-800 border border-border rounded-lg;
-}
-
-.prose-brand blockquote {
-  @apply border-l-4 border-brand-500 pl-4 italic text-gray-300;
-}
+.prose-brand a      { color: hsl(var(--primary)); }
+.prose-brand code   { @apply px-1.5 py-0.5 rounded; background: hsl(var(--muted)); color: hsl(var(--primary)); }
+.prose-brand pre    { @apply rounded-lg border; background: hsl(var(--muted)); }
+.prose-brand blockquote { @apply pl-4 italic; border-left: 4px solid hsl(var(--primary)); }
