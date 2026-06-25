@@ -1,34 +1,7 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { createPortal } from 'react-dom';
-import {
-  ArrowLeft,
-  Circle,
-  DollarSign,
-  Heart,
-  Image,
-  Users,
-  AlertCircle,
-  Layers,
-  CheckCircle2,
-  XCircle,
-  MessageSquare,
-  Plus,
-  Pencil,
-  Trash2,
-  Save,
-  X,
-  Loader2,
-  Tag,
-  ChevronDown,
-  ChevronRight,
-  GripVertical,
-  Camera,
-  Film,
-  CheckCircle,
-  Smile,
-  TrendingUp,
-} from 'lucide-react';
+import { IconArrowLeft, IconCurrencyDollar, IconUsers, IconAlertCircle, IconStack2, IconCircleCheck, IconMessage, IconPlus, IconPencil, IconTrash, IconLoader2, IconChevronDown, IconChevronRight, IconCamera, IconMovie, IconMoodSmile, IconTrendingUp, IconX, IconCircle, IconHeart, IconPhoto, IconCircleX, IconTag, IconGripVertical } from '@tabler/icons-react';
 import Picker from '@emoji-mart/react';
 import data from '@emoji-mart/data';
 import { Card } from '../../../components/ui/Card';
@@ -82,23 +55,23 @@ export function AccountDetailPage() {
 
   if (error || !account) {
     return (
-      <Card className="p-12 border border-slate-600 max-w-lg mx-auto mt-12">
+      <Card className="p-12 border border-border max-w-lg mx-auto mt-12">
         <div className="text-center">
           <div className="w-16 h-16 rounded-full bg-red-900/30 flex items-center justify-center mx-auto mb-4">
-            <AlertCircle className="w-8 h-8 text-red-500" />
+            <IconAlertCircle className="w-8 h-8 text-red-500" />
           </div>
-          <h3 className="text-lg font-semibold text-gray-100 mb-2">Error loading account</h3>
-          <p className="text-gray-400 mb-6">{error || 'Account not found'}</p>
+          <h3 className="text-lg font-semibold text-foreground mb-2">Error loading account</h3>
+          <p className="text-muted-foreground mb-6">{error || 'Account not found'}</p>
           <div className="flex justify-center gap-3">
             <button
               onClick={() => navigate('/accounts')}
-              className="px-4 py-2 text-sm text-gray-300 border border-slate-600 rounded-lg hover:bg-slate-700 transition-colors"
+              className="px-4 py-2 text-sm text-foreground border border-border rounded-lg hover:bg-muted transition-colors"
             >
               Back to Accounts
             </button>
             <button
               onClick={fetchAccount}
-              className="px-4 py-2 text-sm bg-[#ED4C27] hover:bg-[#D8431F] text-white font-medium rounded-lg transition-colors"
+              className="px-4 py-2 text-sm bg-brand hover:bg-brand-hover text-white font-medium rounded-lg transition-colors"
             >
               Retry
             </button>
@@ -113,43 +86,43 @@ export function AccountDetailPage() {
       {/* Back */}
       <button
         onClick={() => navigate('/accounts')}
-        className="inline-flex items-center gap-2 text-sm text-gray-400 hover:text-gray-100 transition-colors"
+        className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
       >
-        <ArrowLeft size={16} />
+        <IconArrowLeft size={16} />
         Back to Accounts
       </button>
 
       {/* Profile Header Card */}
-      <Card className="p-6 border border-slate-600">
+      <Card className="p-6 border border-border">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           {/* Left: avatar + info */}
           <div className="flex items-center gap-4">
             <AccountAvatar src={account.img_url ?? undefined} alt={account.name} />
             <div>
               <div className="flex items-center gap-3 flex-wrap">
-                <h1 className="text-xl sm:text-2xl font-bold text-gray-100">{account.name}</h1>
+                <h1 className="text-xl sm:text-2xl font-bold text-foreground">{account.name}</h1>
                 {account.is_online != null && (
                   <span
                     className={`inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full ${
                       account.is_online
                         ? 'bg-green-900/40 text-green-400'
-                        : 'bg-slate-700 text-gray-400'
+                        : 'bg-muted text-muted-foreground'
                     }`}
                   >
-                    <Circle size={7} className={account.is_online ? 'fill-green-400' : 'fill-gray-500'} />
+                    <IconCircle size={7} className={account.is_online ? 'fill-green-400' : 'fill-gray-500'} />
                     {account.is_online ? 'Online' : 'Offline'}
                   </span>
                 )}
                 {account.total_netto_amount != null && (
-                  <span className="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full bg-[#ED4C27]/15 text-[#ED4C27] border border-[#ED4C27]/30">
-                    <DollarSign size={11} />
+                  <span className="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full bg-brand/15 text-brand border border-brand/30">
+                    <IconCurrencyDollar size={11} />
                     {formatCurrency(account.total_netto_amount)}
                   </span>
                 )}
               </div>
-              <p className="text-sm text-gray-400 mt-1">{account.identifier}</p>
+              <p className="text-sm text-muted-foreground mt-1">{account.identifier}</p>
               {account.last_activity_date && (
-                <p className="text-xs text-gray-500 mt-0.5">
+                <p className="text-xs text-muted-foreground mt-0.5">
                   Last active: {formatRelativeTime(account.last_activity_date)}
                 </p>
               )}
@@ -159,24 +132,24 @@ export function AccountDetailPage() {
           {/* Right: actions */}
           <Link
             to={`/accounts/${account.fourbased_id}/forecast`}
-            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium bg-[#ED4C27]/10 border border-[#ED4C27]/30 text-[#ED4C27] hover:bg-[#ED4C27]/20 rounded-lg transition-colors shrink-0"
+            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium bg-brand/10 border border-brand/30 text-brand hover:bg-brand/20 rounded-lg transition-colors shrink-0"
           >
-            <TrendingUp size={15} />
+            <IconTrendingUp size={15} />
             Revenue Forecast
           </Link>
         </div>
       </Card>
 
       {/* Tabs */}
-      <div className="flex border-b border-slate-700 gap-1">
+      <div className="flex border-b border-border gap-1">
         {(['overview', 'emojis', 'settings'] as Tab[]).map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
             className={`px-4 py-2.5 text-sm font-medium capitalize transition-colors border-b-2 -mb-px ${
               activeTab === tab
-                ? 'border-[#ED4C27] text-[#ED4C27]'
-                : 'border-transparent text-gray-400 hover:text-gray-100'
+                ? 'border-brand text-brand'
+                : 'border-transparent text-muted-foreground hover:text-foreground'
             }`}
           >
             {tab.charAt(0).toUpperCase() + tab.slice(1)}
@@ -255,7 +228,7 @@ function OverviewTab({ account }: { account: Account }) {
         : await inboxApi.createAccountInfo(account.fourbased_id, payload);
       setAccountInfo(updated);
     } catch {
-      setAccountInfoError('Account Info konnte nicht gespeichert werden.');
+      setAccountInfoError('Account IconInfoCircle konnte nicht gespeichert werden.');
     } finally {
       setIsSavingAccountInfo(false);
     }
@@ -278,8 +251,8 @@ function OverviewTab({ account }: { account: Account }) {
             <KpiCard
               title="Revenue"
               value={formatCurrency(account.total_netto_amount)}
-              icon={DollarSign}
-              gradient="from-[#ED4C27] to-[#D8431F]"
+              icon={IconCurrencyDollar}
+              gradient="from-brand to-brand-hover"
               subtitle="Net total"
             />
           )}
@@ -287,8 +260,8 @@ function OverviewTab({ account }: { account: Account }) {
             <KpiCard
               title="Followers"
               value={account.follower_count.toLocaleString()}
-              icon={Users}
-              gradient="from-[#ED4C27] to-[#D8431F]"
+              icon={IconUsers}
+              gradient="from-brand to-brand-hover"
               subtitle="Total followers"
             />
           )}
@@ -296,7 +269,7 @@ function OverviewTab({ account }: { account: Account }) {
             <KpiCard
               title="Likes"
               value={account.likes_count.toLocaleString()}
-              icon={Heart}
+              icon={IconHeart}
               gradient="from-pink-500 to-rose-500"
               subtitle="Total likes"
             />
@@ -305,7 +278,7 @@ function OverviewTab({ account }: { account: Account }) {
             <KpiCard
               title="File Stack"
               value={account.file_stack_count.toLocaleString()}
-              icon={Image}
+              icon={IconPhoto}
               gradient="from-violet-500 to-purple-500"
               subtitle="Total files"
             />
@@ -314,7 +287,7 @@ function OverviewTab({ account }: { account: Account }) {
             <KpiCard
               title="Paid Content"
               value={account.file_stack_with_price_count.toLocaleString()}
-              icon={Layers}
+              icon={IconStack2}
               gradient="from-blue-500 to-indigo-500"
               subtitle="Files with price"
             />
@@ -323,7 +296,7 @@ function OverviewTab({ account }: { account: Account }) {
             <KpiCard
               title="Subscription"
               value={account.has_subscription_configuration ? 'Configured' : 'Not set'}
-              icon={account.has_subscription_configuration ? CheckCircle2 : XCircle}
+              icon={account.has_subscription_configuration ? IconCircleCheck : IconCircleX}
               gradient={
                 account.has_subscription_configuration
                   ? 'from-green-500 to-emerald-500'
@@ -335,16 +308,16 @@ function OverviewTab({ account }: { account: Account }) {
         </div>
       )}
 
-      {/* Account Info Card */}
-      <Card className="p-4 border border-slate-600">
+      {/* Account IconInfoCircle Card */}
+      <Card className="p-4 border border-border">
         <div className="flex items-center justify-between mb-3">
-          <h2 className="text-sm font-semibold text-gray-100">Account Info</h2>
+          <h2 className="text-sm font-semibold text-foreground">Account IconInfoCircle</h2>
           {isAdmin && !isAccountInfoLoading && (
             !isEditingAccountInfo ? (
               <button
                 type="button"
                 onClick={() => setIsEditingAccountInfo(true)}
-                className="text-sm text-[#ED4C27] hover:underline"
+                className="text-sm text-brand hover:underline"
               >
                 Bearbeiten
               </button>
@@ -363,7 +336,7 @@ function OverviewTab({ account }: { account: Account }) {
                   setIsEditingAccountInfo(false);
                   setAccountInfoError(null);
                 }}
-                className="text-sm text-gray-400 hover:underline"
+                className="text-sm text-muted-foreground hover:underline"
               >
                 Abbrechen
               </button>
@@ -373,40 +346,40 @@ function OverviewTab({ account }: { account: Account }) {
 
         {isAccountInfoLoading ? (
           <div className="flex items-center justify-center py-4">
-            <Loader2 size={18} className="animate-spin text-gray-400" />
+            <IconLoader2 size={18} className="animate-spin text-muted-foreground" />
           </div>
         ) : isEditingAccountInfo ? (
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             <div>
-              <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-1">Name</p>
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wide mb-1">Name</p>
               <Input value={editName} onChange={(e) => setEditName(e.target.value)} placeholder="Name…" />
             </div>
             <div>
-              <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-1">Alter</p>
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wide mb-1">Alter</p>
               <Input type="number" value={editAge} onChange={(e) => setEditAge(e.target.value)} placeholder="z.B. 24" />
             </div>
             <div>
-              <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-1">Herkunft</p>
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wide mb-1">Herkunft</p>
               <Input value={editOrigin} onChange={(e) => setEditOrigin(e.target.value)} placeholder="z.B. Deutschland" />
             </div>
             <div>
-              <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-1">Beruf</p>
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wide mb-1">Beruf</p>
               <Input value={editOccupation} onChange={(e) => setEditOccupation(e.target.value)} placeholder="z.B. Model" />
             </div>
             <div>
-              <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-1">BH-Größe</p>
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wide mb-1">BH-Größe</p>
               <Input value={editBraSize} onChange={(e) => setEditBraSize(e.target.value)} placeholder="z.B. 75C" />
             </div>
             <div>
-              <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-1">Taboos (kommagetrennt)</p>
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wide mb-1">Taboos (kommagetrennt)</p>
               <Input value={editTaboos} onChange={(e) => setEditTaboos(e.target.value)} placeholder="z.B. Gesicht, Real meets" />
             </div>
             <div className="col-span-2 sm:col-span-3">
-              <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-1">Hobbys (kommagetrennt)</p>
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wide mb-1">Hobbys (kommagetrennt)</p>
               <Input value={editHobbies} onChange={(e) => setEditHobbies(e.target.value)} placeholder="z.B. Fitness, Gaming" />
             </div>
             <div className="col-span-2 sm:col-span-3">
-              <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-1">Notizen</p>
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wide mb-1">Notizen</p>
               <Textarea value={editNotes} onChange={(e) => setEditNotes(e.target.value)} placeholder="Notizen…" rows={2} />
             </div>
             {accountInfoError && (
@@ -422,69 +395,69 @@ function OverviewTab({ account }: { account: Account }) {
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-x-6 gap-y-3">
             {accountInfo.name && (
               <div>
-                <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-0.5">Name</p>
-                <p className="text-xs text-gray-100">{accountInfo.name}</p>
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wide mb-0.5">Name</p>
+                <p className="text-xs text-foreground">{accountInfo.name}</p>
               </div>
             )}
             {accountInfo.age != null && (
               <div>
-                <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-0.5">Alter</p>
-                <p className="text-xs text-gray-100">{accountInfo.age}</p>
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wide mb-0.5">Alter</p>
+                <p className="text-xs text-foreground">{accountInfo.age}</p>
               </div>
             )}
             {accountInfo.origin && (
               <div>
-                <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-0.5">Herkunft</p>
-                <p className="text-xs text-gray-100">{accountInfo.origin}</p>
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wide mb-0.5">Herkunft</p>
+                <p className="text-xs text-foreground">{accountInfo.origin}</p>
               </div>
             )}
             {accountInfo.occupation && (
               <div>
-                <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-0.5">Beruf</p>
-                <p className="text-xs text-gray-100">{accountInfo.occupation}</p>
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wide mb-0.5">Beruf</p>
+                <p className="text-xs text-foreground">{accountInfo.occupation}</p>
               </div>
             )}
             {accountInfo.bra_size && (
               <div>
-                <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-0.5">BH-Größe</p>
-                <p className="text-xs text-gray-100">{accountInfo.bra_size}</p>
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wide mb-0.5">BH-Größe</p>
+                <p className="text-xs text-foreground">{accountInfo.bra_size}</p>
               </div>
             )}
             {accountInfo.taboos && accountInfo.taboos.length > 0 && (
               <div className="col-span-2">
-                <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-0.5">Taboos</p>
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wide mb-0.5">Taboos</p>
                 <div className="flex flex-wrap gap-1">
                   {accountInfo.taboos.map((t) => (
-                    <span key={t} className="text-[10px] bg-slate-700 text-gray-300 rounded px-1.5 py-0.5">{t}</span>
+                    <span key={t} className="text-[10px] bg-muted text-foreground rounded px-1.5 py-0.5">{t}</span>
                   ))}
                 </div>
               </div>
             )}
             {accountInfo.hobbies && accountInfo.hobbies.length > 0 && (
               <div className="col-span-2">
-                <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-0.5">Hobbys</p>
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wide mb-0.5">Hobbys</p>
                 <div className="flex flex-wrap gap-1">
                   {accountInfo.hobbies.map((h) => (
-                    <span key={h} className="text-xs bg-slate-700 text-gray-300 rounded px-2 py-0.5">{h}</span>
+                    <span key={h} className="text-xs bg-muted text-foreground rounded px-2 py-0.5">{h}</span>
                   ))}
                 </div>
               </div>
             )}
             {accountInfo.notes && (
               <div className="col-span-2 sm:col-span-3 lg:col-span-4">
-                <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-0.5">Notizen</p>
-                <p className="text-xs text-gray-300 whitespace-pre-wrap">{accountInfo.notes}</p>
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wide mb-0.5">Notizen</p>
+                <p className="text-xs text-foreground whitespace-pre-wrap">{accountInfo.notes}</p>
               </div>
             )}
           </div>
         ) : (
-          <div className="text-center py-4 text-gray-500">
+          <div className="text-center py-4 text-muted-foreground">
             <p className="text-xs">Keine Account Infos hinterlegt.</p>
             {isAdmin && (
               <button
                 type="button"
                 onClick={() => setIsEditingAccountInfo(true)}
-                className="mt-2 text-sm text-[#ED4C27] hover:underline"
+                className="mt-2 text-sm text-brand hover:underline"
               >
                 Jetzt hinzufügen
               </button>
@@ -506,15 +479,15 @@ interface KpiCardProps {
 
 function KpiCard({ title, value, icon: Icon, gradient, subtitle }: KpiCardProps) {
   return (
-    <Card className="p-5 border border-slate-600 hover:shadow-lg transition-shadow">
+    <Card className="p-5 border border-border hover:shadow-lg transition-shadow">
       <div className="flex items-center justify-between mb-3">
-        <p className="text-sm font-medium text-gray-400">{title}</p>
+        <p className="text-sm font-medium text-muted-foreground">{title}</p>
         <div className={`w-9 h-9 rounded-lg bg-gradient-to-br ${gradient} flex items-center justify-center`}>
           <Icon className="w-4 h-4 text-white" />
         </div>
       </div>
-      <p className="text-2xl font-bold text-gray-100 mb-1">{value}</p>
-      <p className="text-xs text-gray-500">{subtitle}</p>
+      <p className="text-2xl font-bold text-foreground mb-1">{value}</p>
+      <p className="text-xs text-muted-foreground">{subtitle}</p>
     </Card>
   );
 }
@@ -686,27 +659,27 @@ function AccountEmojisCard({ fourbasedId, isAdmin }: { fourbasedId: string; isAd
   };
 
   return (
-    <Card className="p-6 border border-slate-600">
+    <Card className="p-6 border border-border">
       <div className="flex items-center gap-3 mb-5">
-        <div className="w-8 h-8 rounded-lg bg-[#ED4C27]/15 flex items-center justify-center">
-          <Smile size={16} className="text-[#ED4C27]" />
+        <div className="w-8 h-8 rounded-lg bg-brand/15 flex items-center justify-center">
+          <IconMoodSmile size={16} className="text-brand" />
         </div>
         <div>
-          <h3 className="text-sm font-semibold text-gray-100">Account Emojis</h3>
-          <p className="text-xs text-gray-500">Emojis für den Chat-Schnellzugriff</p>
+          <h3 className="text-sm font-semibold text-foreground">Account Emojis</h3>
+          <p className="text-xs text-muted-foreground">Emojis für den Chat-Schnellzugriff</p>
         </div>
       </div>
 
       {(error ?? mutationError) && (
         <div className="mb-4 flex items-center gap-2 text-xs text-red-400 bg-red-900/20 border border-red-800/40 rounded-lg px-3 py-2">
-          <AlertCircle size={13} />
+          <IconAlertCircle size={13} />
           {error ?? mutationError}
         </div>
       )}
 
       {isLoading ? (
         <div className="flex items-center justify-center py-4">
-          <Loader2 size={18} className="animate-spin text-gray-400" />
+          <IconLoader2 size={18} className="animate-spin text-muted-foreground" />
         </div>
       ) : (
         <>
@@ -718,7 +691,7 @@ function AccountEmojisCard({ fourbasedId, isAdmin }: { fourbasedId: string; isAd
                     <EmojiPickerPopover value={editEmoji} onSelect={setEditEmoji}>
                       <button
                         type="button"
-                        className="w-10 h-10 rounded-lg border border-[#ED4C27] bg-slate-700 text-xl flex items-center justify-center hover:bg-slate-600 transition-colors"
+                        className="w-10 h-10 rounded-lg border border-brand bg-muted text-xl flex items-center justify-center hover:bg-accent transition-colors"
                       >
                         {editEmoji || '?'}
                       </button>
@@ -729,37 +702,37 @@ function AccountEmojisCard({ fourbasedId, isAdmin }: { fourbasedId: string; isAd
                       className="p-1.5 text-green-400 hover:text-green-300 disabled:opacity-50 transition-colors"
                       title="Speichern"
                     >
-                      {savingId === e.id ? <Loader2 size={13} className="animate-spin" /> : <Save size={13} />}
+                      {savingId === e.id ? <IconLoader2 size={13} className="animate-spin" /> : <Save size={13} />}
                     </button>
                     <button
                       onClick={() => setEditId(null)}
-                      className="p-1.5 text-gray-400 hover:text-gray-200 transition-colors"
+                      className="p-1.5 text-muted-foreground hover:text-foreground transition-colors"
                       title="Abbrechen"
                     >
-                      <X size={13} />
+                      <IconX size={13} />
                     </button>
                   </div>
                 ) : (
                   <div key={e.id} className="group relative">
-                    <div className="w-10 h-10 rounded-lg border border-slate-700 bg-slate-800/60 text-xl flex items-center justify-center select-none">
+                    <div className="w-10 h-10 rounded-lg border border-border bg-muted/60 text-xl flex items-center justify-center select-none">
                       {e.emoji}
                     </div>
                     {isAdmin && (
                       <div className="absolute -top-1.5 -right-1.5 hidden group-hover:flex gap-0.5">
                         <button
                           onClick={() => { setEditId(e.id); setEditEmoji(e.emoji); }}
-                          className="w-5 h-5 rounded-full bg-slate-700 border border-slate-600 flex items-center justify-center text-gray-400 hover:text-gray-100 transition-colors"
+                          className="w-5 h-5 rounded-full bg-muted border border-border flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
                           title="Bearbeiten"
                         >
-                          <Pencil size={9} />
+                          <IconPencil size={9} />
                         </button>
                         <button
                           onClick={() => handleDelete(e.id)}
                           disabled={deletingId === e.id}
-                          className="w-5 h-5 rounded-full bg-slate-700 border border-slate-600 flex items-center justify-center text-gray-400 hover:text-red-400 disabled:opacity-50 transition-colors"
+                          className="w-5 h-5 rounded-full bg-muted border border-border flex items-center justify-center text-muted-foreground hover:text-red-400 disabled:opacity-50 transition-colors"
                           title="Löschen"
                         >
-                          {deletingId === e.id ? <Loader2 size={9} className="animate-spin" /> : <X size={9} />}
+                          {deletingId === e.id ? <IconLoader2 size={9} className="animate-spin" /> : <IconX size={9} />}
                         </button>
                       </div>
                     )}
@@ -774,28 +747,28 @@ function AccountEmojisCard({ fourbasedId, isAdmin }: { fourbasedId: string; isAd
               <EmojiPickerPopover value={newEmoji} onSelect={setNewEmoji}>
                 <button
                   type="button"
-                  className="w-10 h-10 rounded-lg border border-slate-600 bg-slate-800 text-xl flex items-center justify-center hover:border-[#ED4C27] transition-colors"
+                  className="w-10 h-10 rounded-lg border border-border bg-muted text-xl flex items-center justify-center hover:border-brand transition-colors"
                   title="Emoji auswählen"
                 >
-                  {newEmoji || <Plus size={16} className="text-gray-400" />}
+                  {newEmoji || <IconPlus size={16} className="text-muted-foreground" />}
                 </button>
               </EmojiPickerPopover>
               <button
                 onClick={handleAdd}
                 disabled={isAdding || !newEmoji.trim()}
-                className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-white bg-[#ED4C27] hover:bg-[#D8431F] rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-white bg-brand hover:bg-brand-hover rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {isAdding ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}
+                {isAdding ? <IconLoader2 size={14} className="animate-spin" /> : <IconPlus size={14} />}
                 Hinzufügen
               </button>
               {emojis.length === 0 && !isAdding && (
-                <p className="text-xs text-gray-500">Noch keine Emojis hinterlegt.</p>
+                <p className="text-xs text-muted-foreground">Noch keine Emojis hinterlegt.</p>
               )}
             </div>
           )}
 
           {!isAdmin && emojis.length === 0 && (
-            <p className="text-sm text-gray-500 text-center py-4">Keine Emojis hinterlegt.</p>
+            <p className="text-sm text-muted-foreground text-center py-4">Keine Emojis hinterlegt.</p>
           )}
         </>
       )}
@@ -871,20 +844,20 @@ function CategoriesCard({ fourbasedId, categories, isLoading, error, onRefresh }
   };
 
   return (
-    <Card className="p-6 border border-slate-600">
+    <Card className="p-6 border border-border">
       <div className="flex items-center gap-3 mb-5">
-        <div className="w-8 h-8 rounded-lg bg-[#ED4C27]/15 flex items-center justify-center">
-          <Tag size={16} className="text-[#ED4C27]" />
+        <div className="w-8 h-8 rounded-lg bg-brand/15 flex items-center justify-center">
+          <IconTag size={16} className="text-brand" />
         </div>
         <div>
-          <h3 className="text-sm font-semibold text-gray-100">Kategorien</h3>
-          <p className="text-xs text-gray-500">Kategorien für vordefinierte Nachrichten verwalten</p>
+          <h3 className="text-sm font-semibold text-foreground">Kategorien</h3>
+          <p className="text-xs text-muted-foreground">Kategorien für vordefinierte Nachrichten verwalten</p>
         </div>
       </div>
 
       {(error ?? mutationError) && (
         <div className="mb-4 flex items-center gap-2 text-xs text-red-400 bg-red-900/20 border border-red-800/40 rounded-lg px-3 py-2">
-          <AlertCircle size={13} />
+          <IconAlertCircle size={13} />
           {error ?? mutationError}
         </div>
       )}
@@ -895,7 +868,7 @@ function CategoriesCard({ fourbasedId, categories, isLoading, error, onRefresh }
           value={newColor}
           onChange={(e) => setNewColor(e.target.value)}
           disabled={isAdding}
-          className="w-10 h-10 rounded-lg border border-slate-600 bg-slate-800 cursor-pointer disabled:opacity-50 shrink-0"
+          className="w-10 h-10 rounded-lg border border-border bg-muted cursor-pointer disabled:opacity-50 shrink-0"
           title="Farbe wählen"
         />
         <input
@@ -905,35 +878,35 @@ function CategoriesCard({ fourbasedId, categories, isLoading, error, onRefresh }
           onKeyDown={(e) => e.key === 'Enter' && handleAdd()}
           placeholder="Neue Kategorie…"
           disabled={isAdding}
-          className="flex-1 min-w-0 bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-sm text-gray-100 placeholder-gray-500 focus:outline-none focus:border-[#ED4C27] focus:ring-1 focus:ring-[#ED4C27]/30 disabled:opacity-50 transition"
+          className="flex-1 min-w-0 bg-muted border border-border rounded-lg px-3 py-2 text-sm text-foreground placeholder-gray-500 focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand/30 disabled:opacity-50 transition"
         />
         <button
           onClick={handleAdd}
           disabled={isAdding || !newName.trim()}
-          className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-white bg-[#ED4C27] hover:bg-[#D8431F] rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
+          className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-white bg-brand hover:bg-brand-hover rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
         >
-          {isAdding ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}
+          {isAdding ? <IconLoader2 size={14} className="animate-spin" /> : <IconPlus size={14} />}
           Hinzufügen
         </button>
       </div>
 
       {isLoading ? (
         <div className="space-y-2">
-          {[1, 2].map((i) => <div key={i} className="h-9 bg-slate-700 rounded-lg animate-pulse" />)}
+          {[1, 2].map((i) => <div key={i} className="h-9 bg-muted rounded-lg animate-pulse" />)}
         </div>
       ) : categories.length === 0 ? (
-        <p className="text-sm text-gray-500 text-center py-4">Noch keine Kategorien vorhanden</p>
+        <p className="text-sm text-muted-foreground text-center py-4">Noch keine Kategorien vorhanden</p>
       ) : (
         <ul className="space-y-2">
           {categories.map((cat) => (
-            <li key={cat.id} className="flex items-center gap-2 bg-slate-800/60 border border-slate-700 rounded-lg px-3 py-2 group">
+            <li key={cat.id} className="flex items-center gap-2 bg-muted/60 border border-border rounded-lg px-3 py-2 group">
               {editId === cat.id ? (
                 <>
                   <input
                     type="color"
                     value={editColor}
                     onChange={(e) => setEditColor(e.target.value)}
-                    className="w-8 h-8 rounded border border-slate-600 bg-slate-700 cursor-pointer shrink-0"
+                    className="w-8 h-8 rounded border border-border bg-muted cursor-pointer shrink-0"
                   />
                   <input
                     type="text"
@@ -944,13 +917,13 @@ function CategoriesCard({ fourbasedId, categories, isLoading, error, onRefresh }
                       if (e.key === 'Escape') { setEditId(null); setEditName(''); }
                     }}
                     autoFocus
-                    className="flex-1 min-w-0 bg-slate-700 border border-slate-600 rounded px-2 py-1 text-sm text-gray-100 focus:outline-none focus:border-[#ED4C27]"
+                    className="flex-1 min-w-0 bg-muted border border-border rounded px-2 py-1 text-sm text-foreground focus:outline-none focus:border-brand"
                   />
                   <button onClick={() => handleUpdate(cat.id)} disabled={savingId === cat.id} className="p-1.5 text-green-400 hover:text-green-300 disabled:opacity-50 transition-colors" title="Speichern">
-                    {savingId === cat.id ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+                    {savingId === cat.id ? <IconLoader2 size={14} className="animate-spin" /> : <Save size={14} />}
                   </button>
-                  <button onClick={() => { setEditId(null); setEditName(''); }} className="p-1.5 text-gray-400 hover:text-gray-200 transition-colors" title="Abbrechen">
-                    <X size={14} />
+                  <button onClick={() => { setEditId(null); setEditName(''); }} className="p-1.5 text-muted-foreground hover:text-foreground transition-colors" title="Abbrechen">
+                    <IconX size={14} />
                   </button>
                 </>
               ) : (
@@ -959,13 +932,13 @@ function CategoriesCard({ fourbasedId, categories, isLoading, error, onRefresh }
                     className="w-3 h-3 rounded-full shrink-0"
                     style={{ backgroundColor: cat.color ?? '#6366f1' }}
                   />
-                  <span className="flex-1 text-sm text-gray-200 truncate">{cat.name}</span>
+                  <span className="flex-1 text-sm text-foreground truncate">{cat.name}</span>
                   <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button onClick={() => { setEditId(cat.id); setEditName(cat.name); setEditColor(cat.color ?? '#6366f1'); }} className="p-1.5 text-gray-400 hover:text-gray-100 transition-colors" title="Bearbeiten">
-                      <Pencil size={13} />
+                    <button onClick={() => { setEditId(cat.id); setEditName(cat.name); setEditColor(cat.color ?? '#6366f1'); }} className="p-1.5 text-muted-foreground hover:text-foreground transition-colors" title="Bearbeiten">
+                      <IconPencil size={13} />
                     </button>
-                    <button onClick={() => handleDelete(cat.id)} disabled={deletingId === cat.id} className="p-1.5 text-gray-400 hover:text-red-400 disabled:opacity-50 transition-colors" title="Löschen">
-                      {deletingId === cat.id ? <Loader2 size={13} className="animate-spin" /> : <Trash2 size={13} />}
+                    <button onClick={() => handleDelete(cat.id)} disabled={deletingId === cat.id} className="p-1.5 text-muted-foreground hover:text-red-400 disabled:opacity-50 transition-colors" title="Löschen">
+                      {deletingId === cat.id ? <IconLoader2 size={13} className="animate-spin" /> : <IconTrash size={13} />}
                     </button>
                   </div>
                 </>
@@ -1319,20 +1292,20 @@ function ConfiguredMessagesCard({ fourbasedId, isAdmin, categories }: { fourbase
 
   return (
     <>
-    <Card className="p-6 border border-slate-600">
+    <Card className="p-6 border border-border">
       <div className="flex items-center gap-3 mb-5">
-        <div className="w-8 h-8 rounded-lg bg-[#ED4C27]/15 flex items-center justify-center">
-          <MessageSquare size={16} className="text-[#ED4C27]" />
+        <div className="w-8 h-8 rounded-lg bg-brand/15 flex items-center justify-center">
+          <IconMessage size={16} className="text-brand" />
         </div>
         <div>
-          <h3 className="text-sm font-semibold text-gray-100">Vordefinierte Nachrichten</h3>
-          <p className="text-xs text-gray-500">Schnellantworten für diesen Account</p>
+          <h3 className="text-sm font-semibold text-foreground">Vordefinierte Nachrichten</h3>
+          <p className="text-xs text-muted-foreground">Schnellantworten für diesen Account</p>
         </div>
       </div>
 
       {error && (
         <div className="mb-4 flex items-center gap-2 text-xs text-red-400 bg-red-900/20 border border-red-800/40 rounded-lg px-3 py-2">
-          <AlertCircle size={13} />
+          <IconAlertCircle size={13} />
           {error}
         </div>
       )}
@@ -1347,7 +1320,7 @@ function ConfiguredMessagesCard({ fourbasedId, isAdmin, categories }: { fourbase
               onChange={(e) => setNewName(e.target.value)}
               placeholder="Name / Titel…"
               disabled={isAdding}
-              className="w-40 shrink-0 bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-sm text-gray-100 placeholder-gray-500 focus:outline-none focus:border-[#ED4C27] focus:ring-1 focus:ring-[#ED4C27]/30 disabled:opacity-50 transition"
+              className="w-40 shrink-0 bg-muted border border-border rounded-lg px-3 py-2 text-sm text-foreground placeholder-gray-500 focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand/30 disabled:opacity-50 transition"
             />
             <input
               type="text"
@@ -1356,14 +1329,14 @@ function ConfiguredMessagesCard({ fourbasedId, isAdmin, categories }: { fourbase
               onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleAdd()}
               placeholder="Nachrichtentext…"
               disabled={isAdding}
-              className="flex-1 min-w-0 bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-sm text-gray-100 placeholder-gray-500 focus:outline-none focus:border-[#ED4C27] focus:ring-1 focus:ring-[#ED4C27]/30 disabled:opacity-50 transition"
+              className="flex-1 min-w-0 bg-muted border border-border rounded-lg px-3 py-2 text-sm text-foreground placeholder-gray-500 focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand/30 disabled:opacity-50 transition"
             />
             <button
               onClick={handleAdd}
               disabled={isAdding || !newMessage.trim()}
-              className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-white bg-[#ED4C27] hover:bg-[#D8431F] rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
+              className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-white bg-brand hover:bg-brand-hover rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
             >
-              {isAdding ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}
+              {isAdding ? <IconLoader2 size={14} className="animate-spin" /> : <IconPlus size={14} />}
               Hinzufügen
             </button>
           </div>
@@ -1372,7 +1345,7 @@ function ConfiguredMessagesCard({ fourbasedId, isAdmin, categories }: { fourbase
               <select
                 value={newCategoryId ?? ''}
                 onChange={(e) => setNewCategoryId(e.target.value ? Number(e.target.value) : null)}
-                className="flex-1 bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-sm text-gray-300 focus:outline-none focus:border-[#ED4C27] transition"
+                className="flex-1 bg-muted border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:border-brand transition"
               >
                 <option value="">Keine Kategorie</option>
                 {categories.map((cat) => (
@@ -1389,21 +1362,21 @@ function ConfiguredMessagesCard({ fourbasedId, isAdmin, categories }: { fourbase
               className={[
                 'flex items-center gap-1.5 px-3 py-2 text-sm rounded-lg border transition-colors shrink-0 disabled:opacity-50',
                 newFileStackId
-                  ? 'bg-[#ED4C27]/15 border-[#ED4C27]/40 text-[#ED4C27]'
-                  : 'bg-slate-800 border-slate-600 text-gray-400 hover:text-gray-100 hover:border-slate-500',
+                  ? 'bg-brand/15 border-brand/40 text-brand'
+                  : 'bg-muted border-border text-muted-foreground hover:text-foreground hover:border-slate-500',
               ].join(' ')}
             >
-              <Camera size={14} />
+              <IconCamera size={14} />
               {newFileStackId ? 'Foto ✓' : 'Foto'}
             </button>
             {newFileStackId && (
               <button
                 type="button"
                 onClick={() => setNewFileStackId(null)}
-                className="p-2 text-gray-500 hover:text-red-400 transition-colors"
+                className="p-2 text-muted-foreground hover:text-red-400 transition-colors"
                 title="Foto entfernen"
               >
-                <X size={13} />
+                <IconX size={13} />
               </button>
             )}
           </div>
@@ -1413,11 +1386,11 @@ function ConfiguredMessagesCard({ fourbasedId, isAdmin, categories }: { fourbase
       {/* List grouped by category */}
       {isLoading ? (
         <div className="space-y-2">
-          {[1, 2, 3].map((i) => <div key={i} className="h-10 bg-slate-700 rounded-lg animate-pulse" />)}
+          {[1, 2, 3].map((i) => <div key={i} className="h-10 bg-muted rounded-lg animate-pulse" />)}
         </div>
       ) : messages.length === 0 ? (
-        <div className="text-center py-8 text-gray-500">
-          <MessageSquare size={28} className="mx-auto mb-2 opacity-30" />
+        <div className="text-center py-8 text-muted-foreground">
+          <IconMessage size={28} className="mx-auto mb-2 opacity-30" />
           <p className="text-sm">Noch keine vordefinierten Nachrichten</p>
         </div>
       ) : (
@@ -1431,15 +1404,15 @@ function ConfiguredMessagesCard({ fourbasedId, isAdmin, categories }: { fourbase
                 className="w-full flex items-center gap-2 mb-2 group/header"
               >
                 {collapsedCategories.has(key)
-                  ? <ChevronRight size={14} className="text-gray-500 shrink-0" />
-                  : <ChevronDown size={14} className="text-gray-500 shrink-0" />}
+                  ? <IconChevronRight size={14} className="text-muted-foreground shrink-0" />
+                  : <IconChevronDown size={14} className="text-muted-foreground shrink-0" />}
                 {category?.color
                   ? <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: category.color }} />
-                  : <Tag size={12} className="text-gray-500 shrink-0" />}
-                <span className="text-xs font-semibold uppercase tracking-wide text-gray-400 group-hover/header:text-gray-300 transition-colors">
+                  : <IconTag size={12} className="text-muted-foreground shrink-0" />}
+                <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground group-hover/header:text-foreground transition-colors">
                   {category ? category.name : 'Ohne Kategorie'}
                 </span>
-                <span className="text-xs text-gray-600 ml-auto">{items.length}</span>
+                <span className="text-xs text-muted-foreground ml-auto">{items.length}</span>
               </button>
 
               {!collapsedCategories.has(key) && (
@@ -1453,9 +1426,9 @@ function ConfiguredMessagesCard({ fourbasedId, isAdmin, categories }: { fourbase
                       onDrop={() => isAdmin && handleDropOnItem(msg._id, key)}
                       onDragEnd={() => { setDragId(null); setDragOverId(null); setDragOverCategoryEnd(null); }}
                       className={[
-                        'flex items-start gap-2 bg-slate-800/60 border rounded-lg px-3 py-2 group transition-colors',
+                        'flex items-start gap-2 bg-muted/60 border rounded-lg px-3 py-2 group transition-colors',
                         dragId === msg._id ? 'opacity-40' : '',
-                        dragOverId === msg._id && dragId !== msg._id ? 'border-[#ED4C27]' : 'border-slate-700',
+                        dragOverId === msg._id && dragId !== msg._id ? 'border-brand' : 'border-border',
                       ].join(' ')}
                     >
                       {editId === msg._id ? (
@@ -1466,7 +1439,7 @@ function ConfiguredMessagesCard({ fourbasedId, isAdmin, categories }: { fourbase
                               value={editName}
                               onChange={(e) => setEditName(e.target.value)}
                               placeholder="Name / Titel…"
-                              className="w-36 shrink-0 bg-slate-700 border border-slate-600 rounded px-2 py-1 text-sm text-gray-100 focus:outline-none focus:border-[#ED4C27]"
+                              className="w-36 shrink-0 bg-muted border border-border rounded px-2 py-1 text-sm text-foreground focus:outline-none focus:border-brand"
                             />
                             <input
                               type="text"
@@ -1477,7 +1450,7 @@ function ConfiguredMessagesCard({ fourbasedId, isAdmin, categories }: { fourbase
                                 if (e.key === 'Escape') setEditId(null);
                               }}
                               autoFocus
-                              className="flex-1 min-w-0 bg-slate-700 border border-slate-600 rounded px-2 py-1 text-sm text-gray-100 focus:outline-none focus:border-[#ED4C27]"
+                              className="flex-1 min-w-0 bg-muted border border-border rounded px-2 py-1 text-sm text-foreground focus:outline-none focus:border-brand"
                             />
                           </div>
                           <div className="flex items-center gap-2">
@@ -1485,7 +1458,7 @@ function ConfiguredMessagesCard({ fourbasedId, isAdmin, categories }: { fourbase
                               <select
                                 value={editCategoryId ?? ''}
                                 onChange={(e) => setEditCategoryId(e.target.value ? Number(e.target.value) : null)}
-                                className="flex-1 bg-slate-700 border border-slate-600 rounded px-2 py-1 text-xs text-gray-300 focus:outline-none focus:border-[#ED4C27]"
+                                className="flex-1 bg-muted border border-border rounded px-2 py-1 text-xs text-foreground focus:outline-none focus:border-brand"
                               >
                                 <option value="">Keine Kategorie</option>
                                 {categories.map((cat) => (
@@ -1501,40 +1474,40 @@ function ConfiguredMessagesCard({ fourbasedId, isAdmin, categories }: { fourbase
                               className={[
                                 'flex items-center gap-1 px-2 py-1 text-xs rounded border transition-colors shrink-0',
                                 editFileStackId
-                                  ? 'bg-[#ED4C27]/15 border-[#ED4C27]/40 text-[#ED4C27]'
-                                  : 'bg-slate-700 border-slate-600 text-gray-400 hover:text-gray-100',
+                                  ? 'bg-brand/15 border-brand/40 text-brand'
+                                  : 'bg-muted border-border text-muted-foreground hover:text-foreground',
                               ].join(' ')}
                             >
-                              <Camera size={12} />
+                              <IconCamera size={12} />
                               {editFileStackId ? '✓' : 'Foto'}
                             </button>
                             {editFileStackId && (
                               <button
                                 type="button"
                                 onClick={() => setEditFileStackId(null)}
-                                className="p-1 text-gray-500 hover:text-red-400 transition-colors"
+                                className="p-1 text-muted-foreground hover:text-red-400 transition-colors"
                                 title="Foto entfernen"
                               >
-                                <X size={11} />
+                                <IconX size={11} />
                               </button>
                             )}
                           </div>
                           <div className="flex gap-1">
                             <button onClick={() => handleUpdate(msg._id)} disabled={savingId === msg._id} className="flex items-center gap-1 px-2 py-1 text-xs text-green-400 hover:text-green-300 disabled:opacity-50 transition-colors">
-                              {savingId === msg._id ? <Loader2 size={12} className="animate-spin" /> : <Save size={12} />}
+                              {savingId === msg._id ? <IconLoader2 size={12} className="animate-spin" /> : <Save size={12} />}
                               Speichern
                             </button>
-                            <button onClick={() => setEditId(null)} className="flex items-center gap-1 px-2 py-1 text-xs text-gray-400 hover:text-gray-200 transition-colors">
-                              <X size={12} />
+                            <button onClick={() => setEditId(null)} className="flex items-center gap-1 px-2 py-1 text-xs text-muted-foreground hover:text-foreground transition-colors">
+                              <IconX size={12} />
                               Abbrechen
                             </button>
                           </div>
                         </div>
                       ) : (
                         <>
-                          {isAdmin && <GripVertical size={14} className="text-gray-600 cursor-grab active:cursor-grabbing shrink-0 mt-0.5 opacity-0 group-hover:opacity-100 transition-opacity" />}
+                          {isAdmin && <IconGripVertical size={14} className="text-muted-foreground cursor-grab active:cursor-grabbing shrink-0 mt-0.5 opacity-0 group-hover:opacity-100 transition-opacity" />}
                           {msg.img_url && (
-                            <div className="w-10 h-10 shrink-0 rounded-lg overflow-hidden bg-slate-800 border border-slate-700">
+                            <div className="w-10 h-10 shrink-0 rounded-lg overflow-hidden bg-muted border border-border">
                               <img
                                 src={unblurUrl(msg.img_url)}
                                 alt=""
@@ -1544,21 +1517,21 @@ function ConfiguredMessagesCard({ fourbasedId, isAdmin, categories }: { fourbase
                             </div>
                           )}
                           <div className="flex-1 min-w-0">
-                            {msg.name && <p className="text-xs font-medium text-gray-400 mb-0.5 truncate">{msg.name}</p>}
-                            <p className="text-sm text-gray-200 break-words">{msg.message}</p>
+                            {msg.name && <p className="text-xs font-medium text-muted-foreground mb-0.5 truncate">{msg.name}</p>}
+                            <p className="text-sm text-foreground break-words">{msg.message}</p>
                             {typeof msg.file_stack?.price === 'number' && msg.file_stack.price > 0 && (
-                              <p className="text-[10px] text-[#ED4C27] mt-0.5">
+                              <p className="text-[10px] text-brand mt-0.5">
                                 ${(msg.file_stack.price / 1.21 / 100).toFixed(2)}
                               </p>
                             )}
                           </div>
                           {isAdmin && (
                             <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
-                              <button onClick={() => startEdit(msg)} className="p-1.5 text-gray-400 hover:text-gray-100 transition-colors" title="Bearbeiten">
-                                <Pencil size={13} />
+                              <button onClick={() => startEdit(msg)} className="p-1.5 text-muted-foreground hover:text-foreground transition-colors" title="Bearbeiten">
+                                <IconPencil size={13} />
                               </button>
-                              <button onClick={() => handleDelete(msg._id)} disabled={deletingId === msg._id} className="p-1.5 text-gray-400 hover:text-red-400 disabled:opacity-50 transition-colors" title="Löschen">
-                                {deletingId === msg._id ? <Loader2 size={13} className="animate-spin" /> : <Trash2 size={13} />}
+                              <button onClick={() => handleDelete(msg._id)} disabled={deletingId === msg._id} className="p-1.5 text-muted-foreground hover:text-red-400 disabled:opacity-50 transition-colors" title="Löschen">
+                                {deletingId === msg._id ? <IconLoader2 size={13} className="animate-spin" /> : <IconTrash size={13} />}
                               </button>
                             </div>
                           )}
@@ -1574,7 +1547,7 @@ function ConfiguredMessagesCard({ fourbasedId, isAdmin, categories }: { fourbase
                       onDragLeave={() => setDragOverCategoryEnd(null)}
                       className={[
                         'h-7 rounded-lg border border-dashed transition-colors',
-                        dragOverCategoryEnd === key ? 'border-[#ED4C27] bg-[#ED4C27]/5' : 'border-slate-700/50',
+                        dragOverCategoryEnd === key ? 'border-brand bg-brand/5' : 'border-border/50',
                       ].join(' ')}
                     />
                   )}
@@ -1636,12 +1609,12 @@ function ConfiguredMessagesCard({ fourbasedId, isAdmin, categories }: { fourbase
 
           {isLoadingVault && vaultItems.length === 0 ? (
             <div className="flex items-center justify-center h-48">
-              <Loader2 size={28} className="animate-spin text-gray-400" />
+              <IconLoader2 size={28} className="animate-spin text-muted-foreground" />
             </div>
           ) : vaultError ? (
             <p className="text-red-500 text-sm">{vaultError}</p>
           ) : vaultItems.length === 0 ? (
-            <p className="text-gray-400 text-sm">Keine Inhalte gefunden.</p>
+            <p className="text-muted-foreground text-sm">Keine Inhalte gefunden.</p>
           ) : (
             <>
               <div className="grid grid-cols-4 gap-2">
@@ -1661,7 +1634,7 @@ function ConfiguredMessagesCard({ fourbasedId, isAdmin, categories }: { fourbase
               {vaultHasMore && (
                 <div className="mt-4 flex justify-center">
                   <Button onClick={() => fetchVault(vaultOffset, activeVaultFolder, vaultFileType)} disabled={isLoadingVault}>
-                    {isLoadingVault ? <Loader2 size={16} className="animate-spin" /> : 'Mehr laden'}
+                    {isLoadingVault ? <IconLoader2 size={16} className="animate-spin" /> : 'Mehr laden'}
                   </Button>
                 </div>
               )}
@@ -1672,25 +1645,25 @@ function ConfiguredMessagesCard({ fourbasedId, isAdmin, categories }: { fourbase
 
       {/* Sticky footer for step 1 when items are selected */}
       {vaultStep === 1 && selectedVaultItems.length > 0 && (
-        <div className="sticky bottom-0 left-0 right-0 mt-4 pt-4 border-t border-slate-700 bg-card flex items-center justify-between gap-4">
+        <div className="sticky bottom-0 left-0 right-0 mt-4 pt-4 border-t border-border bg-card flex items-center justify-between gap-4">
           <div className="flex items-center gap-3 min-w-0 flex-1 overflow-x-auto pb-1">
             {selectedVaultItems.map(item => (
               <div key={item._id} className="relative shrink-0">
                 <img
                   src={unblurUrl(item.img_url)}
                   alt=""
-                  className="w-16 h-16 rounded-xl object-cover border border-slate-600"
+                  className="w-16 h-16 rounded-xl object-cover border border-border"
                 />
                 <button
                   type="button"
                   onClick={() => setSelectedVaultItems(prev => prev.filter(s => s._id !== item._id))}
-                  className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-slate-900 border border-slate-600 flex items-center justify-center text-gray-400 hover:text-red-400 transition-colors"
+                  className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-card border border-border flex items-center justify-center text-muted-foreground hover:text-red-400 transition-colors"
                 >
-                  <X size={11} />
+                  <IconX size={11} />
                 </button>
               </div>
             ))}
-            <span className="text-sm text-gray-400 shrink-0 ml-1">
+            <span className="text-sm text-muted-foreground shrink-0 ml-1">
               {selectedVaultItems.length} ausgewählt
             </span>
           </div>
@@ -1739,8 +1712,8 @@ function CfgVaultThumbnail({
       tabIndex={0}
       onClick={() => onSelect?.(item)}
       onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') onSelect?.(item); }}
-      className={`relative aspect-square rounded-lg overflow-hidden bg-slate-800 border-2 transition-all cursor-pointer group ${
-        isSelected ? 'border-[#ED4C27] ring-2 ring-[#ED4C27]/40' : 'border-slate-700 hover:border-slate-500'
+      className={`relative aspect-square rounded-lg overflow-hidden bg-muted border-2 transition-all cursor-pointer group ${
+        isSelected ? 'border-brand ring-2 ring-brand/40' : 'border-border hover:border-slate-500'
       }`}
     >
       <img
@@ -1753,17 +1726,17 @@ function CfgVaultThumbnail({
       {isVideo && (
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
           <div className="w-9 h-9 rounded-full bg-black/60 flex items-center justify-center">
-            <Film size={16} className="text-white" />
+            <IconMovie size={16} className="text-white" />
           </div>
         </div>
       )}
       {isSelected && (
         <div className="absolute top-1.5 right-1.5 pointer-events-none">
-          <CheckCircle size={18} className="text-[#ED4C27] drop-shadow" fill="white" />
+          <IconCircleCheck size={18} className="text-brand drop-shadow" fill="white" />
         </div>
       )}
       {typeof item.price === 'number' && item.price > 0 && (
-        <span className="absolute bottom-1 right-1 text-[10px] font-semibold px-1.5 py-0.5 rounded bg-black/70 text-[#ED4C27]">
+        <span className="absolute bottom-1 right-1 text-[10px] font-semibold px-1.5 py-0.5 rounded bg-black/70 text-brand">
           ${(item.price / 100).toFixed(2)}
         </span>
       )}
@@ -1852,7 +1825,7 @@ function VaultConfigStep({
     <div className="flex flex-col gap-5">
       <div className="flex gap-5 items-start">
         {/* Preview */}
-        <div className="relative w-48 shrink-0 rounded-xl overflow-hidden bg-slate-800 border border-slate-700 aspect-square">
+        <div className="relative w-48 shrink-0 rounded-xl overflow-hidden bg-muted border border-border aspect-square">
           <img
             src={unblurUrl(firstItem.img_url)}
             alt={firstItem.description ?? firstItem._id}
@@ -1861,7 +1834,7 @@ function VaultConfigStep({
           {isVideo && (
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
               <div className="w-12 h-12 rounded-full bg-black/60 flex items-center justify-center">
-                <Film size={22} className="text-white" />
+                <IconMovie size={22} className="text-white" />
               </div>
             </div>
           )}
@@ -1876,7 +1849,7 @@ function VaultConfigStep({
         <div className="flex flex-col gap-4 flex-1 min-w-0">
           {/* Description */}
           <div>
-            <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-1">
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wide mb-1">
               Beschreibung <span className="text-red-400">*</span>
             </p>
             <Textarea
@@ -1891,10 +1864,10 @@ function VaultConfigStep({
                 ref={emojiBtnRef}
                 type="button"
                 onClick={handleEmojiBtnClick}
-                className="flex items-center justify-center w-8 h-8 rounded-lg border border-slate-600 bg-slate-700 text-gray-400 hover:text-[#ED4C27] hover:border-[#ED4C27] transition-colors"
+                className="flex items-center justify-center w-8 h-8 rounded-lg border border-border bg-muted text-muted-foreground hover:text-brand hover:border-brand transition-colors"
                 title="Emoji einfügen"
               >
-                <Smile size={15} />
+                <IconMoodSmile size={15} />
               </button>
               {isEmojiPickerOpen && createPortal(
                 <div
@@ -1917,9 +1890,9 @@ function VaultConfigStep({
 
           {/* Price */}
           <div>
-            <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-1">Preis ($)</p>
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wide mb-1">Preis ($)</p>
             <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm pointer-events-none">$</span>
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm pointer-events-none">$</span>
               <Input
                 value={priceInput}
                 onChange={(e) => setPriceInput(e.target.value.replace(/[^0-9.]/g, ''))}
@@ -1931,20 +1904,20 @@ function VaultConfigStep({
               <p className="text-[10px] text-red-400 mt-1">Mindestpreis: $3.00</p>
             )}
             {basePrice >= MIN_PRICE && (
-              <div className="mt-2 rounded-lg bg-slate-800/60 border border-slate-700 p-2.5 flex flex-col gap-1.5 text-[11px]">
+              <div className="mt-2 rounded-lg bg-muted/60 border border-border p-2.5 flex flex-col gap-1.5 text-[11px]">
                 <div>
-                  <span className="text-gray-500">Deine Provision:</span>
-                  <span className="text-gray-300 ml-1">
+                  <span className="text-muted-foreground">Deine Provision:</span>
+                  <span className="text-foreground ml-1">
                     ${basePrice.toFixed(2)} × 70% = <span className="text-green-400 font-semibold">${creatorAmount.toFixed(2)}</span>
                   </span>
                 </div>
                 <div>
-                  <span className="text-gray-500">Preis für User:</span>
-                  <span className="text-gray-300 ml-1">
-                    ${basePrice.toFixed(2)} + ${vatAmount.toFixed(2)} <span className="text-gray-500">(MwSt.)</span> = <span className="text-[#ED4C27] font-semibold">${userPrice.toFixed(2)}</span>
+                  <span className="text-muted-foreground">Preis für IconUser:</span>
+                  <span className="text-foreground ml-1">
+                    ${basePrice.toFixed(2)} + ${vatAmount.toFixed(2)} <span className="text-muted-foreground">(MwSt.)</span> = <span className="text-brand font-semibold">${userPrice.toFixed(2)}</span>
                   </span>
                 </div>
-                <p className="text-gray-600 leading-tight">
+                <p className="text-muted-foreground leading-tight">
                   Die MwSt. wird direkt abgeführt.
                 </p>
               </div>
@@ -1953,17 +1926,17 @@ function VaultConfigStep({
         </div>
       </div>
 
-      <div className="flex items-center justify-between pt-3 border-t border-slate-700">
+      <div className="flex items-center justify-between pt-3 border-t border-border">
         <button
           type="button"
           onClick={onBack}
-          className="flex items-center gap-2 text-sm text-gray-400 hover:text-gray-100 transition-colors"
+          className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
           disabled={isSaving}
         >
-          <ArrowLeft size={15} /> Zurück
+          <IconArrowLeft size={15} /> Zurück
         </button>
         <Button onClick={handleSave} disabled={isSaving || isPriceInvalid || !description.trim()}>
-          {isSaving ? <Loader2 size={15} className="animate-spin" /> : 'Speichern'}
+          {isSaving ? <IconLoader2 size={15} className="animate-spin" /> : 'Speichern'}
         </Button>
       </div>
     </div>
@@ -1979,8 +1952,8 @@ function AccountAvatar({ src, alt }: { src?: string; alt: string }) {
 
   if (!src || imgError) {
     return (
-      <div className="w-16 h-16 rounded-full bg-slate-700 flex items-center justify-center shrink-0">
-        <Users size={24} className="text-gray-500" />
+      <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center shrink-0">
+        <IconUsers size={24} className="text-muted-foreground" />
       </div>
     );
   }

@@ -1,22 +1,12 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
-import {
-  ArrowLeft,
-  Users,
-  AlertCircle,
-  MoreHorizontal,
-  Pencil,
-  Trash2,
-  UserMinus,
-  UserPlus,
-  RefreshCw,
-} from 'lucide-react';
+import { IconArrowLeft, IconUsers, IconAlertCircle, IconDots, IconPencil, IconTrash, IconUserPlus, IconRefresh, IconUserMinus } from '@tabler/icons-react';
 import { Card } from '../../../components/ui/Card';
 import { PageLoader } from '../../../components/ui/PageLoader';
 import { Modal } from '../../../components/ui/Modal';
 import { Input } from '../../../components/ui/Input';
-import { Select } from '../../../components/ui/Select';
+import { SelectField as Select } from '../../../components/ui/SelectField';
 import { useAuthStore } from '../../../lib/auth/useAuthStore';
 import { ToastContainer, toast } from '../../../lib/toast';
 import {
@@ -123,20 +113,20 @@ export function FourBasedAccountsPage() {
         <div className="flex items-center gap-4">
           <button
             onClick={() => navigate('/settings')}
-            className="p-2 rounded-lg text-gray-400 hover:text-gray-100 hover:bg-slate-700 transition-all"
+            className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-all"
           >
-            <ArrowLeft size={18} />
+            <IconArrowLeft size={18} />
           </button>
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-2xl sm:text-3xl font-bold text-gray-100">Account Management</h1>
+              <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Account Management</h1>
               {team?.team_name && (
-                <span className="hidden sm:inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-700 text-gray-300 border border-slate-600">
+                <span className="hidden sm:inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-muted text-foreground border border-border">
                   {team.team_name}
                 </span>
               )}
             </div>
-            <p className="mt-0.5 text-sm text-gray-400">
+            <p className="mt-0.5 text-sm text-muted-foreground">
               {accounts.length} account{accounts.length !== 1 ? 's' : ''} in this team
             </p>
           </div>
@@ -145,16 +135,16 @@ export function FourBasedAccountsPage() {
           <button
             onClick={handleSyncAll}
             disabled={isSyncing || isLoading}
-            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-300 bg-card border border-slate-600 rounded-lg hover:bg-slate-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-foreground bg-card border border-border rounded-lg hover:bg-muted transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <RefreshCw size={16} className={isSyncing ? 'animate-spin' : ''} />
+            <IconRefresh size={16} className={isSyncing ? 'animate-spin' : ''} />
             {isSyncing ? 'Syncing…' : 'Sync All'}
           </button>
           <button
             onClick={() => setIsAddModalOpen(true)}
-            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-[#ED4C27] hover:bg-[#D8431F] rounded-lg transition-colors shadow-sm"
+            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-brand hover:bg-brand-hover rounded-lg transition-colors shadow-sm"
           >
-            <UserPlus size={16} />
+            <IconUserPlus size={16} />
             Add Account
           </button>
         </div>
@@ -167,19 +157,19 @@ export function FourBasedAccountsPage() {
       ) : accounts.length === 0 ? (
         <EmptyState />
       ) : (
-        <Card className="overflow-hidden border border-slate-600">
+        <Card className="overflow-hidden border border-border">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-slate-700 bg-slate-800/50">
-                  <th className="text-left px-6 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">Account</th>
-                  <th className="text-left px-6 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">Revenue</th>
-                  <th className="text-left px-6 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">Followers</th>
-                  <th className="text-left px-6 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">Assigned To</th>
+                <tr className="border-b border-border bg-muted/50">
+                  <th className="text-left px-6 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide">Account</th>
+                  <th className="text-left px-6 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide">Revenue</th>
+                  <th className="text-left px-6 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide">Followers</th>
+                  <th className="text-left px-6 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide">Assigned To</th>
                   <th className="px-6 py-3" />
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-700">
+              <tbody className="divide-y divide-border">
                 {accounts.map((account) => (
                   <AccountRow
                     key={account.fourbased_id}
@@ -247,7 +237,7 @@ interface AccountRowProps {
 
 function AccountRow({ account, onEdit, onAssign, onUnassign, onDelete }: AccountRowProps) {
   return (
-    <tr className="hover:bg-slate-700/30 transition-colors">
+    <tr className="hover:bg-accent/30 transition-colors">
       {/* Name + avatar */}
       <td className="px-6 py-4">
         <div className="flex items-center gap-3">
@@ -259,8 +249,8 @@ function AccountRow({ account, onEdit, onAssign, onUnassign, onDelete }: Account
                 className="w-8 h-8 rounded-full object-cover"
               />
             ) : (
-              <div className="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center">
-                <span className="text-xs font-semibold text-gray-300">
+              <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
+                <span className="text-xs font-semibold text-foreground">
                   {account.name.charAt(0).toUpperCase()}
                 </span>
               </div>
@@ -271,28 +261,28 @@ function AccountRow({ account, onEdit, onAssign, onUnassign, onDelete }: Account
             />
           </div>
           <div>
-            <p className="font-medium text-gray-100">{account.name}</p>
-            <p className="text-xs text-gray-500">@{account.identifier}</p>
+            <p className="font-medium text-foreground">{account.name}</p>
+            <p className="text-xs text-muted-foreground">@{account.identifier}</p>
           </div>
         </div>
       </td>
 
-      <td className="px-6 py-4 text-gray-300">{account.revenue}</td>
-      <td className="px-6 py-4 text-gray-300">{account.followers.toLocaleString()}</td>
+      <td className="px-6 py-4 text-foreground">{account.revenue}</td>
+      <td className="px-6 py-4 text-foreground">{account.followers.toLocaleString()}</td>
 
       {/* Assigned to */}
       <td className="px-6 py-4">
         {account.assigned_to ? (
           <div className="flex items-center gap-1.5">
-            <div className="w-5 h-5 rounded-full bg-brand-primary/20 flex items-center justify-center shrink-0">
-              <span className="text-[10px] font-semibold text-brand-primary">
+            <div className="w-5 h-5 rounded-full bg-brand/20 flex items-center justify-center shrink-0">
+              <span className="text-[10px] font-semibold text-brand">
                 {(account.assigned_to.team_group_name ?? '?').charAt(0).toUpperCase()}
               </span>
             </div>
-            <span className="text-sm text-gray-300">{account.assigned_to.team_group_name ?? '—'}</span>
+            <span className="text-sm text-foreground">{account.assigned_to.team_group_name ?? '—'}</span>
           </div>
         ) : (
-          <span className="text-xs text-gray-500 italic">Unassigned</span>
+          <span className="text-xs text-muted-foreground italic">Unassigned</span>
         )}
       </td>
 
@@ -309,7 +299,7 @@ function AccountRow({ account, onEdit, onAssign, onUnassign, onDelete }: Account
   );
 }
 
-// ─── Actions Menu ─────────────────────────────────────────────────────────────
+// ─── Actions IconMenu2 ─────────────────────────────────────────────────────────────
 
 function ActionsMenu({ account, onEdit, onAssign, onUnassign, onDelete }: AccountRowProps) {
   const [open, setOpen] = useState(false);
@@ -342,50 +332,50 @@ function ActionsMenu({ account, onEdit, onAssign, onUnassign, onDelete }: Accoun
       <button
         ref={btnRef}
         onClick={handleOpen}
-        className="p-1.5 rounded-lg text-gray-400 hover:text-gray-100 hover:bg-slate-700 transition-all"
+        className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-all"
       >
-        <MoreHorizontal size={16} />
+        <IconDots size={16} />
       </button>
 
       {open && createPortal(
         <div
           style={{ position: 'absolute', top: pos.top, right: pos.right }}
-          className="w-44 bg-card border border-slate-600 rounded-lg shadow-xl overflow-hidden z-[9999]"
+          className="w-44 bg-card border border-border rounded-lg shadow-xl overflow-hidden z-[9999]"
           onMouseDown={(e) => e.stopPropagation()}
         >
           <button
-            className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-gray-300 hover:bg-slate-700 hover:text-gray-100 transition-colors"
+            className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-foreground hover:bg-muted hover:text-foreground transition-colors"
             onClick={() => action(onEdit)}
           >
-            <Pencil size={14} />
+            <IconPencil size={14} />
             Edit Credentials
           </button>
 
           {account.assigned_to ? (
             <button
-              className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-gray-300 hover:bg-slate-700 hover:text-gray-100 transition-colors"
+              className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-foreground hover:bg-muted hover:text-foreground transition-colors"
               onClick={() => action(onUnassign)}
             >
-              <UserMinus size={14} />
+              <IconUserMinus size={14} />
               Remove Assignment
             </button>
           ) : (
             <button
-              className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-gray-300 hover:bg-slate-700 hover:text-gray-100 transition-colors"
+              className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-foreground hover:bg-muted hover:text-foreground transition-colors"
               onClick={() => action(onAssign)}
             >
-              <UserPlus size={14} />
+              <IconUserPlus size={14} />
               Assign to Group
             </button>
           )}
 
-          <div className="border-t border-slate-700" />
+          <div className="border-t border-border" />
 
           <button
             className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-red-400 hover:bg-red-900/20 hover:text-red-300 transition-colors"
             onClick={() => action(onDelete)}
           >
-            <Trash2 size={14} />
+            <IconTrash size={14} />
             Delete Account
           </button>
         </div>,
@@ -441,8 +431,8 @@ function EditCredentialsModal({ account, onClose, onSave }: EditCredentialsModal
   return (
     <Modal isOpen={!!account} onClose={onClose} title="Edit Credentials" size="sm">
       <form onSubmit={handleSubmit} className="space-y-4">
-        <p className="text-sm text-gray-400">
-          Update credentials for <span className="text-gray-200 font-medium">{account?.name}</span>.
+        <p className="text-sm text-muted-foreground">
+          Update credentials for <span className="text-foreground font-medium">{account?.name}</span>.
           Leave a field blank to keep the current value.
         </p>
 
@@ -466,7 +456,7 @@ function EditCredentialsModal({ account, onClose, onSave }: EditCredentialsModal
 
         {error && (
           <p className="text-sm text-red-400 flex items-center gap-1.5">
-            <AlertCircle size={14} /> {error}
+            <IconAlertCircle size={14} /> {error}
           </p>
         )}
 
@@ -474,14 +464,14 @@ function EditCredentialsModal({ account, onClose, onSave }: EditCredentialsModal
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 text-sm text-gray-400 hover:text-gray-100 transition-colors"
+            className="px-4 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
           >
             Cancel
           </button>
           <button
             type="submit"
             disabled={isSaving}
-            className="px-5 py-2 bg-[#ED4C27] hover:bg-[#D8431F] disabled:opacity-60 text-white text-sm font-medium rounded-lg transition-colors"
+            className="px-5 py-2 bg-brand hover:bg-brand-hover disabled:opacity-60 text-white text-sm font-medium rounded-lg transition-colors"
           >
             {isSaving ? 'Saving…' : 'Save Changes'}
           </button>
@@ -542,8 +532,8 @@ function AssignModal({ account, onClose, onSave }: AssignModalProps) {
   return (
     <Modal isOpen={!!account} onClose={onClose} title="Assign to Group" size="sm">
       <form onSubmit={handleSubmit} className="space-y-4">
-        <p className="text-sm text-gray-400">
-          Assign <span className="text-gray-200 font-medium">{account?.name}</span> to a group.
+        <p className="text-sm text-muted-foreground">
+          Assign <span className="text-foreground font-medium">{account?.name}</span> to a group.
           Each account can only be assigned to one group.
         </p>
 
@@ -557,7 +547,7 @@ function AssignModal({ account, onClose, onSave }: AssignModalProps) {
 
         {error && (
           <p className="text-sm text-red-400 flex items-center gap-1.5">
-            <AlertCircle size={14} /> {error}
+            <IconAlertCircle size={14} /> {error}
           </p>
         )}
 
@@ -565,14 +555,14 @@ function AssignModal({ account, onClose, onSave }: AssignModalProps) {
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 text-sm text-gray-400 hover:text-gray-100 transition-colors"
+            className="px-4 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
           >
             Cancel
           </button>
           <button
             type="submit"
             disabled={isSaving || !selectedGroupId}
-            className="px-5 py-2 bg-[#ED4C27] hover:bg-[#D8431F] disabled:opacity-60 text-white text-sm font-medium rounded-lg transition-colors"
+            className="px-5 py-2 bg-brand hover:bg-brand-hover disabled:opacity-60 text-white text-sm font-medium rounded-lg transition-colors"
           >
             {isSaving ? 'Assigning…' : 'Assign'}
           </button>
@@ -617,18 +607,18 @@ function ConfirmModal({ isOpen, title, message, confirmLabel, danger, onClose, o
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={title} size="sm">
       <div className="space-y-4">
-        <p className="text-sm text-gray-400">{message}</p>
+        <p className="text-sm text-muted-foreground">{message}</p>
 
         {error && (
           <p className="text-sm text-red-400 flex items-center gap-1.5">
-            <AlertCircle size={14} /> {error}
+            <IconAlertCircle size={14} /> {error}
           </p>
         )}
 
         <div className="flex justify-end gap-3 pt-2">
           <button
             onClick={onClose}
-            className="px-4 py-2 text-sm text-gray-400 hover:text-gray-100 transition-colors"
+            className="px-4 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
           >
             Cancel
           </button>
@@ -638,7 +628,7 @@ function ConfirmModal({ isOpen, title, message, confirmLabel, danger, onClose, o
             className={`px-5 py-2 disabled:opacity-60 text-white text-sm font-medium rounded-lg transition-colors ${
               danger
                 ? 'bg-red-600 hover:bg-red-700'
-                : 'bg-[#ED4C27] hover:bg-[#D8431F]'
+                : 'bg-brand hover:bg-brand-hover'
             }`}
           >
             {isProcessing ? 'Processing…' : confirmLabel}
@@ -707,21 +697,21 @@ function AddAccountModal({ isOpen, onClose, onSubmit }: AddAccountModalProps) {
         />
         {formError && (
           <p className="text-sm text-red-400 flex items-center gap-1.5">
-            <AlertCircle size={14} /> {formError}
+            <IconAlertCircle size={14} /> {formError}
           </p>
         )}
         <div className="flex justify-end gap-3 pt-2">
           <button
             type="button"
             onClick={handleClose}
-            className="px-4 py-2 text-sm text-gray-400 hover:text-gray-100 transition-colors"
+            className="px-4 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
           >
             Cancel
           </button>
           <button
             type="submit"
             disabled={isSubmitting}
-            className="px-5 py-2 bg-[#ED4C27] hover:bg-[#D8431F] disabled:opacity-60 text-white text-sm font-medium rounded-lg transition-colors"
+            className="px-5 py-2 bg-brand hover:bg-brand-hover disabled:opacity-60 text-white text-sm font-medium rounded-lg transition-colors"
           >
             {isSubmitting ? 'Adding…' : 'Add Account'}
           </button>
@@ -735,10 +725,10 @@ function AddAccountModal({ isOpen, onClose, onSubmit }: AddAccountModalProps) {
 
 function EmptyState() {
   return (
-    <Card className="p-12 border border-slate-600">
+    <Card className="p-12 border border-border">
       <div className="text-center">
-        <Users className="w-12 h-12 mx-auto mb-3 text-gray-600" />
-        <p className="text-gray-400 font-medium">No accounts found</p>
+        <IconUsers className="w-12 h-12 mx-auto mb-3 text-muted-foreground" />
+        <p className="text-muted-foreground font-medium">No accounts found</p>
       </div>
     </Card>
   );
@@ -746,16 +736,16 @@ function EmptyState() {
 
 function ErrorState({ error, onRetry }: { error: string; onRetry: () => void }) {
   return (
-    <Card className="p-12 border border-slate-600">
+    <Card className="p-12 border border-border">
       <div className="text-center max-w-md mx-auto">
         <div className="w-16 h-16 rounded-full bg-red-900/30 flex items-center justify-center mx-auto mb-4">
-          <AlertCircle className="w-8 h-8 text-red-500" />
+          <IconAlertCircle className="w-8 h-8 text-red-500" />
         </div>
-        <h3 className="text-lg font-semibold text-gray-100 mb-2">Error loading accounts</h3>
-        <p className="text-gray-400 mb-6">{error}</p>
+        <h3 className="text-lg font-semibold text-foreground mb-2">Error loading accounts</h3>
+        <p className="text-muted-foreground mb-6">{error}</p>
         <button
           onClick={onRetry}
-          className="px-6 py-2 bg-[#ED4C27] hover:bg-[#D8431F] text-white font-medium rounded-lg transition-colors"
+          className="px-6 py-2 bg-brand hover:bg-brand-hover text-white font-medium rounded-lg transition-colors"
         >
           Retry
         </button>

@@ -36,7 +36,7 @@ function MediaCarousel({ items, isPurchased, price, previewUrl }: MediaCarouselP
   const total = items.length;
 
   return (
-    <div className="relative mb-2 w-full rounded-lg overflow-hidden border border-gray-700 bg-black">
+    <div className="relative mb-2 w-full rounded-lg overflow-hidden border border-border bg-black">
       <div className="relative w-full" style={{ aspectRatio: '4/5', maxHeight: '280px' }}>
         {isVideo ? (
           <video
@@ -191,11 +191,11 @@ export function ChatMessageList({
 
   return (
     <div ref={containerRef} className="flex-1 overflow-y-auto p-4 space-y-3" onScroll={handleScroll}>
-      {loadingOlder && <p className="text-xs text-gray-400 text-center">Lade ältere Nachrichten...</p>}
+      {loadingOlder && <p className="text-xs text-muted-foreground text-center">Lade ältere Nachrichten...</p>}
       {loadOlderError && <p className="text-xs text-red-400 text-center">{loadOlderError}</p>}
 
       {messages.length === 0 ? (
-        <p className="text-gray-400">Keine Nachrichten vorhanden.</p>
+        <p className="text-muted-foreground">Keine Nachrichten vorhanden.</p>
       ) : (
         messages.map((message) => {
           const ownMessage = isOwnMessage(message);
@@ -211,7 +211,7 @@ export function ChatMessageList({
               <button
                 type="button"
                 onClick={() => onEditFileStack(message)}
-                className="shrink-0 mb-1 p-1.5 rounded-lg text-gray-500 hover:text-[#ED4C27] hover:bg-slate-700 transition-colors"
+                className="shrink-0 mb-1 p-1.5 rounded-lg text-muted-foreground hover:text-brand hover:bg-muted transition-colors"
                 title="Bearbeiten"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor">
@@ -222,10 +222,10 @@ export function ChatMessageList({
             <div
               className={`max-w-[80%] rounded-2xl px-4 py-2 border ${
                 isTip
-                  ? 'bg-[#ED4C27]/10 border-[#ED4C27] text-[#ED4C27]'
+                  ? 'bg-brand/10 border-brand text-brand'
                   : ownMessage
-                  ? 'bg-[#ED4C27] border-[#ED4C27]/70 text-white'
-                  : 'bg-gray-800 border-gray-700 text-gray-100'
+                  ? 'bg-brand border-brand/70 text-white'
+                  : 'bg-muted border-border text-foreground'
               } ${message.img_preview_link ? 'w-64' : ''}`}
             >
               {message.img_preview_link && (() => {
@@ -247,7 +247,7 @@ export function ChatMessageList({
                 );
               })()}
               <p className="whitespace-pre-wrap break-words">{message.message || '-'}</p>
-              <div className={`mt-1 flex items-center justify-end gap-1 text-[11px] ${isTip ? 'text-[#ED4C27]/70' : ownMessage ? 'text-white/70' : 'text-gray-400'}`}>
+              <div className={`mt-1 flex items-center justify-end gap-1 text-[11px] ${isTip ? 'text-brand/70' : ownMessage ? 'text-white/70' : 'text-muted-foreground'}`}>
                 <span>{formatChatTimestamp(message.created_at ?? message.updated_at)}</span>
                 {status === 'sent' && <span aria-label="Gesendet">✓</span>}
                 {status === 'received' && <span className="text-blue-400" aria-label="Empfangen">✓✓</span>}

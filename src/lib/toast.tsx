@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { X, CheckCircle, AlertCircle, Info } from 'lucide-react';
+import { IconCircleCheck, IconAlertCircle, IconInfoCircle, IconX } from '@tabler/icons-react';
 
 type ToastType = 'success' | 'error' | 'info';
 
@@ -83,15 +83,15 @@ interface ToastItemProps {
 
 function ToastItem({ toast: item, onDismiss }: ToastItemProps) {
   const styles = {
-    success: 'bg-[#ED4C27] text-white',
+    success: 'bg-brand text-white',
     error: 'bg-red-600 text-white',
     info: 'bg-blue-600 text-white',
   };
 
   const icons = {
-    success: CheckCircle,
-    error: AlertCircle,
-    info: Info,
+    success: IconCircleCheck,
+    error: IconAlertCircle,
+    info: IconInfoCircle,
   };
 
   const Icon = icons[item.type];
@@ -107,7 +107,7 @@ function ToastItem({ toast: item, onDismiss }: ToastItemProps) {
         className="shrink-0 hover:opacity-80 transition-opacity"
         aria-label="Dismiss"
       >
-        <X size={18} />
+        <IconX size={18} />
       </button>
     </div>
   );

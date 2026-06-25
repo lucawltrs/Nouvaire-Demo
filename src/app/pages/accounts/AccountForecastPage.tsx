@@ -10,7 +10,7 @@ import {
   ResponsiveContainer,
   Legend,
 } from 'recharts';
-import { ArrowLeft, TrendingUp, TrendingDown, Minus, AlertCircle, Loader2 } from 'lucide-react';
+import { IconArrowLeft, IconTrendingUp, IconTrendingDown, IconMinus, IconAlertCircle, IconLoader2 } from '@tabler/icons-react';
 import { Card } from '../../../components/ui/Card';
 import { PageLoader } from '../../../components/ui/PageLoader';
 import {
@@ -68,8 +68,8 @@ const CustomTooltip = ({
 }) => {
   if (!active || !payload?.length) return null;
   return (
-    <div className="bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm shadow-xl">
-      <p className="text-gray-400 mb-1 text-xs">{label}</p>
+    <div className="bg-card border border-border rounded-lg px-3 py-2 text-sm shadow-xl">
+      <p className="text-muted-foreground mb-1 text-xs">{label}</p>
       {payload.map((entry) => (
         <p key={entry.name} style={{ color: entry.color }} className="font-semibold">
           {entry.name}: {formatCurrency(entry.value)}
@@ -144,16 +144,16 @@ export function AccountForecastPage() {
 
   if (error || !account) {
     return (
-      <Card className="p-12 border border-slate-600 max-w-lg mx-auto mt-12">
+      <Card className="p-12 border border-border max-w-lg mx-auto mt-12">
         <div className="text-center">
           <div className="w-16 h-16 rounded-full bg-red-900/30 flex items-center justify-center mx-auto mb-4">
-            <AlertCircle className="w-8 h-8 text-red-500" />
+            <IconAlertCircle className="w-8 h-8 text-red-500" />
           </div>
-          <h3 className="text-lg font-semibold text-gray-100 mb-2">Fehler beim Laden</h3>
-          <p className="text-gray-400 mb-6">{error ?? 'Account nicht gefunden'}</p>
+          <h3 className="text-lg font-semibold text-foreground mb-2">Fehler beim Laden</h3>
+          <p className="text-muted-foreground mb-6">{error ?? 'Account nicht gefunden'}</p>
           <button
             onClick={() => navigate(`/accounts/${fourbased_id}`)}
-            className="px-4 py-2 text-sm text-gray-300 border border-slate-600 rounded-lg hover:bg-slate-700 transition-colors"
+            className="px-4 py-2 text-sm text-foreground border border-border rounded-lg hover:bg-muted transition-colors"
           >
             Zurück zum Account
           </button>
@@ -169,14 +169,14 @@ export function AccountForecastPage() {
       {/* Back */}
       <button
         onClick={() => navigate(`/accounts/${fourbased_id}`)}
-        className="inline-flex items-center gap-2 text-sm text-gray-400 hover:text-gray-100 transition-colors"
+        className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
       >
-        <ArrowLeft size={16} />
+        <IconArrowLeft size={16} />
         Zurück zum Account
       </button>
 
       {/* Profile header */}
-      <Card className="p-6 border border-slate-600">
+      <Card className="p-6 border border-border">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-4">
             {account.img_url ? (
@@ -186,17 +186,17 @@ export function AccountForecastPage() {
                 className="w-14 h-14 rounded-full object-cover shrink-0"
               />
             ) : (
-              <div className="w-14 h-14 rounded-full bg-slate-700 shrink-0" />
+              <div className="w-14 h-14 rounded-full bg-muted shrink-0" />
             )}
             <div>
-              <h1 className="text-xl sm:text-2xl font-bold text-gray-100">{account.name}</h1>
-              <p className="text-sm text-gray-400 mt-0.5">Revenue Forecast</p>
+              <h1 className="text-xl sm:text-2xl font-bold text-foreground">{account.name}</h1>
+              <p className="text-sm text-muted-foreground mt-0.5">Revenue Forecast</p>
             </div>
           </div>
 
           {/* Days selector */}
           <div className="flex items-center gap-2">
-            <span className="text-xs text-gray-500 mr-1">Forecast:</span>
+            <span className="text-xs text-muted-foreground mr-1">Forecast:</span>
             {FORECAST_DAYS_OPTIONS.map((d) => (
               <button
                 key={d}
@@ -204,8 +204,8 @@ export function AccountForecastPage() {
                 disabled={isForecastLoading}
                 className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 border ${
                   forecastDays === d
-                    ? 'bg-[#ED4C27] border-[#ED4C27] text-white'
-                    : 'bg-slate-800 border-slate-600 text-gray-300 hover:bg-slate-700'
+                    ? 'bg-brand border-brand text-white'
+                    : 'bg-muted border-border text-foreground hover:bg-muted'
                 }`}
               >
                 {d}d
@@ -217,59 +217,59 @@ export function AccountForecastPage() {
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <Card className="p-5 border border-slate-600">
-          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+        <Card className="p-5 border border-border">
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
             Ø Tagesumsatz
           </p>
-          <p className="text-2xl font-bold text-gray-100">
+          <p className="text-2xl font-bold text-foreground">
             {formatCurrency(forecastData?.daily_average ?? 0)}
           </p>
-          <p className="text-xs text-gray-500 mt-1">basierend auf historischen Daten</p>
+          <p className="text-xs text-muted-foreground mt-1">basierend auf historischen Daten</p>
         </Card>
 
-        <Card className="p-5 border border-slate-600">
-          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+        <Card className="p-5 border border-border">
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
             Trend
           </p>
           <div className="flex items-center gap-2">
             {trend === 'up' && (
               <>
-                <TrendingUp className="w-6 h-6 text-green-400 shrink-0" />
+                <IconTrendingUp className="w-6 h-6 text-green-400 shrink-0" />
                 <span className="text-2xl font-bold text-green-400">Steigend</span>
               </>
             )}
             {trend === 'down' && (
               <>
-                <TrendingDown className="w-6 h-6 text-red-400 shrink-0" />
+                <IconTrendingDown className="w-6 h-6 text-red-400 shrink-0" />
                 <span className="text-2xl font-bold text-red-400">Fallend</span>
               </>
             )}
             {trend === 'stable' && (
               <>
-                <Minus className="w-6 h-6 text-yellow-400 shrink-0" />
+                <IconMinus className="w-6 h-6 text-yellow-400 shrink-0" />
                 <span className="text-2xl font-bold text-yellow-400">Stabil</span>
               </>
             )}
           </div>
-          <p className="text-xs text-gray-500 mt-1">vom Backend berechnet</p>
+          <p className="text-xs text-muted-foreground mt-1">vom Backend berechnet</p>
         </Card>
 
-        <Card className="p-5 border border-slate-600">
-          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+        <Card className="p-5 border border-border">
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
             Forecast-Summe ({forecastDays}d)
           </p>
-          <p className="text-2xl font-bold text-[#ED4C27]">{formatCurrency(forecastSum)}</p>
-          <p className="text-xs text-gray-500 mt-1">prognostizierter Umsatz</p>
+          <p className="text-2xl font-bold text-brand">{formatCurrency(forecastSum)}</p>
+          <p className="text-xs text-muted-foreground mt-1">prognostizierter Umsatz</p>
         </Card>
       </div>
 
       {/* Chart */}
-      <Card className="p-6 border border-slate-600">
+      <Card className="p-6 border border-border">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-base font-semibold text-gray-100">Umsatz & Prognose</h2>
+          <h2 className="text-base font-semibold text-foreground">Umsatz & Prognose</h2>
           {isForecastLoading && (
-            <span className="flex items-center gap-1.5 text-xs text-gray-400">
-              <Loader2 size={13} className="animate-spin" />
+            <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <IconLoader2 size={13} className="animate-spin" />
               Aktualisiere...
             </span>
           )}
@@ -277,13 +277,13 @@ export function AccountForecastPage() {
 
         {forecastError && (
           <div className="flex items-center gap-2 text-xs text-red-400 bg-red-900/20 border border-red-800/40 rounded-lg px-3 py-2 mb-4">
-            <AlertCircle size={13} />
+            <IconAlertCircle size={13} />
             {forecastError}
           </div>
         )}
 
         {chartData.length === 0 && !isForecastLoading ? (
-          <div className="flex items-center justify-center h-48 text-sm text-gray-500">
+          <div className="flex items-center justify-center h-48 text-sm text-muted-foreground">
             Keine Daten verfügbar
           </div>
         ) : (

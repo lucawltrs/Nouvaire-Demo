@@ -1,12 +1,13 @@
 import { useState, useEffect, useMemo, useCallback, useRef, memo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Card } from '../../components/ui/Card';
 import { PageLoader } from '../../components/ui/PageLoader';
 import { Modal } from '../../components/ui/Modal';
 import { Button } from '../../components/ui/Button';
 import { Textarea } from '../../components/ui/Textarea';
 import { Input } from '../../components/ui/Input';
-import { Receipt, Inbox, MessageSquareText, Heart, Users, Clock, ChevronDown, AlertCircle, User, CheckCheck, CornerUpLeft, Loader2, RotateCcw, Eye, X, Send, Plus } from 'lucide-react';
+import { Card, CardContent } from '../../components/ui/Card';
+import { Badge } from '../../components/ui/Badge';
+import { IconClock, IconChevronDown, IconAlertCircle, IconUser, IconChecks, IconLoader2, IconRotate, IconSend, IconPlus, IconTrendingUp, IconUsers, IconReceipt, IconEye, IconInbox, IconCornerUpLeft, IconMessageCircle, IconHeart } from '@tabler/icons-react';
 import { sendChatMessage } from '../../modules/4based/services/4based.api';
 import {
   dashboardApi,
@@ -17,7 +18,6 @@ import {
   mergeUnreadChats,
   formatCurrency,
   formatDate,
-  formatRelativeTime,
 } from '../../modules/dashboard';
 import { ToastContainer, toast } from '../../lib/toast';
 import { unreadCountStore } from '../../lib/unreadCountStore';
@@ -27,6 +27,7 @@ import { accountsApi } from '../../modules/accounts/accountsApi';
 import { massMessagesApi } from '../../modules/mass-messages/massMessagesApi';
 import type { Account } from '../../modules/accounts/types';
 import type { UserList } from '../../modules/mass-messages/types';
+import { cn } from '../../lib/utils';
 
 type RangeDays = 7 | 30 | 90;
 
@@ -72,10 +73,8 @@ export function DashboardPage() {
     accountsApi.getAccounts().then(setAccounts).catch(() => {});
   }, []);
 
-  // Handler to update KPIs after marking a chat as read
   const handleChatMarkedAsRead = useCallback((chatKey: string, unreadCount: number) => {
     setRemovedChatIds((prev) => new Set(prev).add(chatKey));
-    // Update KPIs und erzwinge neue Referenz für das Array
     setResponse((prev) => {
       if (!prev) return prev;
       const updatedData = prev.data.map((account) => {
@@ -92,19 +91,12 @@ export function DashboardPage() {
           },
         };
       });
-      // Neue Referenz für das Array erzwingen
-      return {
-        ...prev,
-        data: [...updatedData],
-      };
+      return { ...prev, data: [...updatedData] };
     });
   }, []);
 
-  // Compute aggregated or single account data
   const { kpis, chats } = useMemo(() => {
-    if (!response?.data) {
-      return { kpis: null, chats: [] };
-    }
+    if (!response?.data) return { kpis: null, chats: [] };
 
     if (selectedAccountId === 'all') {
       const aggregated = aggregateDashboard(response.data);
@@ -114,9 +106,7 @@ export function DashboardPage() {
     }
 
     const account = response.data.find((acc) => acc.profile.fourbased_id === selectedAccountId);
-    if (!account) {
-      return { kpis: null, chats: [] };
-    }
+    if (!account) return { kpis: null, chats: [] };
 
     return {
       kpis: {
@@ -145,37 +135,26 @@ export function DashboardPage() {
 
   if (isLoading) {
     return (
-      <div className="space-y-8">
+      <div className="space-y-6">
         <DashboardHeader
-          rangeDays={rangeDays}
-          onRangeChange={setRangeDays}
-          accounts={[]}
-          selectedAccountId={selectedAccountId}
-          onAccountChange={setSelectedAccountId}
-          meta={null}
-          onReload={loadDashboard}
-          isLoading={isLoading}
+          rangeDays={rangeDays} onRangeChange={setRangeDays}
+          accounts={[]} selectedAccountId={selectedAccountId}
+          onAccountChange={setSelectedAccountId} meta={null}
+          onReload={loadDashboard} isLoading={isLoading}
         />
-        <PageLoader
-          message="Lade Performance Daten..."
-          subtitle="KPIs, Umsatz und Chats werden geladen"
-        />
+        <PageLoader message="Lade Performance Daten..." subtitle="KPIs, Umsatz und Chats werden geladen" />
       </div>
     );
   }
 
   if (error || !response) {
     return (
-      <div className="space-y-8">
+      <div className="space-y-6">
         <DashboardHeader
-          rangeDays={rangeDays}
-          onRangeChange={setRangeDays}
-          accounts={[]}
-          selectedAccountId={selectedAccountId}
-          onAccountChange={setSelectedAccountId}
-          meta={null}
-          onReload={loadDashboard}
-          isLoading={isLoading}
+          rangeDays={rangeDays} onRangeChange={setRangeDays}
+          accounts={[]} selectedAccountId={selectedAccountId}
+          onAccountChange={setSelectedAccountId} meta={null}
+          onReload={loadDashboard} isLoading={isLoading}
         />
         <ErrorState error={error || 'Unknown error'} onRetry={() => window.location.reload()} />
       </div>
@@ -183,17 +162,13 @@ export function DashboardPage() {
   }
 
   return (
-    <div className="space-y-4 sm:space-y-8">
+    <div className="space-y-6">
       <ToastContainer />
       <DashboardHeader
-        rangeDays={rangeDays}
-        onRangeChange={setRangeDays}
-        accounts={response.data}
-        selectedAccountId={selectedAccountId}
-        onAccountChange={setSelectedAccountId}
-        meta={response.meta}
-        onReload={loadDashboard}
-        isLoading={isLoading}
+        rangeDays={rangeDays} onRangeChange={setRangeDays}
+        accounts={response.data} selectedAccountId={selectedAccountId}
+        onAccountChange={setSelectedAccountId} meta={response.meta}
+        onReload={loadDashboard} isLoading={isLoading}
       />
 
       {kpis && (
@@ -214,19 +189,21 @@ export function DashboardPage() {
       )}
 
       {chats.length > 0 && (
-        <LatestChatsSection 
-          chats={chats} 
+        <LatestChatsSection
+          chats={chats}
           showAccountName={selectedAccountId === 'all'}
           onChatMarkedAsRead={handleChatMarkedAsRead}
         />
       )}
 
       {chats.length === 0 && (
-        <Card className="p-12">
-          <div className="text-center text-gray-400">
-            <Inbox className="w-12 h-12 mx-auto mb-3 opacity-50" />
-            <p>No unread chats</p>
-          </div>
+        <Card>
+          <CardContent className="py-16">
+            <div className="text-center text-muted-foreground">
+              <IconInbox className="w-10 h-10 mx-auto mb-3 opacity-40" />
+              <p className="text-sm font-medium">No unread chats</p>
+            </div>
+          </CardContent>
         </Card>
       )}
     </div>
@@ -234,7 +211,7 @@ export function DashboardPage() {
 }
 
 // ============================================================================
-// Dashboard Header Component
+// Dashboard Header
 // ============================================================================
 
 interface DashboardHeaderProps {
@@ -248,16 +225,7 @@ interface DashboardHeaderProps {
   isLoading: boolean;
 }
 
-function DashboardHeader({
-  rangeDays,
-  onRangeChange,
-  accounts,
-  selectedAccountId,
-  onAccountChange,
-  meta,
-  onReload,
-  isLoading,
-}: DashboardHeaderProps) {
+function DashboardHeader({ rangeDays, onRangeChange, accounts, selectedAccountId, onAccountChange, meta, onReload, isLoading }: DashboardHeaderProps) {
   const [isAccountDropdownOpen, setIsAccountDropdownOpen] = useState(false);
 
   const selectedLabel =
@@ -266,39 +234,42 @@ function DashboardHeader({
       : accounts.find((acc) => acc.profile.fourbased_id === selectedAccountId)?.profile.name || 'Account';
 
   return (
-    <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
       <div>
-        <h1 className="text-2xl sm:text-3xl font-bold text-gray-100">Dashboard</h1>
+        <h1 className="text-xl font-semibold text-foreground">Dashboard</h1>
         {meta && (
-          <p className="hidden sm:block mt-2 text-xs sm:text-sm text-gray-400">
-            Last updated: {formatDate(meta.generated_at)} • Accounts: {meta.total_accounts}
+          <p className="hidden sm:block mt-0.5 text-sm text-muted-foreground">
+            Zuletzt aktualisiert: {formatDate(meta.generated_at)} · {meta.total_accounts} Accounts
           </p>
         )}
       </div>
 
-      <div className="flex flex-wrap gap-3 items-center">
-        {/* Reload Button */}
-        <button
+      <div className="flex flex-wrap gap-2 items-center">
+        {/* Reload */}
+        <Button
+          variant="outline"
+          size="sm"
           onClick={onReload}
-          className={`hidden sm:flex items-center justify-center px-3 sm:px-4 py-2 bg-[#ED4C27] hover:bg-[#D8431F] border border-[#ED4C27] hover:border-[#D8431F] rounded-lg transition-colors shadow-sm hover:shadow-md ${isLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
-          title="Reload dashboard"
           disabled={isLoading}
+          className="hidden sm:flex h-8 w-8 p-0"
         >
-          <RotateCcw size={20} className="text-white" style={isLoading ? { animation: 'spin-ccw 1s linear infinite' } : {}} />
-        </button>
+          <IconRotate size={14} className={isLoading ? 'animate-spin' : ''} />
+        </Button>
+
         {/* Range Selector */}
-        <div className="hidden sm:flex rounded-lg border border-slate-600 bg-card overflow-hidden">
+        <div className="hidden sm:flex rounded-lg border border-border bg-card overflow-hidden">
           {([7, 30, 90] as RangeDays[]).map((range) => (
             <button
               key={range}
               onClick={() => onRangeChange(range)}
-              className={`px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium transition-colors ${
+              className={cn(
+                'px-3 py-1.5 text-xs font-medium transition-colors',
                 rangeDays === range
-                  ? 'bg-[#ED4C27] text-white'
-                  : 'text-gray-300 hover:bg-slate-700'
-              }`}
+                  ? 'bg-brand text-white'
+                  : 'text-muted-foreground hover:bg-accent'
+              )}
             >
-              {range} days
+              {range}d
             </button>
           ))}
         </div>
@@ -307,45 +278,34 @@ function DashboardHeader({
         <div className="hidden sm:block relative">
           <button
             onClick={() => setIsAccountDropdownOpen(!isAccountDropdownOpen)}
-            className="flex items-center gap-2 px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-gray-300 bg-card border border-slate-600 rounded-lg hover:bg-slate-700 transition-colors min-w-0 max-w-[200px] sm:max-w-none"
+            className="flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-foreground bg-card border border-border rounded-lg hover:bg-accent transition-colors max-w-[180px]"
           >
             <span className="truncate">{selectedLabel}</span>
-            <ChevronDown size={16} className={`transition-transform shrink-0 ${isAccountDropdownOpen ? 'rotate-180' : ''}`} />
+            <IconChevronDown size={14} className={cn('shrink-0 transition-transform', isAccountDropdownOpen && 'rotate-180')} />
           </button>
 
           {isAccountDropdownOpen && (
             <>
-              <div
-                className="fixed inset-0 z-10"
-                onClick={() => setIsAccountDropdownOpen(false)}
-              />
-              <div className="absolute right-0 top-full mt-2 w-56 sm:w-64 bg-card border border-slate-600 rounded-lg shadow-lg overflow-hidden z-20">
+              <div className="fixed inset-0 z-10" onClick={() => setIsAccountDropdownOpen(false)} />
+              <div className="absolute right-0 top-full mt-1 w-56 bg-popover border border-border rounded-lg shadow-md overflow-hidden z-20">
                 <button
-                  onClick={() => {
-                    onAccountChange('all');
-                    setIsAccountDropdownOpen(false);
-                  }}
-                  className={`flex items-center gap-3 w-full text-left px-4 py-2 text-xs sm:text-sm transition-colors ${
-                    selectedAccountId === 'all'
-                      ? 'bg-[#ED4C27] text-white'
-                      : 'text-gray-300 hover:bg-slate-700'
-                  }`}
+                  onClick={() => { onAccountChange('all'); setIsAccountDropdownOpen(false); }}
+                  className={cn(
+                    'flex items-center gap-2.5 w-full text-left px-3 py-2 text-sm transition-colors',
+                    selectedAccountId === 'all' ? 'bg-brand/10 text-brand font-medium' : 'text-foreground hover:bg-accent'
+                  )}
                 >
-                  <Users size={18} className="shrink-0" />
-                  <span>All accounts</span>
+                  <IconUsers size={15} className="shrink-0" />
+                  All accounts
                 </button>
                 {accounts.map((account) => (
                   <button
                     key={account.profile.fourbased_id}
-                    onClick={() => {
-                      onAccountChange(account.profile.fourbased_id);
-                      setIsAccountDropdownOpen(false);
-                    }}
-                    className={`flex items-center gap-3 w-full text-left px-4 py-2 text-xs sm:text-sm transition-colors ${
-                      selectedAccountId === account.profile.fourbased_id
-                        ? 'bg-[#ED4C27] text-white'
-                        : 'text-gray-300 hover:bg-slate-700'
-                    }`}
+                    onClick={() => { onAccountChange(account.profile.fourbased_id); setIsAccountDropdownOpen(false); }}
+                    className={cn(
+                      'flex items-center gap-2.5 w-full text-left px-3 py-2 text-sm transition-colors',
+                      selectedAccountId === account.profile.fourbased_id ? 'bg-brand/10 text-brand font-medium' : 'text-foreground hover:bg-accent'
+                    )}
                   >
                     <Avatar src={account.profile.img_url} alt={account.profile.name} size="sm" />
                     <span className="truncate">{account.profile.name}</span>
@@ -361,7 +321,7 @@ function DashboardHeader({
 }
 
 // ============================================================================
-// KPI Grid Component
+// KPI Grid
 // ============================================================================
 
 interface KpiGridProps {
@@ -370,86 +330,98 @@ interface KpiGridProps {
   onOpenCreateMassMessage: () => void;
 }
 
-function KpiGrid({ kpis, isAggregated, onOpenCreateMassMessage }: KpiGridProps) {
+function KpiGrid({ kpis, onOpenCreateMassMessage }: KpiGridProps) {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
+    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
       <KpiCard
         title="Revenue"
         value={formatCurrency(kpis.revenue_net)}
-        icon={Receipt}
-        gradient="from-[#ED4C27] to-[#D8431F]"
+        icon={IconReceipt}
         subtitle="Net revenue"
+        accent="violet"
       />
       <KpiCard
         title="Unread Chats"
         value={kpis.unread_chats.toString()}
-        icon={Inbox}
-        gradient="from-[#ED4C27] to-[#D8431F]"
+        icon={IconInbox}
         subtitle="Needs attention"
+        accent="amber"
       />
       <KpiCard
         title="Messages"
         value={kpis.unread_messages.toString()}
-        icon={MessageSquareText}
-        gradient="from-[#ED4C27] to-[#D8431F]"
+        icon={IconMessageCircle}
         subtitle="Unread"
+        accent="blue"
       />
       <KpiCard
         title="Likes"
         value={kpis.likes.toString()}
-        icon={Heart}
-        gradient="from-[#ED4C27] to-[#D8431F]"
+        icon={IconHeart}
         subtitle="Total"
+        accent="rose"
       />
 
-      {/* Massennachricht erstellen */}
+      {/* Quick action: create mass message */}
       <button
         onClick={onOpenCreateMassMessage}
-        className="p-4 sm:p-6 border border-dashed border-slate-600 hover:border-[#ED4C27]/60 hover:bg-[#ED4C27]/5 transition-all rounded-lg bg-card group flex flex-col items-center justify-center gap-2 min-h-[100px]"
+        className="group p-4 rounded-lg border-2 border-dashed border-border hover:border-brand/40 hover:bg-brand/5 transition-all flex flex-col items-center justify-center gap-2 min-h-[90px]"
       >
-        <div className="w-9 h-9 rounded-full bg-[#ED4C27]/10 group-hover:bg-[#ED4C27]/20 border border-[#ED4C27]/30 group-hover:border-[#ED4C27]/60 flex items-center justify-center transition-all">
-          <Plus className="w-5 h-5 text-[#ED4C27]" />
+        <div className="w-8 h-8 rounded-lg bg-brand/10 group-hover:bg-brand/20 flex items-center justify-center transition-colors">
+          <IconPlus className="w-4 h-4 text-brand" />
         </div>
-        <p className="text-xs text-gray-500 group-hover:text-gray-300 transition-colors text-center leading-tight">
-          Massennachricht<br />erstellen
+        <p className="text-xs text-muted-foreground group-hover:text-brand transition-colors text-center leading-tight font-medium">
+          Mass Message
         </p>
       </button>
 
-      {/* Massennachrichten verwalten */}
+      {/* Quick link: manage mass messages */}
       <Link
         to="/mass-messages"
-        className="p-4 sm:p-6 border border-slate-600 hover:border-slate-500 hover:bg-slate-700/30 transition-all rounded-lg bg-card group flex flex-col items-center justify-center gap-2 min-h-[100px]"
+        className="group p-4 rounded-lg border border-border bg-card hover:border-border/80 hover:bg-accent transition-all flex flex-col items-center justify-center gap-2 min-h-[90px]"
       >
-        <div className="w-9 h-9 rounded-full bg-slate-700/60 group-hover:bg-slate-600/60 flex items-center justify-center transition-all">
-          <Send className="w-4 h-4 text-gray-400 group-hover:text-gray-200 transition-colors" />
+        <div className="w-8 h-8 rounded-lg bg-muted group-hover:bg-muted/80 flex items-center justify-center transition-colors">
+          <IconSend className="w-4 h-4 text-muted-foreground group-hover:text-foreground transition-colors" />
         </div>
-        <p className="text-xs text-gray-500 group-hover:text-gray-300 transition-colors text-center leading-tight">
-          Massennachrichten<br />verwalten
+        <p className="text-xs text-muted-foreground group-hover:text-foreground transition-colors text-center leading-tight font-medium">
+          Manage
         </p>
       </Link>
     </div>
   );
 }
 
+const ACCENT_CLASSES = {
+  violet: { bg: 'bg-violet-100 dark:bg-violet-900/30', icon: 'text-violet-600 dark:text-violet-400' },
+  amber:  { bg: 'bg-amber-100  dark:bg-amber-900/30',  icon: 'text-amber-600  dark:text-amber-400'  },
+  blue:   { bg: 'bg-blue-100   dark:bg-blue-900/30',   icon: 'text-blue-600   dark:text-blue-400'   },
+  rose:   { bg: 'bg-rose-100   dark:bg-rose-900/30',   icon: 'text-rose-600   dark:text-rose-400'   },
+  green:  { bg: 'bg-green-100  dark:bg-green-900/30',  icon: 'text-green-600  dark:text-green-400'  },
+} as const;
+
 interface KpiCardProps {
   title: string;
   value: string;
-  icon: any;
-  gradient: string;
+  icon: React.ComponentType<{ className?: string }>;
   subtitle: string;
+  accent: keyof typeof ACCENT_CLASSES;
 }
 
-const KpiCard = memo(function KpiCard({ title, value, icon: Icon, gradient, subtitle }: KpiCardProps) {
+const KpiCard = memo(function KpiCard({ title, value, icon: Icon, subtitle, accent }: KpiCardProps) {
+  const styles = ACCENT_CLASSES[accent];
   return (
-    <Card className="p-4 sm:p-6 border border-slate-600 hover:shadow-lg transition-shadow">
-      <div className="flex items-center justify-between mb-3 sm:mb-4">
-        <p className="text-xs sm:text-sm font-medium text-gray-400">{title}</p>
-        <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-gradient-to-br ${gradient} flex items-center justify-center`}>
-          <Icon className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+    <Card className="p-4 hover:shadow-md transition-shadow">
+      <div className="flex items-center justify-between mb-3">
+        <p className="text-xs font-medium text-muted-foreground">{title}</p>
+        <div className={cn('w-7 h-7 rounded-lg flex items-center justify-center', styles.bg)}>
+          <Icon className={cn('w-3.5 h-3.5', styles.icon)} />
         </div>
       </div>
-      <p className="text-xl sm:text-2xl font-bold text-gray-100 mb-1">{value}</p>
-      <p className="text-xs text-gray-500">{subtitle}</p>
+      <p className="text-2xl font-bold text-foreground mb-0.5 leading-none">{value}</p>
+      <p className="text-xs text-muted-foreground flex items-center gap-1">
+        <IconTrendingUp className="w-3 h-3" />
+        {subtitle}
+      </p>
     </Card>
   );
 });
@@ -472,9 +444,7 @@ const LatestChatsSection = memo(function LatestChatsSection({ chats, showAccount
   const handleMarkAsRead = async (chat: MergedUnreadChat) => {
     const chatKey = `${chat.fourbased_id}:${chat.chat_id}`;
     if (loadingChats.has(chatKey)) return;
-
     setLoadingChats((prev) => new Set(prev).add(chatKey));
-
     try {
       await dashboardApi.markChatAsRead(chat.fourbased_id, chat.chat_id);
       toast.success('Marked as read');
@@ -482,97 +452,86 @@ const LatestChatsSection = memo(function LatestChatsSection({ chats, showAccount
     } catch {
       toast.error('Failed to mark as read');
     } finally {
-      setLoadingChats((prev) => {
-        const next = new Set(prev);
-        next.delete(chatKey);
-        return next;
-      });
+      setLoadingChats((prev) => { const next = new Set(prev); next.delete(chatKey); return next; });
     }
   };
 
   return (
     <div>
-      <h2 className="hidden sm:block text-xl sm:text-2xl font-bold text-gray-100 mb-4">Latest unread chats</h2>
-      <Card className="divide-y divide-slate-700 border border-slate-600">
-        {chats.map((chat) => {
-          const chatKey = `${chat.fourbased_id}:${chat.chat_id}`;
-          const isLoading = loadingChats.has(chatKey);
+      <h2 className="text-base font-semibold text-foreground mb-3">Latest unread chats</h2>
+      <Card>
+        <div className="divide-y divide-border">
+          {chats.map((chat) => {
+            const chatKey = `${chat.fourbased_id}:${chat.chat_id}`;
+            const isLoading = loadingChats.has(chatKey);
 
-          return (
-            <div key={chatKey} className="p-4 sm:p-6 hover:bg-slate-700/50 transition-colors">
-              <div className="flex items-start gap-4">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-2 flex-wrap">
-                    <h3 className="font-semibold text-sm sm:text-base text-gray-100">{chat.customer_name}</h3>
-                    {chat.unread_count > 0 && (
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#ED4C27] text-white shrink-0">
-                        {chat.unread_count} new
-                      </span>
-                    )}
-                    {showAccountName && (
-                      <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-700 text-gray-300 shrink-0">
-                        <Avatar src={chat.account_img_url} alt={chat.account_name} size="sm" />
-                        <span>{chat.account_name}</span>
-                      </span>
-                    )}
+            return (
+              <div key={chatKey} className="px-4 py-3.5 hover:bg-accent transition-colors">
+                <div className="flex items-center gap-4">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1 flex-wrap">
+                      <h3 className="font-medium text-sm text-foreground">{chat.customer_name}</h3>
+                      {chat.unread_count > 0 && (
+                        <Badge className="bg-brand text-white text-[10px] px-1.5 py-0 h-4">
+                          {chat.unread_count}
+                        </Badge>
+                      )}
+                      {showAccountName && chat.account_name && (
+                        <span className="inline-flex items-center gap-1.5 text-[11px] text-muted-foreground bg-muted border border-border rounded-full px-2 py-0.5">
+                          <Avatar src={chat.account_img_url} alt={chat.account_name} size="sm" />
+                          {chat.account_name}
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs text-muted-foreground line-clamp-1 mb-1">{chat.last_message_preview}</p>
+                    <div className="flex items-center text-[11px] text-muted-foreground">
+                      <IconClock size={11} className="mr-1" />
+                      {formatDate(chat.last_message_at)}
+                    </div>
                   </div>
-                  <p className="text-xs sm:text-sm text-gray-400 line-clamp-2 mb-2">{chat.last_message_preview}</p>
-                  <div className="flex items-center text-xs text-gray-500">
-                    <Clock size={12} className="mr-1" />
-                    {formatDate(chat.last_message_at)}
+
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => navigate(`/inbox/${chat.fourbased_id}/chat/${chat.chat_id}`)}
+                      className="h-7 px-2.5 text-xs gap-1"
+                    >
+                      <IconEye size={13} />
+                      <span className="hidden sm:inline">Öffnen</span>
+                    </Button>
+
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setReplyChat(chat)}
+                      className="h-7 px-2.5 text-xs gap-1"
+                    >
+                      <IconCornerUpLeft size={13} />
+                      <span className="hidden sm:inline">Reply</span>
+                    </Button>
+
+                    <Button
+                      size="sm"
+                      onClick={() => handleMarkAsRead(chat)}
+                      disabled={isLoading}
+                      className="h-7 px-2.5 text-xs gap-1"
+                    >
+                      {isLoading ? <IconLoader2 size={13} className="animate-spin" /> : <IconChecks size={13} />}
+                      <span className="hidden sm:inline">
+                        {isLoading ? 'Marking…' : 'Read'}
+                      </span>
+                    </Button>
                   </div>
-                </div>
-
-                {/* Action Buttons */}
-                <div className="flex items-center gap-2 shrink-0">
-                  {/* Open chat */}
-                  <button
-                    onClick={() => navigate(`/inbox/${chat.fourbased_id}/chat/${chat.chat_id}`)}
-                    title="Chat öffnen"
-                    className="inline-flex items-center justify-center gap-1.5 px-3 py-2 text-xs sm:text-sm font-medium text-gray-300 hover:text-white bg-slate-700 hover:bg-slate-600 border border-slate-600 hover:border-slate-500 rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-1"
-                  >
-                    <Eye size={16} />
-                    <span className="hidden sm:inline">Öffnen</span>
-                  </button>
-
-                  {/* Quick reply */}
-                  <button
-                    onClick={() => setReplyChat(chat)}
-                    title="Antworten"
-                    className="inline-flex items-center justify-center gap-1.5 px-3 py-2 text-xs sm:text-sm font-medium text-gray-300 hover:text-white bg-slate-700 hover:bg-slate-600 border border-slate-600 hover:border-slate-500 rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-1"
-                  >
-                    <CornerUpLeft size={16} />
-                    <span className="hidden sm:inline">Reply</span>
-                  </button>
-
-                  {/* Mark as read */}
-                  <button
-                    onClick={() => handleMarkAsRead(chat)}
-                    disabled={isLoading}
-                    title="Als gelesen markieren"
-                    className="inline-flex items-center justify-center gap-1.5 px-3 py-2 text-xs sm:text-sm font-medium text-white bg-[#ED4C27] hover:bg-[#D8431F] border border-[#ED4C27] hover:border-[#D8431F] rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-[#ED4C27] focus:ring-offset-1 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow-md"
-                  >
-                    {isLoading ? (
-                      <Loader2 size={16} className="animate-spin" />
-                    ) : (
-                      <CheckCheck size={16} />
-                    )}
-                    <span className="hidden sm:inline">
-                      {isLoading ? 'Marking...' : 'Mark as read'}
-                    </span>
-                  </button>
                 </div>
               </div>
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
       </Card>
 
       {replyChat && (
-        <ReplyPopup
-          chat={replyChat}
-          onClose={() => setReplyChat(null)}
-        />
+        <ReplyPopup chat={replyChat} onClose={() => setReplyChat(null)} />
       )}
     </div>
   );
@@ -594,12 +553,8 @@ function ReplyPopup({ chat, onClose }: ReplyPopupProps) {
   const [sent, setSent] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // Focus textarea on open
-  useEffect(() => {
-    textareaRef.current?.focus();
-  }, []);
+  useEffect(() => { textareaRef.current?.focus(); }, []);
 
-  // Close on Escape
   useEffect(() => {
     const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
     document.addEventListener('keydown', handler);
@@ -625,68 +580,54 @@ function ReplyPopup({ chat, onClose }: ReplyPopupProps) {
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
-      e.preventDefault();
-      handleSend();
-    }
+    if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); handleSend(); }
   };
 
   return (
     <>
-      {/* Backdrop */}
-      <div
-        className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm"
-        onClick={onClose}
-      />
-
-      {/* Popup */}
+      <div className="fixed inset-0 z-40 bg-black/30 backdrop-blur-sm" onClick={onClose} />
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
-        <div className="w-full max-w-md bg-slate-800 border border-slate-600 rounded-2xl shadow-2xl pointer-events-auto animate-slide-in">
-          {/* Header */}
-          <div className="flex items-start justify-between p-4 border-b border-slate-700">
-            <div className="flex items-start gap-3 min-w-0">
-              <div className="flex-1 min-w-0">
-                <p className="text-xs text-gray-400 mb-0.5">Antwort an</p>
-                <p className="font-semibold text-gray-100 truncate">{chat.customer_name}</p>
-                {chat.account_name && (
-                  <span className="inline-flex items-center gap-1.5 mt-1 px-2 py-0.5 rounded-full text-[11px] bg-slate-700 text-gray-400">
-                    <Avatar src={chat.account_img_url} alt={chat.account_name} size="sm" />
-                    {chat.account_name}
-                  </span>
-                )}
-              </div>
+        <div className="w-full max-w-md bg-white border border-slate-200 rounded-xl shadow-xl pointer-events-auto animate-slide-in">
+          <div className="flex items-start justify-between px-4 py-3.5 border-b border-slate-100">
+            <div className="min-w-0">
+              <p className="text-xs text-slate-400 mb-0.5">Reply to</p>
+              <p className="font-semibold text-sm text-slate-900 truncate">{chat.customer_name}</p>
+              {chat.account_name && (
+                <span className="inline-flex items-center gap-1.5 mt-1 text-[11px] text-slate-500 bg-slate-100 rounded-full px-2 py-0.5">
+                  <Avatar src={chat.account_img_url} alt={chat.account_name} size="sm" />
+                  {chat.account_name}
+                </span>
+              )}
             </div>
             <div className="flex items-center gap-2 shrink-0 ml-3">
               <Link
                 to={`/inbox/${chat.fourbased_id}/chat/${chat.chat_id}`}
-                className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-gray-400 hover:text-gray-100 bg-slate-700 hover:bg-slate-600 border border-slate-600 rounded-lg transition-colors"
-                title="Chat vollständig öffnen"
+                className="inline-flex items-center gap-1 px-2 py-1 text-xs text-slate-500 hover:text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-md transition-colors"
               >
-                <Eye size={13} />
+                <IconEye size={12} />
                 Öffnen
               </Link>
               <button
                 onClick={onClose}
-                className="p-1.5 text-gray-500 hover:text-gray-200 hover:bg-slate-700 rounded-lg transition-colors"
-                aria-label="Schließen"
+                className="p-1 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-md transition-colors"
               >
-                <X size={16} />
+                <IconX size={15} />
               </button>
             </div>
           </div>
 
-          {/* Last message preview */}
-          <div className="px-4 py-3 bg-slate-900/40 border-b border-slate-700/50">
-            <p className="text-xs text-gray-500 mb-1">Letzte Nachricht</p>
-            <p className="text-sm text-gray-400 line-clamp-2">{chat.last_message_preview || '—'}</p>
-          </div>
+          {chat.last_message_preview && (
+            <div className="px-4 py-2.5 bg-slate-50 border-b border-slate-100">
+              <p className="text-[11px] text-slate-400 mb-0.5">Letzte Nachricht</p>
+              <p className="text-xs text-slate-600 line-clamp-2">{chat.last_message_preview}</p>
+            </div>
+          )}
 
-          {/* Input */}
           <div className="p-4">
             {sent ? (
-              <div className="flex items-center justify-center gap-2 py-6 text-green-400">
-                <CheckCheck size={20} />
-                <span className="font-medium">Nachricht gesendet!</span>
+              <div className="flex items-center justify-center gap-2 py-6 text-emerald-600">
+                <IconChecks size={18} />
+                <span className="text-sm font-medium">Nachricht gesendet!</span>
               </div>
             ) : (
               <>
@@ -697,24 +638,24 @@ function ReplyPopup({ chat, onClose }: ReplyPopupProps) {
                   onKeyDown={handleKeyDown}
                   placeholder="Nachricht eingeben…"
                   rows={4}
-                  className="w-full px-3 py-2.5 text-sm bg-slate-700 border border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ED4C27]/40 focus:border-[#ED4C27] text-gray-100 placeholder-gray-500 resize-none transition-colors"
+                  className="w-full px-3 py-2 text-sm bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-400 text-slate-900 placeholder-slate-400 resize-none transition-colors"
                 />
                 {error && (
-                  <p className="mt-2 text-xs text-red-400 flex items-center gap-1">
-                    <AlertCircle size={12} />
-                    {error}
+                  <p className="mt-2 text-xs text-red-500 flex items-center gap-1">
+                    <IconAlertCircle size={12} /> {error}
                   </p>
                 )}
                 <div className="flex items-center justify-between mt-3">
-                  <p className="text-[11px] text-gray-500">⌘ + Enter zum Senden</p>
-                  <button
+                  <p className="text-[11px] text-slate-400">⌘ + Enter zum Senden</p>
+                  <Button
+                    size="sm"
                     onClick={handleSend}
                     disabled={sending || !message.trim()}
-                    className="inline-flex items-center gap-2 px-4 py-2 bg-[#ED4C27] hover:bg-[#D8431F] text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="h-8 gap-1.5"
                   >
-                    {sending ? <Loader2 size={15} className="animate-spin" /> : <Send size={15} />}
+                    {sending ? <IconLoader2 size={13} className="animate-spin" /> : <IconSend size={13} />}
                     {sending ? 'Senden…' : 'Senden'}
-                  </button>
+                  </Button>
                 </div>
               </>
             )}
@@ -729,27 +670,19 @@ function ReplyPopup({ chat, onClose }: ReplyPopupProps) {
 // Error State
 // ============================================================================
 
-interface ErrorStateProps {
-  error: string;
-  onRetry: () => void;
-}
-
-function ErrorState({ error, onRetry }: ErrorStateProps) {
+function ErrorState({ error, onRetry }: { error: string; onRetry: () => void }) {
   return (
-    <Card className="p-12 border border-slate-600">
-      <div className="text-center max-w-md mx-auto">
-        <div className="w-16 h-16 rounded-full bg-red-900/30 flex items-center justify-center mx-auto mb-4">
-          <AlertCircle className="w-8 h-8 text-red-500" />
+    <Card>
+      <CardContent className="py-16">
+        <div className="text-center max-w-sm mx-auto">
+          <div className="w-12 h-12 rounded-full bg-red-50 flex items-center justify-center mx-auto mb-4">
+            <IconAlertCircle className="w-6 h-6 text-red-500" />
+          </div>
+          <h3 className="text-base font-semibold text-foreground mb-1">Fehler beim Laden</h3>
+          <p className="text-sm text-muted-foreground mb-5">{error}</p>
+          <Button onClick={onRetry} size="sm">Erneut versuchen</Button>
         </div>
-        <h3 className="text-lg font-semibold text-gray-100 mb-2">Error loading dashboard</h3>
-        <p className="text-gray-400 mb-6">{error}</p>
-        <button
-          onClick={onRetry}
-          className="px-6 py-2 bg-[#ED4C27] hover:bg-[#D8431F] text-white font-medium rounded-lg transition-colors"
-        >
-          Retry
-        </button>
-      </div>
+      </CardContent>
     </Card>
   );
 }
@@ -784,9 +717,7 @@ function CreateMassMessageModal({ accounts, onClose }: CreateMassMessageModalPro
     setStep('compose');
     setUserListsLoading(true);
     massMessagesApi.getUserLists(account.fourbased_id)
-      .then(setUserLists)
-      .catch(() => setUserLists([]))
-      .finally(() => setUserListsLoading(false));
+      .then(setUserLists).catch(() => setUserLists([])).finally(() => setUserListsLoading(false));
   };
 
   const toggleFilter = (value: string) => {
@@ -823,26 +754,26 @@ function CreateMassMessageModal({ accounts, onClose }: CreateMassMessageModalPro
   return (
     <Modal isOpen onClose={onClose} title="Massennachricht erstellen" size="md">
       {step === 'account' ? (
-        <div className="p-4 sm:p-6 space-y-4">
-          <p className="text-sm text-gray-400">Account auswählen:</p>
-          <div className="flex flex-col gap-2 max-h-72 overflow-y-auto pr-1">
+        <div className="p-5 space-y-3">
+          <p className="text-sm text-slate-500">Account auswählen:</p>
+          <div className="flex flex-col gap-2 max-h-72 overflow-y-auto">
             {accounts.map((account) => (
               <button
                 key={account.fourbased_id}
                 onClick={() => handleSelectAccount(account)}
-                className="flex items-center gap-3 px-4 py-3 rounded-xl border border-slate-700 bg-slate-800 hover:border-slate-500 hover:text-gray-100 text-gray-300 text-left transition-all"
+                className="flex items-center gap-3 px-4 py-3 rounded-lg border border-slate-200 bg-white hover:border-violet-300 hover:bg-violet-50/50 text-left transition-all"
               >
                 {account.img_url ? (
-                  <img src={account.img_url} alt={account.name} className="w-9 h-9 rounded-full object-cover shrink-0" />
+                  <img src={account.img_url} alt={account.name} className="w-8 h-8 rounded-full object-cover shrink-0" />
                 ) : (
-                  <div className="w-9 h-9 rounded-full bg-slate-700 flex items-center justify-center shrink-0 text-sm font-semibold">
+                  <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center shrink-0 text-sm font-semibold text-slate-600">
                     {account.name.charAt(0).toUpperCase()}
                   </div>
                 )}
                 <div className="min-w-0">
-                  <p className="text-sm font-medium truncate">{account.name}</p>
+                  <p className="text-sm font-medium text-slate-900 truncate">{account.name}</p>
                   {account.followers != null && (
-                    <p className="text-xs text-gray-500">{account.followers.toLocaleString()} followers</p>
+                    <p className="text-xs text-slate-400">{account.followers.toLocaleString()} followers</p>
                   )}
                 </div>
               </button>
@@ -850,51 +781,46 @@ function CreateMassMessageModal({ accounts, onClose }: CreateMassMessageModalPro
           </div>
         </div>
       ) : (
-        <div className="p-4 sm:p-6 space-y-5">
+        <div className="p-5 space-y-4">
           {selectedAccount && (
             <div className="flex items-center gap-2">
-              <button onClick={() => setStep('account')} className="text-xs text-gray-500 hover:text-gray-300 transition-colors">← zurück</button>
-              <span className="text-xs text-gray-500">Account:</span>
-              <span className="text-xs font-medium text-gray-300">{selectedAccount.name}</span>
+              <button onClick={() => setStep('account')} className="text-xs text-slate-400 hover:text-slate-600 transition-colors">← zurück</button>
+              <span className="text-xs text-slate-400">Account:</span>
+              <span className="text-xs font-medium text-slate-700">{selectedAccount.name}</span>
             </div>
           )}
 
-          <Textarea
-            label="Nachricht *"
-            placeholder="Nachricht eingeben…"
-            rows={4}
-            value={form.message}
-            onChange={(e) => setForm((f) => ({ ...f, message: e.target.value }))}
-          />
+          <Textarea label="Nachricht *" placeholder="Nachricht eingeben…" rows={4}
+            value={form.message} onChange={(e) => setForm((f) => ({ ...f, message: e.target.value }))} />
 
           <div>
-            <p className="text-sm font-medium text-gray-300 mb-2">Zielgruppe</p>
+            <p className="text-sm font-medium text-slate-700 mb-2">Zielgruppe</p>
             <div className="space-y-2">
               {FILTER_OPTIONS.map((opt) => (
-                <label key={opt.value} className="flex items-center gap-3 cursor-pointer group">
+                <label key={opt.value} className="flex items-center gap-2.5 cursor-pointer">
                   <input
                     type="checkbox"
                     checked={form.filter.includes(opt.value)}
                     onChange={() => toggleFilter(opt.value)}
-                    className="w-4 h-4 rounded border-slate-600 bg-slate-800 text-brand-primary focus:ring-brand-500 focus:ring-offset-slate-900"
+                    className="w-4 h-4 rounded border-slate-300 text-violet-600 focus:ring-violet-500"
                   />
-                  <span className="text-sm text-gray-300 group-hover:text-gray-100 transition-colors">{opt.label}</span>
+                  <span className="text-sm text-slate-700">{opt.label}</span>
                 </label>
               ))}
             </div>
           </div>
 
           {userListsLoading ? (
-            <div className="flex items-center gap-2 text-xs text-gray-500">
-              <span className="w-3 h-3 border border-gray-600 border-t-gray-400 rounded-full animate-spin" />
+            <div className="flex items-center gap-2 text-xs text-slate-400">
+              <span className="w-3 h-3 border border-slate-300 border-t-violet-500 rounded-full animate-spin" />
               Userlisten werden geladen…
             </div>
           ) : userLists.length > 0 && (
             <div>
-              <p className="text-sm font-medium text-gray-300 mb-2">User Lists</p>
-              <div className="space-y-2 max-h-36 overflow-y-auto pr-1">
+              <p className="text-sm font-medium text-slate-700 mb-2">User Lists</p>
+              <div className="space-y-2 max-h-36 overflow-y-auto">
                 {userLists.map((list) => (
-                  <label key={list._id} className="flex items-center gap-3 cursor-pointer group">
+                  <label key={list._id} className="flex items-center gap-2.5 cursor-pointer">
                     <input
                       type="checkbox"
                       checked={form.include_user_list.includes(list._id)}
@@ -904,32 +830,28 @@ function CreateMassMessageModal({ accounts, onClose }: CreateMassMessageModalPro
                           ? f.include_user_list.filter((id) => id !== list._id)
                           : [...f.include_user_list, list._id],
                       }))}
-                      className="w-4 h-4 rounded border-slate-600 bg-slate-800 text-brand-primary focus:ring-brand-500 focus:ring-offset-slate-900"
+                      className="w-4 h-4 rounded border-slate-300 text-violet-600 focus:ring-violet-500"
                     />
-                    <span className="text-sm text-gray-300 group-hover:text-gray-100 transition-colors">{list.name}</span>
+                    <span className="text-sm text-slate-700">{list.name}</span>
                   </label>
                 ))}
               </div>
             </div>
           )}
 
-          <Input
-            label="Geplant (optional)"
-            type="datetime-local"
-            value={form.to_be_posted_at}
-            onChange={(e) => setForm((f) => ({ ...f, to_be_posted_at: e.target.value }))}
-          />
+          <Input label="Geplant (optional)" type="datetime-local"
+            value={form.to_be_posted_at} onChange={(e) => setForm((f) => ({ ...f, to_be_posted_at: e.target.value }))} />
 
           {formError && (
-            <p className="text-sm text-red-400 flex items-center gap-1.5">
-              <AlertCircle size={14} /> {formError}
+            <p className="text-sm text-red-500 flex items-center gap-1.5">
+              <IconAlertCircle size={14} /> {formError}
             </p>
           )}
 
-          <div className="flex justify-end gap-3 pt-1">
-            <Button variant="secondary" onClick={onClose} disabled={isSubmitting}>Abbrechen</Button>
-            <Button onClick={handleCreate} disabled={isSubmitting} className="flex items-center gap-2">
-              <Send size={14} />
+          <div className="flex justify-end gap-2 pt-1">
+            <Button variant="outline" size="sm" onClick={onClose} disabled={isSubmitting}>Abbrechen</Button>
+            <Button size="sm" onClick={handleCreate} disabled={isSubmitting} className="gap-1.5">
+              <IconSend size={13} />
               {isSubmitting ? 'Senden…' : 'Erstellen'}
             </Button>
           </div>
@@ -949,35 +871,24 @@ interface AvatarProps {
   size?: 'sm' | 'md' | 'lg';
 }
 
-const avatarSizeClasses = {
-  sm: 'w-6 h-6',
-  md: 'w-8 h-8',
-  lg: 'w-10 h-10',
-} as const;
-
-const avatarIconSizes = {
-  sm: 14,
-  md: 16,
-  lg: 20,
-} as const;
+const avatarSizeClasses = { sm: 'w-5 h-5', md: 'w-7 h-7', lg: 'w-9 h-9' } as const;
+const avatarIconSizes = { sm: 12, md: 14, lg: 18 } as const;
 
 const Avatar = memo(function Avatar({ src, alt, size = 'md' }: AvatarProps) {
   const [failed, setFailed] = useState(false);
 
   if (!src || failed) {
     return (
-      <div className={`${avatarSizeClasses[size]} rounded-full bg-slate-700 flex items-center justify-center shrink-0`}>
-        <User size={avatarIconSizes[size]} className="text-gray-500" />
+      <div className={cn(avatarSizeClasses[size], 'rounded-full bg-slate-100 flex items-center justify-center shrink-0')}>
+        <IconUser size={avatarIconSizes[size]} className="text-slate-400" />
       </div>
     );
   }
 
   return (
     <img
-      src={src}
-      alt={alt}
-      loading="lazy"
-      className={`${avatarSizeClasses[size]} rounded-full object-cover shrink-0`}
+      src={src} alt={alt} loading="lazy"
+      className={cn(avatarSizeClasses[size], 'rounded-full object-cover shrink-0')}
       onError={() => setFailed(true)}
     />
   );

@@ -186,7 +186,7 @@ export function FourBasedModelStatisticsPage() {
   if (!account) {
     return (
       <div className="text-center py-12">
-        <p className="text-gray-400">Account nicht gefunden</p>
+        <p className="text-muted-foreground">Account nicht gefunden</p>
         <Link to="/4based/models" className="inline-block mt-4">
           <Button variant="secondary">Zurück zur Liste</Button>
         </Link>
@@ -214,14 +214,14 @@ export function FourBasedModelStatisticsPage() {
             <img
               src={account.img_url}
               alt={account.name}
-              className="w-14 h-14 rounded-full object-cover border border-gray-700"
+              className="w-14 h-14 rounded-full object-cover border border-border"
             />
             <div className="min-w-0">
-                <h1 className="text-3xl font-bold text-gray-100">{account.name} Statistics</h1>
+                <h1 className="text-3xl font-bold text-foreground">{account.name} Statistics</h1>
             </div>
           </div>
           <div className="text-right">
-            <p className="text-sm text-gray-400">Total Amount</p>
+            <p className="text-sm text-muted-foreground">Total Amount</p>
             <p className="text-3xl font-bold text-cyan-400">{formatAmount(getMetricValue('total_netto_amount'))}</p>
           </div>
         </div>
@@ -255,26 +255,26 @@ export function FourBasedModelStatisticsPage() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
         <Card className="p-5">
-          <p className="text-sm text-gray-400">Abonnements</p>
+          <p className="text-sm text-muted-foreground">Abonnements</p>
           <p className="text-2xl font-bold text-cyan-400">{formatAmount(getMetricValue('subscription_netto_amount'))}</p>
         </Card>
         <Card className="p-5">
-          <p className="text-sm text-gray-400">Trinkgeld</p>
+          <p className="text-sm text-muted-foreground">Trinkgeld</p>
           <p className="text-2xl font-bold text-cyan-400">{formatAmount(getMetricValue('chat_tip_netto_amount'))}</p>
         </Card>
         <Card className="p-5">
-          <p className="text-sm text-gray-400">Einzelnachrichten</p>
+          <p className="text-sm text-muted-foreground">Einzelnachrichten</p>
           <p className="text-2xl font-bold text-cyan-400">{formatAmount(getMetricValue('message_netto_amount'))}</p>
         </Card>
         <Card className="p-5">
-          <p className="text-sm text-gray-400">Medienverkäufe</p>
+          <p className="text-sm text-muted-foreground">Medienverkäufe</p>
           <p className="text-2xl font-bold text-cyan-400">{formatAmount(getMetricValue('message_file_stack_netto_amount'))}</p>
         </Card>
       </div>
 
       <Card className="p-6">
         <div className="flex items-center justify-between gap-4 mb-4">
-          <h2 className="text-lg font-semibold text-gray-100">Metrik-Suche</h2>
+          <h2 className="text-lg font-semibold text-foreground">Metrik-Suche</h2>
           <div className="flex items-center gap-2">
             <Button
               variant="secondary"
@@ -303,13 +303,13 @@ export function FourBasedModelStatisticsPage() {
 
             <div className="mt-4">
               {metricEntries.length === 0 ? (
-                <p className="text-gray-300">Keine Metriken gefunden.</p>
+                <p className="text-foreground">Keine Metriken gefunden.</p>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
                   {metricEntries.map((entry) => (
-                    <div key={entry.key} className="bg-gray-800/60 border border-gray-700 rounded-lg p-3">
-                      <p className="text-sm text-gray-400 mb-1">{entry.key}</p>
-                      <p className="text-lg font-semibold text-gray-100">{formatAmount(entry.value)}</p>
+                    <div key={entry.key} className="bg-muted/60 border border-border rounded-lg p-3">
+                      <p className="text-sm text-muted-foreground mb-1">{entry.key}</p>
+                      <p className="text-lg font-semibold text-foreground">{formatAmount(entry.value)}</p>
                     </div>
                   ))}
                 </div>

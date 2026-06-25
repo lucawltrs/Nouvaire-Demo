@@ -2,18 +2,7 @@ import { useState, useEffect, useCallback, memo, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { Card } from '../../components/ui/Card';
 import { PageLoader } from '../../components/ui/PageLoader';
-import {
-  CheckCheck,
-  MessageSquare,
-  User,
-  Loader2,
-  AlertCircle,
-  RotateCcw,
-  MessageSquareOff,
-  Search,
-  X,
-  ChevronsDown,
-} from 'lucide-react';
+import { IconChecks, IconMessage, IconUser, IconLoader2, IconAlertCircle, IconRotate, IconMessageOff, IconSearch, IconChevronsDown, IconX } from '@tabler/icons-react';
 import { inboxApi } from '../../modules/inbox/services/inbox.api';
 import type { ChatListItem, InboxAccount, InboxFilter } from '../../modules/inbox/types';
 import { ToastContainer, toast } from '../../lib/toast';
@@ -122,7 +111,6 @@ export function InboxPage() {
           chatOffsetRef.current += resolved.length;
           setHasMoreChats(pageHasMore);
         } else if (silent) {
-          // Smart merge: update existing chats, prepend truly new ones, keep extra loaded pages
           setChats((prev) => {
             const resolvedMap = new Map(resolved.map((c) => [`${c.fourbased_id}:${c.chat_id}`, c]));
             const prevIds = new Set(prev.map((c) => `${c.fourbased_id}:${c.chat_id}`));
@@ -214,7 +202,7 @@ export function InboxPage() {
     return () => observer.disconnect();
   }, [loadMoreChats]);
 
-  // React to chats being marked as read from other pages (e.g. InboxChatPage after reply)
+  // React to chats being marked as read from other pages
   useEffect(() => {
     return newMessageNotifications.onChatRead((fourbasedId, chatId) => {
       const key = `${fourbasedId}:${chatId}`;
@@ -273,16 +261,16 @@ export function InboxPage() {
 
       {/* Title */}
       <div>
-        <h1 className="text-2xl sm:text-3xl font-bold text-gray-100">Inbox</h1>
-        <p className="mt-1 text-xs sm:text-sm text-gray-400">Last 30 days</p>
+        <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Inbox</h1>
+        <p className="mt-1 text-xs sm:text-sm text-muted-foreground">Last 30 days</p>
       </div>
 
       {/* Account tabs */}
       {accountsLoading ? (
         <PageLoader message="Lade Inbox..." subtitle="Accounts werden abgerufen" />
       ) : accountsError ? (
-        <div className="flex items-center gap-2 px-4 py-3 bg-red-900/20 border border-red-700/40 rounded-lg text-sm text-red-400">
-          <AlertCircle size={16} className="shrink-0" />
+        <div className="flex items-center gap-2 px-4 py-3 bg-destructive/10 border border-destructive/30 rounded-lg text-sm text-destructive">
+          <IconAlertCircle size={16} className="shrink-0" />
           {accountsError}
         </div>
       ) : (
@@ -292,8 +280,8 @@ export function InboxPage() {
             onClick={() => setActiveTabId('__all__')}
             className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium whitespace-nowrap transition-colors border shrink-0 ${
               activeTabId === '__all__'
-                ? 'bg-[#ED4C27] border-[#ED4C27] text-white'
-                : 'bg-card border-slate-600 text-gray-300 hover:bg-slate-700'
+                ? 'bg-brand border-brand text-white'
+                : 'bg-card border-border text-muted-foreground hover:bg-accent hover:text-foreground'
             }`}
           >
             All
@@ -304,8 +292,8 @@ export function InboxPage() {
               onClick={() => setActiveTabId(acc.fourbased_id)}
               className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium whitespace-nowrap transition-colors border shrink-0 ${
                 activeTabId === acc.fourbased_id
-                  ? 'bg-[#ED4C27] border-[#ED4C27] text-white'
-                  : 'bg-card border-slate-600 text-gray-300 hover:bg-slate-700'
+                  ? 'bg-brand border-brand text-white'
+                  : 'bg-card border-border text-muted-foreground hover:bg-accent hover:text-foreground'
               }`}
             >
               <AccountAvatar src={acc.img_url} name={acc.name} size="sm" />
@@ -320,21 +308,21 @@ export function InboxPage() {
         <div className="flex flex-wrap gap-3 items-center">
           {activeTabId !== '__all__' && (
             <div className="relative flex-1 min-w-[180px] max-w-xs">
-              <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+              <IconSearch size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search chats…"
-                className="w-full pl-8 pr-8 py-2 text-sm bg-slate-800 border border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ED4C27]/40 focus:border-[#ED4C27] text-gray-100 placeholder-gray-500 transition-colors"
+                className="w-full pl-8 pr-8 py-2 text-sm bg-card border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-brand/40 focus:border-brand text-foreground placeholder-muted-foreground transition-colors"
               />
               {searchQuery && (
                 <button
                   onClick={() => setSearchQuery('')}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-100 transition-colors"
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                   aria-label="Clear search"
                 >
-                  <X size={14} />
+                  <IconX size={14} />
                 </button>
               )}
             </div>
@@ -347,11 +335,11 @@ export function InboxPage() {
             onClick={() => loadChats(activeTabId)}
             disabled={chatsLoading}
             title="Reload"
-            className={`flex items-center justify-center px-3 py-2 bg-[#ED4C27] hover:bg-[#D8431F] border border-[#ED4C27] rounded-lg transition-colors shadow-sm ${
+            className={`flex items-center justify-center px-3 py-2 bg-brand hover:bg-brand-hover border border-brand rounded-lg transition-colors shadow-sm ${
               chatsLoading ? 'opacity-70 cursor-not-allowed' : ''
             }`}
           >
-            <RotateCcw
+            <IconRotate
               size={18}
               className="text-white"
               style={chatsLoading ? { animation: 'spin-ccw 1s linear infinite' } : {}}
@@ -359,13 +347,13 @@ export function InboxPage() {
           </button>
 
           {/* Filter: All / Online / Unread */}
-          <div className="flex rounded-lg border border-slate-600 bg-card overflow-hidden">
+          <div className="flex rounded-lg border border-border bg-card overflow-hidden">
             {([['all', 'All'], ['online', 'Online'], ['unread', 'Unread']] as [InboxFilter, string][]).map(([f, label]) => (
               <button
                 key={f}
                 onClick={() => setFilter(f)}
                 className={`px-4 py-2 text-xs sm:text-sm font-medium transition-colors ${
-                  filter === f ? 'bg-[#ED4C27] text-white' : 'text-gray-300 hover:bg-slate-700'
+                  filter === f ? 'bg-brand text-white' : 'text-muted-foreground hover:bg-accent hover:text-foreground'
                 }`}
               >
                 {label}
@@ -385,7 +373,7 @@ export function InboxPage() {
           <EmptyState filter={filter} />
         ) : (
           <>
-            <Card className="divide-y divide-slate-700 border border-slate-600 overflow-hidden">
+            <Card className="divide-y divide-border border border-border overflow-hidden">
               {displayedChats.map((chat) => {
                 const key = `${chat.fourbased_id}:${chat.chat_id}`;
                 return (
@@ -402,13 +390,13 @@ export function InboxPage() {
             {searchQuery.trim().length < 3 && (
               <div ref={sentinelRef} className="flex items-center justify-center py-4">
                 {loadingMoreChats ? (
-                  <Loader2 size={18} className="animate-spin text-gray-500" />
+                  <IconLoader2 size={18} className="animate-spin text-muted-foreground" />
                 ) : hasMoreChats ? (
                   <button
                     onClick={loadMoreChats}
-                    className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-300 transition-colors"
+                    className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
                   >
-                    <ChevronsDown size={16} />
+                    <IconChevronsDown size={16} />
                     Mehr laden
                   </button>
                 ) : null}
@@ -435,7 +423,7 @@ const ChatRow = memo(function ChatRow({ chat, isLoading, onMarkAsRead }: ChatRow
   return (
     <Link
       to={`/inbox/${chat.fourbased_id}/chat/${chat.chat_id}`}
-      className="flex items-center gap-3 sm:gap-4 px-4 sm:px-6 py-4 hover:bg-slate-700/50 transition-colors group"
+      className="flex items-center gap-3 sm:gap-4 px-4 sm:px-6 py-4 hover:bg-accent/50 transition-colors group"
       style={{ textDecoration: 'none', color: 'inherit' }}
     >
       {/* Avatar */}
@@ -444,34 +432,28 @@ const ChatRow = memo(function ChatRow({ chat, isLoading, onMarkAsRead }: ChatRow
       {/* Main content */}
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 flex-wrap mb-0.5">
-          <span className="font-semibold text-sm text-gray-100 truncate">{chat.customer_name}</span>
+          <span className="font-semibold text-sm text-foreground truncate">{chat.customer_name}</span>
 
           {/* Sales badge */}
           {typeof chat.sales_volume === 'number' && (
-            <span
-              className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold shrink-0"
-              style={{ background: 'rgba(237,76,39,0.12)', color: '#ED4C27' }}
-            >
+            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold shrink-0 bg-brand/10 text-brand">
               ${ (chat.sales_volume / 100).toFixed(2) }
             </span>
           )}
 
           {chat.is_unread && (
-            <span
-              className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold shrink-0"
-              style={{ background: 'rgba(237,76,39,0.12)', color: '#ED4C27' }}
-            >
+            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold shrink-0 bg-brand/10 text-brand">
               {chat.unread_count > 0 ? `${chat.unread_count} new` : 'Unread'}
             </span>
           )}
         </div>
 
-        <p className="text-xs sm:text-sm text-gray-500 truncate">{chat.last_message_preview}</p>
+        <p className="text-xs sm:text-sm text-muted-foreground truncate">{chat.last_message_preview}</p>
       </div>
 
       {/* Right: time + actions */}
       <div className="flex flex-col items-end gap-2 shrink-0">
-        <span className="text-xs text-gray-400 whitespace-nowrap">
+        <span className="text-xs text-muted-foreground whitespace-nowrap">
           {formatRelativeTime(chat.last_message_at)}
         </span>
 
@@ -482,12 +464,12 @@ const ChatRow = memo(function ChatRow({ chat, isLoading, onMarkAsRead }: ChatRow
               onClick={e => { e.preventDefault(); onMarkAsRead(chat); }}
               disabled={isLoading}
               title="Mark as read"
-              className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-white bg-[#ED4C27] hover:bg-[#D8431F] transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-[#ED4C27] focus:ring-offset-1"
+              className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-white bg-brand hover:bg-brand-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-1"
             >
               {isLoading ? (
-                <Loader2 size={14} className="animate-spin" />
+                <IconLoader2 size={14} className="animate-spin" />
               ) : (
-                <CheckCheck size={14} />
+                <IconChecks size={14} />
               )}
             </button>
           )}
@@ -495,10 +477,10 @@ const ChatRow = memo(function ChatRow({ chat, isLoading, onMarkAsRead }: ChatRow
           {/* Chat öffnen */}
           <span
             title="Chat öffnen"
-            className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-gray-400 bg-slate-700 hover:bg-slate-600 border border-slate-600 hover:border-slate-500 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-1 group-hover:border-[#ED4C27]"
+            className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-muted-foreground bg-muted hover:bg-accent border border-border transition-colors focus:outline-none group-hover:border-brand"
             style={{ pointerEvents: 'none' }}
           >
-            <MessageSquare size={14} />
+            <IconMessage size={14} />
           </span>
         </div>
       </div>
@@ -526,9 +508,9 @@ const AccountAvatar = memo(function AccountAvatar({ src, name, size = 'md', isOn
 
   const avatar = !src || failed ? (
     <div
-      className={`${sizeClass} rounded-full bg-slate-700 border border-slate-600 flex items-center justify-center shrink-0 text-gray-400 font-semibold ${textClass}`}
+      className={`${sizeClass} rounded-full bg-muted border border-border flex items-center justify-center shrink-0 text-muted-foreground font-semibold ${textClass}`}
     >
-      {(name ?? '').split(' ').slice(0, 2).map((w) => w[0]?.toUpperCase() ?? '').join('') || <User size={iconSize} />}
+      {(name ?? '').split(' ').slice(0, 2).map((w) => w[0]?.toUpperCase() ?? '').join('') || <IconUser size={iconSize} />}
     </div>
   ) : (
     <img
@@ -546,7 +528,7 @@ const AccountAvatar = memo(function AccountAvatar({ src, name, size = 'md', isOn
     <div className="relative shrink-0">
       {avatar}
       <span
-        className={`absolute bottom-0 right-0 ${dotClass} rounded-full bg-green-500 ring-2 ring-[#0F172A]`}
+        className={`absolute bottom-0 right-0 ${dotClass} rounded-full bg-green-500 ring-2 ring-background`}
       />
     </div>
   );
@@ -558,13 +540,13 @@ const AccountAvatar = memo(function AccountAvatar({ src, name, size = 'md', isOn
 
 function EmptyState({ filter }: { filter: InboxFilter }) {
   return (
-    <Card className="p-12 border border-slate-600">
-      <div className="text-center text-gray-500">
-        <MessageSquareOff className="w-12 h-12 mx-auto mb-3 opacity-50" />
-        <p className="font-medium text-gray-400">
+    <Card className="p-12 border border-border">
+      <div className="text-center text-muted-foreground">
+        <IconMessageOff className="w-12 h-12 mx-auto mb-3 opacity-40" />
+        <p className="font-medium text-muted-foreground">
           {filter === 'unread' ? 'No unread chats' : 'No chats found'}
         </p>
-        <p className="text-sm mt-1">
+        <p className="text-sm mt-1 text-muted-foreground/70">
           {filter === 'unread' ? 'All caught up!' : 'No chats in the last 30 days.'}
         </p>
       </div>
@@ -578,16 +560,16 @@ function EmptyState({ filter }: { filter: InboxFilter }) {
 
 function ErrorState({ error, onRetry }: { error: string; onRetry: () => void }) {
   return (
-    <Card className="p-12 border border-slate-600">
+    <Card className="p-12 border border-border">
       <div className="text-center max-w-md mx-auto">
-        <div className="w-16 h-16 rounded-full bg-red-900/30 flex items-center justify-center mx-auto mb-4">
-          <AlertCircle className="w-8 h-8 text-red-500" />
+        <div className="w-16 h-16 rounded-full bg-destructive/10 flex items-center justify-center mx-auto mb-4">
+          <IconAlertCircle className="w-8 h-8 text-destructive" />
         </div>
-        <h3 className="text-lg font-semibold text-gray-100 mb-2">Error loading inbox</h3>
-        <p className="text-gray-400 mb-6 text-sm">{error}</p>
+        <h3 className="text-lg font-semibold text-foreground mb-2">Error loading inbox</h3>
+        <p className="text-muted-foreground mb-6 text-sm">{error}</p>
         <button
           onClick={onRetry}
-          className="px-6 py-2 bg-[#ED4C27] hover:bg-[#D8431F] text-white text-sm font-medium rounded-lg transition-colors"
+          className="px-6 py-2 bg-brand hover:bg-brand-hover text-white text-sm font-medium rounded-lg transition-colors"
         >
           Retry
         </button>

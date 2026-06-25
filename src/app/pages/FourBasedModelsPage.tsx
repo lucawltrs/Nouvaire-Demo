@@ -89,12 +89,12 @@ const FourBasedModelsPage: React.FC = () => {
         <>
       {users.length === 0 && (
         <Card className="p-4 mt-4">
-          <p className="text-gray-300">Keine 4Based Accounts gefunden.</p>
+          <p className="text-foreground">Keine 4Based Accounts gefunden.</p>
         </Card>
       )}
       {users.length > 0 && filteredUsers.length === 0 && (
         <Card className="p-4 mt-4">
-          <p className="text-gray-300">Keine Treffer für deine Suche.</p>
+          <p className="text-foreground">Keine Treffer für deine Suche.</p>
         </Card>
       )}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">

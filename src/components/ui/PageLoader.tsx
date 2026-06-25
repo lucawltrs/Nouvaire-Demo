@@ -14,7 +14,7 @@ export function PageLoader({
       {/* Spinner rings */}
       <div className="relative w-14 h-14">
         {/* Outer static ring */}
-        <div className="absolute inset-0 rounded-full border-2 border-slate-700" />
+        <div className="absolute inset-0 rounded-full border-2 border-slate-300 dark:border-slate-600" />
         {/* Spinning brand ring */}
         <div
           className="absolute inset-0 rounded-full border-2 border-transparent animate-spin"
@@ -33,8 +33,8 @@ export function PageLoader({
 
       {/* Text */}
       <div className="text-center space-y-1">
-        <p className="text-sm font-medium text-gray-200 tracking-wide">{message}</p>
-        {subtitle && <p className="text-xs text-gray-500">{subtitle}</p>}
+        <p className="text-sm font-medium text-foreground tracking-wide">{message}</p>
+        {subtitle && <p className="text-xs text-muted-foreground">{subtitle}</p>}
       </div>
     </div>
   );
