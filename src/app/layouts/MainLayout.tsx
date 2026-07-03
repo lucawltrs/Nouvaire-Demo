@@ -1,7 +1,7 @@
 import { ReactNode, useEffect, useState, useSyncExternalStore } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../lib/auth/useAuthStore';
-import { IconLayoutDashboard, IconLogout, IconMessage, IconUsers, IconSettings, IconCloud, IconUserCircle, IconSquare, IconSend, IconMenu2, IconChevronDown, IconSun, IconMoon, IconChartBar } from '@tabler/icons-react';
+import { IconLayoutDashboard, IconLogout, IconMessage, IconUsers, IconSettings, IconCloud, IconUserCircle, IconSquare, IconSend, IconMenu2, IconChevronDown, IconSun, IconMoon } from '@tabler/icons-react';
 import { NotificationsProvider } from '../../contexts/NotificationsContext';
 import { NotificationBell } from '../../components/NotificationBell';
 import { useWorkSessionStore } from '../../modules/work-sessions/store/useWorkSessionStore';
@@ -54,7 +54,6 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
     { path: '/inbox',         label: 'Inbox',         icon: IconMessage },
     { path: '/cloud',         label: 'Cloud',         icon: IconCloud },
     { path: '/mass-messages', label: 'Mass Messages', icon: IconSend },
-    { path: '/4based',        label: 'Analytics',     icon: IconChartBar },
     ...(isAdmin ? [{ path: '/settings', label: 'Settings', icon: IconSettings } as NavItem] : []),
   ];
 
