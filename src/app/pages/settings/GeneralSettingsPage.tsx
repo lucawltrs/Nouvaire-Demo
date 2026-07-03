@@ -7,6 +7,7 @@ import { Input } from '../../../components/ui/Input';
 import { Button } from '../../../components/ui/Button';
 import { ToastContainer, toast } from '../../../lib/toast';
 import { settingsApi } from '../../../modules/shared/services/settingsApi';
+import { PushNotificationToggle } from '../../../components/PushNotificationToggle';
 
 export function GeneralSettingsPage() {
   const navigate = useNavigate();
@@ -178,6 +179,11 @@ export function GeneralSettingsPage() {
                   </p>
                 </div>
               )}
+
+              {/* Push Notifications */}
+              <div className="py-4 border-t border-border">
+                <PushNotificationToggle />
+              </div>
             </div>
           </Card>
 

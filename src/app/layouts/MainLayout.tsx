@@ -4,6 +4,7 @@ import { useAuthStore } from '../../lib/auth/useAuthStore';
 import { IconLayoutDashboard, IconLogout, IconMessage, IconUsers, IconSettings, IconCloud, IconUserCircle, IconSquare, IconSend, IconMenu2, IconChevronDown, IconSun, IconMoon } from '@tabler/icons-react';
 import { NotificationsProvider } from '../../contexts/NotificationsContext';
 import { NotificationBell } from '../../components/NotificationBell';
+import { PushNotificationBanner } from '../../components/PushNotificationBanner';
 import { useWorkSessionStore } from '../../modules/work-sessions/store/useWorkSessionStore';
 import { WorkSessionModal } from '../../modules/work-sessions/components/WorkSessionModal';
 import { putEndWorkSession } from '../../modules/work-sessions/services/workSession.api';
@@ -309,6 +310,7 @@ export function MainLayout({ children }: MainLayoutProps) {
       </div>
 
       <WorkSessionModal />
+      <PushNotificationBanner />
     </NotificationsProvider>
   );
 }
