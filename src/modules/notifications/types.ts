@@ -1,4 +1,4 @@
-export type NotificationType = 'message' | 'sale' | 'tip' | 'follow' | 'like';
+export type NotificationType = 'message' | 'voice_message' | 'sale' | 'tip' | 'follow' | 'like';
 
 export interface NotificationData {
   chat_id?: string;
