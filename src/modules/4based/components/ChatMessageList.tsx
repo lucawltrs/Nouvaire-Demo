@@ -1,6 +1,83 @@
 import { UIEvent, useEffect, useRef, useState } from 'react';
 import { FourBasedChatMessage, FourBasedFileStackItem } from '../services/4based.api';
 
+function VoiceMessagePlayer({ src, isOwn }: { src: string; isOwn: boolean }) {
+  const audioRef = useRef<HTMLAudioElement>(null);
+  const [playing, setPlaying] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [duration, setDuration] = useState(0);
+
+  const toggle = () => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    if (playing) {
+      audio.pause();
+    } else {
+      audio.play().catch(() => {});
+    }
+  };
+
+  const handleSeek = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const audio = audioRef.current;
+    if (!audio || !audio.duration) return;
+    audio.currentTime = parseFloat(e.target.value) * audio.duration;
+    setProgress(parseFloat(e.target.value));
+  };
+
+  const formatTime = (s: number) =>
+    `${Math.floor(s / 60)}:${Math.floor(s % 60).toString().padStart(2, '0')}`;
+
+  const elapsed = duration * progress;
+
+  return (
+    <div className="flex items-center gap-2 w-52 py-0.5">
+      <audio
+        ref={audioRef}
+        src={src}
+        onPlay={() => setPlaying(true)}
+        onPause={() => setPlaying(false)}
+        onEnded={() => { setPlaying(false); setProgress(0); }}
+        onTimeUpdate={() => {
+          const a = audioRef.current;
+          if (a?.duration) setProgress(a.currentTime / a.duration);
+        }}
+        onLoadedMetadata={() => {
+          if (audioRef.current) setDuration(audioRef.current.duration);
+        }}
+      />
+      <button
+        type="button"
+        onClick={toggle}
+        className={`shrink-0 w-8 h-8 rounded-full flex items-center justify-center transition-colors ${isOwn ? 'bg-white/20 hover:bg-white/30' : 'bg-foreground/10 hover:bg-foreground/20'}`}
+      >
+        {playing ? (
+          <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
+            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM7 8a1 1 0 012 0v4a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v4a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+          </svg>
+        ) : (
+          <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
+            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" />
+          </svg>
+        )}
+      </button>
+      <div className="flex-1 flex flex-col gap-1 min-w-0">
+        <input
+          type="range"
+          min={0}
+          max={1}
+          step={0.001}
+          value={progress}
+          onChange={handleSeek}
+          className={`w-full h-1 rounded-full appearance-none cursor-pointer ${isOwn ? 'accent-white' : 'accent-foreground'}`}
+        />
+        <span className={`text-[10px] ${isOwn ? 'text-white/60' : 'text-muted-foreground'}`}>
+          {formatTime(elapsed)} / {formatTime(duration)}
+        </span>
+      </div>
+    </div>
+  );
+}
+
 interface ChatMessageListProps {
   messages: FourBasedChatMessage[];
   isOwnMessage: (message: FourBasedChatMessage) => boolean;
@@ -202,12 +279,15 @@ export function ChatMessageList({
           const status = ownMessage ? getOwnMessageStatus(message) : null;
           const isTip = message.type === 'tip';
 
+          const isVoice = message.categories?.includes('audio') && !!message.file_stack?.media_url;
+          const hasMedia = !!message.img_preview_link && !isVoice;
+
           return (
             <div
               key={message._id}
               className={`flex items-end gap-2 ${ownMessage ? 'justify-end' : 'justify-start'}`}
             >
-            {ownMessage && onEditFileStack && message.file_stack?._id && message.img_preview_link && (
+            {ownMessage && onEditFileStack && message.file_stack?._id && hasMedia && (
               <button
                 type="button"
                 onClick={() => onEditFileStack(message)}
@@ -226,9 +306,9 @@ export function ChatMessageList({
                   : ownMessage
                   ? 'bg-brand border-brand/70 text-white'
                   : 'bg-muted border-border text-foreground'
-              } ${message.img_preview_link ? 'w-64' : ''}`}
+              } ${hasMedia ? 'w-64' : ''}`}
             >
-              {message.img_preview_link && (() => {
+              {hasMedia && (() => {
                 const fs = message.file_stack;
                 const collection = fs?.collection ?? [];
                 const allItems: FourBasedFileStackItem[] = fs
@@ -242,11 +322,15 @@ export function ChatMessageList({
                     items={allItems}
                     isPurchased={isPurchased}
                     price={price}
-                    previewUrl={message.img_preview_link}
+                    previewUrl={message.img_preview_link!}
                   />
                 );
               })()}
-              <p className="whitespace-pre-wrap break-words">{message.message || '-'}</p>
+              {isVoice ? (
+                <VoiceMessagePlayer src={message.file_stack!.media_url!} isOwn={ownMessage} />
+              ) : (
+                <p className="whitespace-pre-wrap break-words">{message.message || '-'}</p>
+              )}
               <div className={`mt-1 flex items-center justify-end gap-1 text-[11px] ${isTip ? 'text-brand/70' : ownMessage ? 'text-white/70' : 'text-muted-foreground'}`}>
                 <span>{formatChatTimestamp(message.created_at ?? message.updated_at)}</span>
                 {status === 'sent' && <span aria-label="Gesendet">✓</span>}

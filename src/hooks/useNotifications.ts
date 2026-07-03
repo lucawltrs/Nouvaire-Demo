@@ -101,7 +101,7 @@ export function useNotifications(teamSlug: string, type?: NotificationType) {
           } else {
             playNotificationSound();
           }
-          const newToasts = newArrivals.filter((n) => n.type === 'message' || n.type === 'sale' || n.type === 'tip');
+          const newToasts = newArrivals.filter((n) => n.type === 'message' || n.type === 'voice_message' || n.type === 'sale' || n.type === 'tip');
           if (newToasts.length > 0) {
             setToasts((prev) => [...newToasts, ...prev]);
           }

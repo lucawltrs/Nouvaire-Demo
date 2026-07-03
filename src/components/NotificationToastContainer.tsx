@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { IconCurrencyEuro, IconGift, IconMessageCircle, IconX } from '@tabler/icons-react';
+import { IconCurrencyEuro, IconGift, IconMessageCircle, IconMicrophone, IconX } from '@tabler/icons-react';
 import type { Notification } from '../modules/notifications/types';
 
 const TOAST_DURATION_MS = 8_000;
@@ -19,6 +19,7 @@ function Toast({
   }, [notification.id, onDismiss]);
 
   const isMessage = notification.type === 'message';
+  const isVoiceMessage = notification.type === 'voice_message';
   const isSale = notification.type === 'sale';
   const avatarUrl = notification.fourbased_user?.media_url;
 
@@ -34,6 +35,10 @@ function Toast({
         <span className="flex items-center justify-center w-9 h-9 rounded-full bg-blue-500/10 shrink-0">
           <IconMessageCircle size={18} className="text-blue-400" />
         </span>
+      ) : isVoiceMessage ? (
+        <span className="flex items-center justify-center w-9 h-9 rounded-full bg-blue-500/10 shrink-0">
+          <IconMicrophone size={18} className="text-blue-400" />
+        </span>
       ) : isSale ? (
         <span className="flex items-center justify-center w-9 h-9 rounded-full bg-emerald-500/10 shrink-0">
           <IconCurrencyEuro size={18} className="text-emerald-400" />
@@ -46,7 +51,7 @@ function Toast({
       <div className="flex-1 min-w-0">
         <p className="text-sm font-medium text-foreground truncate">{notification.title}</p>
         <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{notification.body}</p>
-        {(isMessage || isSale) && (
+        {(isMessage || isVoiceMessage || isSale) && (
           <button
             onClick={() => {
               onDismiss(notification.id);

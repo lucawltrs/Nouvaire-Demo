@@ -105,6 +105,7 @@ export interface FourBasedFileStackItem {
   price?: number;
   own?: boolean;
   collection_id?: string;
+  media_url?: string;
   [key: string]: unknown;
 }
 
@@ -121,6 +122,7 @@ export interface FourBasedChatMessage {
   user_id: string;
   receiver_user_id?: string;
   message?: string;
+  categories?: string[];
   img_preview_link?: string;
   file_stack?: FourBasedFileStack;
   sender_status?: string;
