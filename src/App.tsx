@@ -13,19 +13,6 @@ const ForgotPasswordPage = lazy(() =>
 const DashboardPage = lazy(() => import('./app/pages/DashboardPage').then((m) => ({ default: m.DashboardPage })));
 const InboxPage = lazy(() => import('./app/pages/InboxPage').then((m) => ({ default: m.InboxPage })));
 const InboxChatPage = lazy(() => import('./app/pages/InboxChatPage').then((m) => ({ default: m.InboxChatPage })));
-const FourBasedPage = lazy(() => import('./app/pages/FourBasedPage'));
-const FourBasedModelsPage = lazy(() => import('./app/pages/FourBasedModelsPage'));
-const FourBasedModelDetailPage = lazy(() =>
-  import('./modules/4based/pages/FourBasedModelDetailPage').then((m) => ({ default: m.FourBasedModelDetailPage }))
-);
-const FourBasedModelStatisticsPage = lazy(() =>
-  import('./modules/4based/pages/FourBasedModelStatisticsPage').then((m) => ({
-    default: m.FourBasedModelStatisticsPage,
-  }))
-);
-const FourBasedModelChatsPage = lazy(() =>
-  import('./modules/4based/pages/FourBasedModelChatsPage').then((m) => ({ default: m.FourBasedModelChatsPage }))
-);
 const AccountForecastPage = lazy(() =>
   import('./app/pages/accounts/AccountForecastPage').then((m) => ({ default: m.AccountForecastPage }))
 );
@@ -105,56 +92,6 @@ function App() {
               }
             />
 
-            <Route
-              path="/4based"
-              element={
-                <ProtectedRoute>
-                  <MainLayout>
-                    <FourBasedPage />
-                  </MainLayout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/4based/models"
-              element={
-                <ProtectedRoute>
-                  <MainLayout>
-                    <FourBasedModelsPage />
-                  </MainLayout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/4based/models/:fourbasedId"
-              element={
-                <ProtectedRoute>
-                  <MainLayout>
-                    <FourBasedModelDetailPage />
-                  </MainLayout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/4based/models/:fourbasedId/statistics"
-              element={
-                <ProtectedRoute>
-                  <MainLayout>
-                    <FourBasedModelStatisticsPage />
-                  </MainLayout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/4based/models/:fourbasedId/chats"
-              element={
-                <ProtectedRoute>
-                  <MainLayout>
-                    <FourBasedModelChatsPage />
-                  </MainLayout>
-                </ProtectedRoute>
-              }
-            />
             <Route
               path="/cloud"
               element={
