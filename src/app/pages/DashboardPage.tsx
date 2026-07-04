@@ -7,7 +7,7 @@ import { Textarea } from '../../components/ui/Textarea';
 import { Input } from '../../components/ui/Input';
 import { Card, CardContent } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
-import { IconClock, IconChevronDown, IconAlertCircle, IconUser, IconChecks, IconLoader2, IconRotate, IconSend, IconPlus, IconTrendingUp, IconUsers, IconReceipt, IconEye, IconInbox, IconCornerUpLeft, IconMessageCircle, IconHeart } from '@tabler/icons-react';
+import { IconClock, IconChevronDown, IconAlertCircle, IconUser, IconChecks, IconLoader2, IconRotate, IconSend, IconPlus, IconTrendingUp, IconUsers, IconReceipt, IconEye, IconInbox, IconCornerUpLeft, IconMessageCircle, IconHeart, IconX } from '@tabler/icons-react';
 import { sendChatMessage } from '../../modules/4based/services/4based.api';
 import {
   dashboardApi,
@@ -587,13 +587,13 @@ function ReplyPopup({ chat, onClose }: ReplyPopupProps) {
     <>
       <div className="fixed inset-0 z-40 bg-black/30 backdrop-blur-sm" onClick={onClose} />
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
-        <div className="w-full max-w-md bg-white border border-slate-200 rounded-xl shadow-xl pointer-events-auto animate-slide-in">
-          <div className="flex items-start justify-between px-4 py-3.5 border-b border-slate-100">
+        <div className="w-full max-w-md bg-card border border-border rounded-xl shadow-xl pointer-events-auto animate-slide-in">
+          <div className="flex items-start justify-between px-4 py-3.5 border-b border-border">
             <div className="min-w-0">
-              <p className="text-xs text-slate-400 mb-0.5">Reply to</p>
-              <p className="font-semibold text-sm text-slate-900 truncate">{chat.customer_name}</p>
+              <p className="text-xs text-muted-foreground mb-0.5">Reply to</p>
+              <p className="font-semibold text-sm text-foreground truncate">{chat.customer_name}</p>
               {chat.account_name && (
-                <span className="inline-flex items-center gap-1.5 mt-1 text-[11px] text-slate-500 bg-slate-100 rounded-full px-2 py-0.5">
+                <span className="inline-flex items-center gap-1.5 mt-1 text-[11px] text-muted-foreground bg-muted rounded-full px-2 py-0.5">
                   <Avatar src={chat.account_img_url} alt={chat.account_name} size="sm" />
                   {chat.account_name}
                 </span>
@@ -602,14 +602,14 @@ function ReplyPopup({ chat, onClose }: ReplyPopupProps) {
             <div className="flex items-center gap-2 shrink-0 ml-3">
               <Link
                 to={`/inbox/${chat.fourbased_id}/chat/${chat.chat_id}`}
-                className="inline-flex items-center gap-1 px-2 py-1 text-xs text-slate-500 hover:text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-md transition-colors"
+                className="inline-flex items-center gap-1 px-2 py-1 text-xs text-muted-foreground hover:text-foreground bg-muted hover:bg-muted/70 rounded-md transition-colors"
               >
                 <IconEye size={12} />
                 Öffnen
               </Link>
               <button
                 onClick={onClose}
-                className="p-1 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-md transition-colors"
+                className="p-1 text-muted-foreground hover:text-foreground hover:bg-muted rounded-md transition-colors"
               >
                 <IconX size={15} />
               </button>
@@ -617,9 +617,9 @@ function ReplyPopup({ chat, onClose }: ReplyPopupProps) {
           </div>
 
           {chat.last_message_preview && (
-            <div className="px-4 py-2.5 bg-slate-50 border-b border-slate-100">
-              <p className="text-[11px] text-slate-400 mb-0.5">Letzte Nachricht</p>
-              <p className="text-xs text-slate-600 line-clamp-2">{chat.last_message_preview}</p>
+            <div className="px-4 py-2.5 bg-muted/50 border-b border-border">
+              <p className="text-[11px] text-muted-foreground mb-0.5">Letzte Nachricht</p>
+              <p className="text-xs text-muted-foreground line-clamp-2">{chat.last_message_preview}</p>
             </div>
           )}
 
@@ -638,7 +638,7 @@ function ReplyPopup({ chat, onClose }: ReplyPopupProps) {
                   onKeyDown={handleKeyDown}
                   placeholder="Nachricht eingeben…"
                   rows={4}
-                  className="w-full px-3 py-2 text-sm bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-400 text-slate-900 placeholder-slate-400 resize-none transition-colors"
+                  className="w-full px-3 py-2 text-sm bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring focus:border-ring text-foreground placeholder-muted-foreground resize-none transition-colors"
                 />
                 {error && (
                   <p className="mt-2 text-xs text-red-500 flex items-center gap-1">
@@ -646,7 +646,7 @@ function ReplyPopup({ chat, onClose }: ReplyPopupProps) {
                   </p>
                 )}
                 <div className="flex items-center justify-between mt-3">
-                  <p className="text-[11px] text-slate-400">⌘ + Enter zum Senden</p>
+                  <p className="text-[11px] text-muted-foreground">⌘ + Enter zum Senden</p>
                   <Button
                     size="sm"
                     onClick={handleSend}
@@ -755,25 +755,25 @@ function CreateMassMessageModal({ accounts, onClose }: CreateMassMessageModalPro
     <Modal isOpen onClose={onClose} title="Massennachricht erstellen" size="md">
       {step === 'account' ? (
         <div className="p-5 space-y-3">
-          <p className="text-sm text-slate-500">Account auswählen:</p>
+          <p className="text-sm text-muted-foreground">Account auswählen:</p>
           <div className="flex flex-col gap-2 max-h-72 overflow-y-auto">
             {accounts.map((account) => (
               <button
                 key={account.fourbased_id}
                 onClick={() => handleSelectAccount(account)}
-                className="flex items-center gap-3 px-4 py-3 rounded-lg border border-slate-200 bg-white hover:border-violet-300 hover:bg-violet-50/50 text-left transition-all"
+                className="flex items-center gap-3 px-4 py-3 rounded-lg border border-border bg-card hover:border-violet-300 hover:bg-violet-50/10 text-left transition-all"
               >
                 {account.img_url ? (
                   <img src={account.img_url} alt={account.name} className="w-8 h-8 rounded-full object-cover shrink-0" />
                 ) : (
-                  <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center shrink-0 text-sm font-semibold text-slate-600">
+                  <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center shrink-0 text-sm font-semibold text-muted-foreground">
                     {account.name.charAt(0).toUpperCase()}
                   </div>
                 )}
                 <div className="min-w-0">
-                  <p className="text-sm font-medium text-slate-900 truncate">{account.name}</p>
+                  <p className="text-sm font-medium text-foreground truncate">{account.name}</p>
                   {account.followers != null && (
-                    <p className="text-xs text-slate-400">{account.followers.toLocaleString()} followers</p>
+                    <p className="text-xs text-muted-foreground">{account.followers.toLocaleString()} followers</p>
                   )}
                 </div>
               </button>
@@ -784,9 +784,9 @@ function CreateMassMessageModal({ accounts, onClose }: CreateMassMessageModalPro
         <div className="p-5 space-y-4">
           {selectedAccount && (
             <div className="flex items-center gap-2">
-              <button onClick={() => setStep('account')} className="text-xs text-slate-400 hover:text-slate-600 transition-colors">← zurück</button>
-              <span className="text-xs text-slate-400">Account:</span>
-              <span className="text-xs font-medium text-slate-700">{selectedAccount.name}</span>
+              <button onClick={() => setStep('account')} className="text-xs text-muted-foreground hover:text-foreground transition-colors">← zurück</button>
+              <span className="text-xs text-muted-foreground">Account:</span>
+              <span className="text-xs font-medium text-foreground">{selectedAccount.name}</span>
             </div>
           )}
 
@@ -794,7 +794,7 @@ function CreateMassMessageModal({ accounts, onClose }: CreateMassMessageModalPro
             value={form.message} onChange={(e) => setForm((f) => ({ ...f, message: e.target.value }))} />
 
           <div>
-            <p className="text-sm font-medium text-slate-700 mb-2">Zielgruppe</p>
+            <p className="text-sm font-medium text-foreground mb-2">Zielgruppe</p>
             <div className="space-y-2">
               {FILTER_OPTIONS.map((opt) => (
                 <label key={opt.value} className="flex items-center gap-2.5 cursor-pointer">
@@ -802,22 +802,22 @@ function CreateMassMessageModal({ accounts, onClose }: CreateMassMessageModalPro
                     type="checkbox"
                     checked={form.filter.includes(opt.value)}
                     onChange={() => toggleFilter(opt.value)}
-                    className="w-4 h-4 rounded border-slate-300 text-violet-600 focus:ring-violet-500"
+                    className="w-4 h-4 rounded border-border text-violet-600 focus:ring-violet-500"
                   />
-                  <span className="text-sm text-slate-700">{opt.label}</span>
+                  <span className="text-sm text-foreground">{opt.label}</span>
                 </label>
               ))}
             </div>
           </div>
 
           {userListsLoading ? (
-            <div className="flex items-center gap-2 text-xs text-slate-400">
-              <span className="w-3 h-3 border border-slate-300 border-t-violet-500 rounded-full animate-spin" />
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <span className="w-3 h-3 border border-border border-t-violet-500 rounded-full animate-spin" />
               Userlisten werden geladen…
             </div>
           ) : userLists.length > 0 && (
             <div>
-              <p className="text-sm font-medium text-slate-700 mb-2">User Lists</p>
+              <p className="text-sm font-medium text-foreground mb-2">User Lists</p>
               <div className="space-y-2 max-h-36 overflow-y-auto">
                 {userLists.map((list) => (
                   <label key={list._id} className="flex items-center gap-2.5 cursor-pointer">
@@ -830,9 +830,9 @@ function CreateMassMessageModal({ accounts, onClose }: CreateMassMessageModalPro
                           ? f.include_user_list.filter((id) => id !== list._id)
                           : [...f.include_user_list, list._id],
                       }))}
-                      className="w-4 h-4 rounded border-slate-300 text-violet-600 focus:ring-violet-500"
+                      className="w-4 h-4 rounded border-border text-violet-600 focus:ring-violet-500"
                     />
-                    <span className="text-sm text-slate-700">{list.name}</span>
+                    <span className="text-sm text-foreground">{list.name}</span>
                   </label>
                 ))}
               </div>
@@ -879,8 +879,8 @@ const Avatar = memo(function Avatar({ src, alt, size = 'md' }: AvatarProps) {
 
   if (!src || failed) {
     return (
-      <div className={cn(avatarSizeClasses[size], 'rounded-full bg-slate-100 flex items-center justify-center shrink-0')}>
-        <IconUser size={avatarIconSizes[size]} className="text-slate-400" />
+      <div className={cn(avatarSizeClasses[size], 'rounded-full bg-muted flex items-center justify-center shrink-0')}>
+        <IconUser size={avatarIconSizes[size]} className="text-muted-foreground" />
       </div>
     );
   }

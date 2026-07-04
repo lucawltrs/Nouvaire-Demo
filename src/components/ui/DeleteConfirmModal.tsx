@@ -38,13 +38,13 @@ export function DeleteConfirmModal({
             </svg>
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm sm:text-base text-gray-200">{message}</p>
+            <p className="text-sm sm:text-base text-foreground">{message}</p>
             {itemName && (
-              <p className="mt-2 text-xs sm:text-sm font-semibold text-gray-100 bg-gray-700/50 px-3 py-2 rounded break-words">
+              <p className="mt-2 text-xs sm:text-sm font-semibold text-foreground bg-muted px-3 py-2 rounded break-words">
                 {itemName}
               </p>
             )}
-            <p className="mt-3 text-xs sm:text-sm text-gray-400">
+            <p className="mt-3 text-xs sm:text-sm text-muted-foreground">
               Diese Aktion kann nicht rückgängig gemacht werden.
             </p>
           </div>
