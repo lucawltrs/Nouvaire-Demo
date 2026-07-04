@@ -31,10 +31,12 @@ self.addEventListener('notificationclick', (event) => {
     event.notification.close();
     const data = event.notification.data;
     let url = '/';
-    if (data?.type === 'message' && data?.fourbased_user_id) {
-        url = `/4based/messages?user=${data.fourbased_user_id}`;
+    if (data?.type === 'message' && data?.fourbased_user_id && data?.chat_id) {
+        url = `/inbox/${data.fourbased_user_id}/chat/${data.chat_id}`;
+    } else if (data?.type === 'message' && data?.fourbased_user_id) {
+        url = `/inbox/${data.fourbased_user_id}`;
     } else if (data?.type === 'sale' || data?.type === 'tip') {
-        url = '/4based/revenue';
+        url = '/';
     }
     event.waitUntil(
         clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
