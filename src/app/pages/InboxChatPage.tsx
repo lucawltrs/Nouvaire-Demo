@@ -563,7 +563,7 @@ export function InboxChatPage() {
   const accountImgUrl = activeChat?.account_img_url ?? chats[0]?.account_img_url;
 
   return (
-    <div className="h-[calc(100vh-10rem)] flex flex-col md:flex-row gap-0 md:gap-6 overflow-hidden">
+    <div className="h-[calc(100vh-6rem)] sm:h-[calc(100vh-7rem)] flex flex-col md:flex-row gap-0 md:gap-6 overflow-hidden">
       {/* Sidebar */}
       <aside className={`md:w-80 w-full shrink-0 flex-col gap-3 min-h-0 ${mobileView === 'sidebar' ? 'flex' : 'hidden'} md:flex`}>
         {/* Back button + Account indicator */}
