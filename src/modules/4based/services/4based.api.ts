@@ -194,7 +194,7 @@ export interface RevenueForecastDataPoint {
 export interface RevenueForecastResult {
   historical: RevenueForecastDataPoint[];
   forecast: RevenueForecastDataPoint[];
-  trend: 'up' | 'down' | 'stable';
+  trend: 'up' | 'down' | 'stable' | 'rising' | 'falling';
   daily_average: number;
 }
 

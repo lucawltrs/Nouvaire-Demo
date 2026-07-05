@@ -232,13 +232,13 @@ export function AccountForecastPage() {
             Trend
           </p>
           <div className="flex items-center gap-2">
-            {trend === 'up' && (
+            {(trend === 'up' || trend === 'rising') && (
               <>
                 <IconTrendingUp className="w-6 h-6 text-green-400 shrink-0" />
                 <span className="text-2xl font-bold text-green-400">Steigend</span>
               </>
             )}
-            {trend === 'down' && (
+            {(trend === 'down' || trend === 'falling') && (
               <>
                 <IconTrendingDown className="w-6 h-6 text-red-400 shrink-0" />
                 <span className="text-2xl font-bold text-red-400">Fallend</span>
