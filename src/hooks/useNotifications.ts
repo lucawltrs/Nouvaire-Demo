@@ -7,6 +7,9 @@ const POLL_INTERVAL_MS = 5_000;
 // Browsers block audio playback until the user has interacted with the page
 // at least once. We keep one shared <audio> element and "unlock" it on the
 // first click/keydown — afterwards .play() works without further interaction.
+// The click/keydown listeners are only registered while a useNotifications
+// instance is actually mounted (i.e. inside an authenticated, non-/login
+// route) — see the effect below — so this never fires on public pages.
 const notificationAudio = new Audio('/sounds/notification.mp3');
 notificationAudio.volume = 0.6;
 const coinAudio = new Audio('/sounds/coin.mp3');
@@ -33,8 +36,6 @@ const unlockAudio = () => {
     document.removeEventListener('keydown', unlockAudio);
   });
 };
-document.addEventListener('click', unlockAudio);
-document.addEventListener('keydown', unlockAudio);
 
 const playSound = (audio: HTMLAudioElement) => {
   try {
@@ -150,6 +151,16 @@ export function useNotifications(teamSlug: string, type?: NotificationType) {
       fetchNotifications();
     }
   }, [apiBase, fetchNotifications]);
+
+  useEffect(() => {
+    if (audioUnlocked) return;
+    document.addEventListener('click', unlockAudio);
+    document.addEventListener('keydown', unlockAudio);
+    return () => {
+      document.removeEventListener('click', unlockAudio);
+      document.removeEventListener('keydown', unlockAudio);
+    };
+  }, []);
 
   useEffect(() => {
     if (!teamSlug) return;
