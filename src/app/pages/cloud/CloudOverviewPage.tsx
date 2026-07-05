@@ -109,7 +109,7 @@ export default function CloudOverviewPage() {
       {/* Content */}
       <Card className="rounded-2xl overflow-hidden divide-y divide-border">
         {loading ? (
-          <PageLoader message="Lade IconCloud-Nutzer..." subtitle="Nutzerdaten werden abgerufen" />
+          <PageLoader message="Lade Cloud-Nutzer..." subtitle="Nutzerdaten werden abgerufen" />
         ) : error ? (
           <div className="flex flex-col items-center justify-center gap-3 py-16 text-center px-4">
             <IconAlertCircle size={36} className="text-red-400" />

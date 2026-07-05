@@ -43,6 +43,7 @@ export function MyProfilePage() {
 
   const [sessions, setSessions] = useState<SessionOverviewSession[]>([]);
   const [totalRevenue, setTotalRevenue] = useState<string>('$ 0.00');
+  const [chatterPercentage, setChatterPercentage] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -141,6 +142,7 @@ export function MyProfilePage() {
       const overview = await getSessionOverview(user.id);
       setSessions(overview?.sessions ?? []);
       setTotalRevenue(overview?.total_revenue ?? '$ 0.00');
+      setChatterPercentage(overview?.chatter_percentage ?? null);
     } catch {
       setError('Deine Arbeitszeiten konnten nicht geladen werden.');
     } finally {
@@ -345,7 +347,9 @@ export function MyProfilePage() {
               <IconCurrencyDollar size={18} className="text-green-500 dark:text-green-400" />
             </div>
             <div>
-              <p className="text-xs text-muted-foreground">Gesamtumsatz (20%)</p>
+              <p className="text-xs text-muted-foreground">
+                Gesamtumsatz{chatterPercentage !== null ? ` (${chatterPercentage}%)` : ''}
+              </p>
               <p className="text-xl font-bold text-green-500 dark:text-green-400">{totalRevenue}</p>
             </div>
           </div>
@@ -454,7 +458,9 @@ export function MyProfilePage() {
                   <th className="text-left px-6 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide">Ende</th>
                   <th className="text-left px-6 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide">Dauer</th>
                   <th className="text-left px-6 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide">Status</th>
-                  <th className="text-left px-6 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide">Umsatz (20%)</th>
+                  <th className="text-left px-6 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                    Umsatz{chatterPercentage !== null ? ` (${chatterPercentage}%)` : ''}
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
@@ -487,7 +493,7 @@ export function MyProfilePage() {
 
       {/* Revenue info note */}
       <p className="text-xs text-muted-foreground px-1">
-        Der Umsatz entspricht deinem 20%-Anteil am Gruppenerlös der jeweiligen Schicht (ohne Subscription-Umsätze).
+        Der Umsatz entspricht deinem {chatterPercentage !== null ? `${chatterPercentage}%` : ''}-Anteil am Gruppenerlös der jeweiligen Schicht (ohne Subscription-Umsätze).
       </p>
     </div>
   );

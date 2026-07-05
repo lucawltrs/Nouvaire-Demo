@@ -2,10 +2,10 @@ import { useEffect, lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { ProtectedRoute } from './lib/auth/ProtectedRoute';
 import { ErrorBoundary } from './components/ui/ErrorBoundary';
-import { MainLayout } from './app/layouts/MainLayout';
 import { PageLoader } from './components/ui/PageLoader';
 import { useAuthStore } from './lib/auth/useAuthStore';
 
+const MainLayout = lazy(() => import('./app/layouts/MainLayout').then((m) => ({ default: m.MainLayout })));
 const LoginPage = lazy(() => import('./app/pages/LoginPage').then((m) => ({ default: m.LoginPage })));
 const ForgotPasswordPage = lazy(() =>
   import('./app/pages/ForgotPasswordPage').then((m) => ({ default: m.ForgotPasswordPage }))

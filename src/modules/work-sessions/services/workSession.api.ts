@@ -111,6 +111,7 @@ export interface SessionOverview {
   };
   sessions: SessionOverviewSession[];
   total_revenue: string;
+  chatter_percentage: number | null;
 }
 
 export async function getSessionOverview(userId: number): Promise<SessionOverview> {
