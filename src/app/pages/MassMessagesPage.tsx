@@ -71,6 +71,12 @@ export function MassMessagesPage() {
   const [listError, setListError] = useState<string | null>(null);
 
   const [deleteTarget, setDeleteTarget] = useState<MassMessage | null>(null);
+  const latestSentMessage = messages.reduce<MassMessage | null>((latest, m) => {
+    if (m.status !== 'finished') return latest;
+    if (!latest || new Date(m.created_at) > new Date(latest.created_at)) return m;
+    return latest;
+  }, null);
+  const isDeletingLatestSent = !!deleteTarget && deleteTarget.status === 'finished' && deleteTarget._id === latestSentMessage?._id;
   const [isDeleting, setIsDeleting] = useState(false);
 
   const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -84,6 +90,7 @@ export function MassMessagesPage() {
     include_user_list: [] as string[],
     exclude_user_list: [] as string[],
     to_be_posted_at: '',
+    delete_latest: false,
   });
   const [formError, setFormError] = useState<string | null>(null);
 
@@ -145,7 +152,7 @@ export function MassMessagesPage() {
   };
 
   const handleOpenCreate = () => {
-    setForm({ message: '', filter: [], exclude_filter: [], include_user_list: [], exclude_user_list: [], to_be_posted_at: '' });
+    setForm({ message: '', filter: [], exclude_filter: [], include_user_list: [], exclude_user_list: [], to_be_posted_at: '', delete_latest: false });
     setFormError(null);
     setIsCreateOpen(true);
     setUserListsLoading(true);
@@ -199,6 +206,7 @@ export function MassMessagesPage() {
         exclude_filter: form.exclude_filter,
         file_stack_id: null,
         to_be_posted_at: form.to_be_posted_at ? datetimeLocalToApi(form.to_be_posted_at) : null,
+        delete_latest: form.delete_latest,
       });
       toast.success('Mass message created.');
       setIsCreateOpen(false);
@@ -446,6 +454,12 @@ export function MassMessagesPage() {
               "{deleteTarget.message}"
             </p>
           )}
+          {isDeletingLatestSent && (
+            <div className="flex items-start gap-2 text-xs text-yellow-500 bg-yellow-500/10 border border-yellow-500/20 rounded-lg px-3 py-2">
+              <IconAlertCircle size={14} className="shrink-0 mt-0.5" />
+              <span>Dies ist die neueste Nachricht, die bereits an die Kunden gesendet wurde und diese erreicht hat. Das Löschen entfernt sie nur aus dieser Übersicht — die Zustellung wird dadurch nicht zurückgenommen.</span>
+            </div>
+          )}
           <div className="flex justify-end gap-3 pt-2">
             <Button variant="secondary" onClick={() => setDeleteTarget(null)} disabled={isDeleting}>
               Cancel
@@ -552,6 +566,20 @@ export function MassMessagesPage() {
               </div>
             </div>
           )}
+
+          {/* Delete latest sent message */}
+          <label className="flex items-start gap-3 cursor-pointer group">
+            <input
+              type="checkbox"
+              checked={form.delete_latest}
+              onChange={(e) => setForm((f) => ({ ...f, delete_latest: e.target.checked }))}
+              className="w-4 h-4 mt-0.5 rounded border-border bg-muted text-brand focus:ring-brand-500 focus:ring-offset-slate-900"
+            />
+            <span className="text-sm text-foreground group-hover:text-foreground transition-colors">
+              Neueste bereits gesendete Nachricht löschen
+              <span className="block text-xs text-muted-foreground mt-0.5">Beim Erstellen dieser Nachricht wird die aktuell neueste, bereits an die Kunden zugestellte Nachricht entfernt.</span>
+            </span>
+          </label>
 
           {/* Scheduled send */}
           <Input
