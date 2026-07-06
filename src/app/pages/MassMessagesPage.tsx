@@ -80,7 +80,9 @@ export function MassMessagesPage() {
   const [form, setForm] = useState({
     message: '',
     filter: [] as string[],
+    exclude_filter: [] as string[],
     include_user_list: [] as string[],
+    exclude_user_list: [] as string[],
     to_be_posted_at: '',
   });
   const [formError, setFormError] = useState<string | null>(null);
@@ -143,7 +145,7 @@ export function MassMessagesPage() {
   };
 
   const handleOpenCreate = () => {
-    setForm({ message: '', filter: [], include_user_list: [], to_be_posted_at: '' });
+    setForm({ message: '', filter: [], exclude_filter: [], include_user_list: [], exclude_user_list: [], to_be_posted_at: '' });
     setFormError(null);
     setIsCreateOpen(true);
     setUserListsLoading(true);
@@ -153,12 +155,27 @@ export function MassMessagesPage() {
       .finally(() => setUserListsLoading(false));
   };
 
-  const toggleFilter = (value: string) => {
+  type SelectionMode = 'none' | 'include' | 'exclude';
+
+  const getFilterMode = (value: string): SelectionMode =>
+    form.filter.includes(value) ? 'include' : form.exclude_filter.includes(value) ? 'exclude' : 'none';
+
+  const setFilterMode = (value: string, mode: SelectionMode) => {
     setForm((f) => ({
       ...f,
-      filter: f.filter.includes(value)
-        ? f.filter.filter((v) => v !== value)
-        : [...f.filter, value],
+      filter: mode === 'include' ? [...f.filter.filter((v) => v !== value), value] : f.filter.filter((v) => v !== value),
+      exclude_filter: mode === 'exclude' ? [...f.exclude_filter.filter((v) => v !== value), value] : f.exclude_filter.filter((v) => v !== value),
+    }));
+  };
+
+  const getUserListMode = (id: string): SelectionMode =>
+    form.include_user_list.includes(id) ? 'include' : form.exclude_user_list.includes(id) ? 'exclude' : 'none';
+
+  const setUserListMode = (id: string, mode: SelectionMode) => {
+    setForm((f) => ({
+      ...f,
+      include_user_list: mode === 'include' ? [...f.include_user_list.filter((v) => v !== id), id] : f.include_user_list.filter((v) => v !== id),
+      exclude_user_list: mode === 'exclude' ? [...f.exclude_user_list.filter((v) => v !== id), id] : f.exclude_user_list.filter((v) => v !== id),
     }));
   };
 
@@ -178,8 +195,8 @@ export function MassMessagesPage() {
         message: form.message.trim(),
         filter: form.filter,
         include_user_list: form.include_user_list,
-        exclude_user_list: [],
-        exclude_filter: [],
+        exclude_user_list: form.exclude_user_list,
+        exclude_filter: form.exclude_filter,
         file_stack_id: null,
         to_be_posted_at: form.to_be_posted_at ? datetimeLocalToApi(form.to_be_posted_at) : null,
       });
@@ -459,18 +476,35 @@ export function MassMessagesPage() {
           {/* Target group filters */}
           <div>
             <p className="text-sm font-medium text-foreground mb-2">Target Group</p>
-            <div className="space-y-2">
-              {FILTER_OPTIONS.map((opt) => (
-                <label key={opt.value} className="flex items-center gap-3 cursor-pointer group">
-                  <input
-                    type="checkbox"
-                    checked={form.filter.includes(opt.value)}
-                    onChange={() => toggleFilter(opt.value)}
-                    className="w-4 h-4 rounded border-border bg-muted text-brand focus:ring-brand-500 focus:ring-offset-slate-900"
-                  />
-                  <span className="text-sm text-foreground group-hover:text-foreground transition-colors">{opt.label}</span>
-                </label>
-              ))}
+            <div className="space-y-1.5">
+              {FILTER_OPTIONS.map((opt) => {
+                const mode = getFilterMode(opt.value);
+                return (
+                  <div key={opt.value} className="flex items-center justify-between gap-3">
+                    <span className="text-sm text-foreground">{opt.label}</span>
+                    <div className="flex gap-1">
+                      <button
+                        type="button"
+                        onClick={() => setFilterMode(opt.value, mode === 'include' ? 'none' : 'include')}
+                        className={`px-2.5 py-1 rounded-md text-xs font-medium transition-colors ${
+                          mode === 'include' ? 'bg-brand text-white' : 'bg-muted text-muted-foreground hover:text-foreground'
+                        }`}
+                      >
+                        Include
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setFilterMode(opt.value, mode === 'exclude' ? 'none' : 'exclude')}
+                        className={`px-2.5 py-1 rounded-md text-xs font-medium transition-colors ${
+                          mode === 'exclude' ? 'bg-red-600 text-white' : 'bg-muted text-muted-foreground hover:text-foreground'
+                        }`}
+                      >
+                        Exclude
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
             {form.filter.length === 0 && form.include_user_list.length === 0 && (
               <p className="mt-1.5 text-xs text-yellow-500">No target selected — add filters or include a user list.</p>
@@ -486,23 +520,35 @@ export function MassMessagesPage() {
           ) : userLists.length > 0 && (
             <div>
               <p className="text-sm font-medium text-foreground mb-2">User Lists</p>
-              <div className="space-y-2 max-h-36 overflow-y-auto pr-1">
-                {userLists.map((list) => (
-                  <label key={list._id} className="flex items-center gap-3 cursor-pointer group">
-                    <input
-                      type="checkbox"
-                      checked={form.include_user_list.includes(list._id)}
-                      onChange={() => setForm((f) => ({
-                        ...f,
-                        include_user_list: f.include_user_list.includes(list._id)
-                          ? f.include_user_list.filter((id) => id !== list._id)
-                          : [...f.include_user_list, list._id],
-                      }))}
-                      className="w-4 h-4 rounded border-border bg-muted text-brand focus:ring-brand-500 focus:ring-offset-slate-900"
-                    />
-                    <span className="text-sm text-foreground group-hover:text-foreground transition-colors">{list.name}</span>
-                  </label>
-                ))}
+              <div className="space-y-1.5 max-h-48 overflow-y-auto pr-1">
+                {userLists.map((list) => {
+                  const mode = getUserListMode(list._id);
+                  return (
+                    <div key={list._id} className="flex items-center justify-between gap-3">
+                      <span className="text-sm text-foreground">{list.name}</span>
+                      <div className="flex gap-1">
+                        <button
+                          type="button"
+                          onClick={() => setUserListMode(list._id, mode === 'include' ? 'none' : 'include')}
+                          className={`px-2.5 py-1 rounded-md text-xs font-medium transition-colors ${
+                            mode === 'include' ? 'bg-brand text-white' : 'bg-muted text-muted-foreground hover:text-foreground'
+                          }`}
+                        >
+                          Include
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setUserListMode(list._id, mode === 'exclude' ? 'none' : 'exclude')}
+                          className={`px-2.5 py-1 rounded-md text-xs font-medium transition-colors ${
+                            mode === 'exclude' ? 'bg-red-600 text-white' : 'bg-muted text-muted-foreground hover:text-foreground'
+                          }`}
+                        >
+                          Exclude
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           )}

@@ -5,7 +5,7 @@ import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Textarea } from '../../components/ui/Textarea';
 import { Input } from '../../components/ui/Input';
-import { IconLoader2, IconUser, IconArrowLeft, IconSearch, IconCamera, IconMovie, IconCircleCheck, IconMoodSmile, IconChevronDown, IconAdjustmentsHorizontal, IconPencil, IconSend, IconX } from '@tabler/icons-react';
+import { IconLoader2, IconUser, IconArrowLeft, IconSearch, IconCamera, IconMovie, IconCircleCheck, IconMoodSmile, IconChevronDown, IconAdjustmentsHorizontal, IconPencil, IconSend, IconX, IconLayoutDashboard } from '@tabler/icons-react';
 import Picker from '@emoji-mart/react';
 import data from '@emoji-mart/data';
 import { Modal } from '../../components/ui/Modal';
@@ -688,6 +688,15 @@ export function InboxChatPage() {
                 aria-label="Zurück zur Chat-Liste"
               >
                 <IconArrowLeft size={16} />
+              </button>
+              <button
+                type="button"
+                onClick={() => navigate('/')}
+                className="md:hidden flex items-center justify-center w-8 h-8 rounded-lg border border-border bg-muted text-muted-foreground hover:text-brand hover:border-brand transition-colors shrink-0"
+                aria-label="Zum Dashboard"
+                title="Zum Dashboard"
+              >
+                <IconLayoutDashboard size={16} />
               </button>
               {activeChat ? (
                 <>
