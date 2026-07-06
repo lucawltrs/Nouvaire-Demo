@@ -39,8 +39,10 @@ export interface CloudAsset {
   price: number;
   own: boolean;
   collection: unknown[];
-  /** Preview / CDN thumbnail URL */
-  img_url: string;
+  /** Preview / CDN thumbnail URL. Not set when fileStackType is "video" or "audio". */
+  img_url?: string;
+  /** Playable video/audio URL. Only set when fileStackType is "video" or "audio". */
+  media_url?: string;
 }
 
 /** CloudAssetDetails — same shape, all fields already present in CloudAsset */

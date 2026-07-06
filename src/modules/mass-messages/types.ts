@@ -29,6 +29,7 @@ export interface CreateMassMessagePayload {
   exclude_user_ids?: string[] | null;
   file_stack_id?: string | null;
   to_be_posted_at?: string | null;
+  delete_latest?: boolean;
 }
 
 export interface UserList {
