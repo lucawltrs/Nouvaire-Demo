@@ -41,12 +41,15 @@ function FilterChip({
 
 // ── Asset tile ────────────────────────────────────────────────────────────────
 function AssetTile({ asset }: { asset: CloudAsset }) {
+  const isVideo = asset.fileStackType === 'video';
+  const isAudio = asset.fileStackType === 'audio';
+  const mediaSrc = isVideo || isAudio ? asset.media_url : unblurUrl(asset.img_url);
 
   const handleCopy = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     try {
-      await navigator.clipboard.writeText(unblurUrl(asset.img_url));
+      await navigator.clipboard.writeText(mediaSrc ?? '');
       toast.success('Link kopiert!');
     } catch {
       toast.error('Kopieren fehlgeschlagen');
@@ -56,30 +59,35 @@ function AssetTile({ asset }: { asset: CloudAsset }) {
   const handleOpen = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    window.open(unblurUrl(asset.img_url), '_blank', 'noopener,noreferrer');
+    if (mediaSrc) window.open(mediaSrc, '_blank', 'noopener,noreferrer');
   };
 
   return (
     <div
       role="button"
       tabIndex={0}
-      onClick={() => window.open(unblurUrl(asset.img_url), '_blank', 'noopener,noreferrer')}
+      onClick={() => { if (mediaSrc) window.open(mediaSrc, '_blank', 'noopener,noreferrer'); }}
       onKeyDown={(e) => {
-        if (e.key === 'Enter') window.open(unblurUrl(asset.img_url), '_blank', 'noopener,noreferrer');
+        if (e.key === 'Enter' && mediaSrc) window.open(mediaSrc, '_blank', 'noopener,noreferrer');
       }}
       className="group relative rounded-xl overflow-hidden border border-border hover:shadow-lg transition-shadow cursor-pointer bg-card"
     >
       {/* Preview */}
       <div className="aspect-square bg-muted overflow-hidden">
-        {asset.fileStackType === 'video' ? (
+        {isVideo ? (
           <div className="w-full h-full flex items-center justify-center bg-gray-900 relative">
-            <img
-              src={unblurUrl(asset.img_url)}
-              alt={asset.description ?? asset._id}
+            <video
+              src={asset.media_url}
               className="w-full h-full object-cover opacity-70"
-              loading="lazy"
+              muted
+              playsInline
+              preload="metadata"
             />
-            <IconMovie size={32} className="absolute text-white drop-shadow" />
+            <IconMovie size={32} className="absolute text-white drop-shadow pointer-events-none" />
+          </div>
+        ) : isAudio ? (
+          <div className="w-full h-full flex items-center justify-center bg-gray-900">
+            <audio src={asset.media_url} controls className="w-[90%]" onClick={(e) => e.stopPropagation()} />
           </div>
         ) : (
           <img
@@ -161,7 +169,7 @@ export default function CloudUserAssetsPage() {
         const [userData, assetsData] = await Promise.all([
           cloudApi.getUser(fourbased_id).catch(() => null),
           cloudApi.getAssets(fourbased_id, {
-            fileStackType: type === 'all' ? undefined : type,
+            file_type: type === 'all' ? undefined : type,
             belongs_to_folders: folder ?? undefined,
           }),
         ]);
@@ -192,7 +200,7 @@ export default function CloudUserAssetsPage() {
     setLoadingMore(true);
     try {
       const data = await cloudApi.getAssets(fourbased_id, {
-        fileStackType: filter === 'all' ? undefined : filter,
+        file_type: filter === 'all' ? undefined : filter,
         belongs_to_folders: activeFolder ?? undefined,
         offset: nextOffset,
       });
@@ -261,7 +269,7 @@ export default function CloudUserAssetsPage() {
               style={{ marginLeft: 'auto' }}
             >
               <IconExternalLink size={16} />
-              IconCloud öffnen
+              Cloud öffnen
             </a>
           </>
         ) : (

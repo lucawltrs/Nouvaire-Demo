@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { createPortal } from 'react-dom';
-import { IconArrowLeft, IconCurrencyDollar, IconUsers, IconAlertCircle, IconStack2, IconCircleCheck, IconMessage, IconPlus, IconPencil, IconTrash, IconLoader2, IconChevronDown, IconChevronRight, IconCamera, IconMovie, IconMoodSmile, IconTrendingUp, IconX, IconCircle, IconHeart, IconPhoto, IconCircleX, IconTag, IconGripVertical } from '@tabler/icons-react';
+import { IconArrowLeft, IconCurrencyDollar, IconUsers, IconAlertCircle, IconStack2, IconCircleCheck, IconMessage, IconPlus, IconPencil, IconTrash, IconLoader2, IconChevronDown, IconChevronRight, IconCamera, IconMovie, IconMusic, IconMoodSmile, IconTrendingUp, IconX, IconCircle, IconHeart, IconPhoto, IconCircleX, IconTag, IconGripVertical } from '@tabler/icons-react';
 import Picker from '@emoji-mart/react';
 import data from '@emoji-mart/data';
 import { Card } from '../../../components/ui/Card';
@@ -1649,11 +1649,24 @@ function ConfiguredMessagesCard({ fourbasedId, isAdmin, categories }: { fourbase
           <div className="flex items-center gap-3 min-w-0 flex-1 overflow-x-auto pb-1">
             {selectedVaultItems.map(item => (
               <div key={item._id} className="relative shrink-0">
-                <img
-                  src={unblurUrl(item.img_url)}
-                  alt=""
-                  className="w-16 h-16 rounded-xl object-cover border border-border"
-                />
+                {item.fileStackType === 'video' ? (
+                  <video
+                    src={item.media_url}
+                    muted
+                    playsInline
+                    className="w-16 h-16 rounded-xl object-cover border border-border"
+                  />
+                ) : item.fileStackType === 'audio' ? (
+                  <div className="w-16 h-16 rounded-xl border border-border bg-gray-900 flex items-center justify-center">
+                    <IconMusic size={18} className="text-white" />
+                  </div>
+                ) : (
+                  <img
+                    src={unblurUrl(item.img_url)}
+                    alt=""
+                    className="w-16 h-16 rounded-xl object-cover border border-border"
+                  />
+                )}
                 <button
                   type="button"
                   onClick={() => setSelectedVaultItems(prev => prev.filter(s => s._id !== item._id))}
@@ -1706,6 +1719,7 @@ function CfgVaultThumbnail({
   onSelect?: (item: CloudAsset) => void;
 }) {
   const isVideo = item.fileStackType === 'video';
+  const isAudio = item.fileStackType === 'audio';
   return (
     <div
       role="button"
@@ -1716,13 +1730,27 @@ function CfgVaultThumbnail({
         isSelected ? 'border-brand ring-2 ring-brand/40' : 'border-border hover:border-slate-500'
       }`}
     >
-      <img
-        src={unblurUrl(item.img_url)}
-        alt={item.description ?? item._id}
-        className="w-full h-full object-cover"
-        loading="lazy"
-        onError={(e) => { e.currentTarget.style.display = 'none'; }}
-      />
+      {isVideo ? (
+        <video
+          src={item.media_url}
+          className="w-full h-full object-cover"
+          muted
+          playsInline
+          preload="metadata"
+        />
+      ) : isAudio ? (
+        <div className="w-full h-full flex items-center justify-center bg-gray-900">
+          <IconMusic size={16} className="text-white" />
+        </div>
+      ) : (
+        <img
+          src={unblurUrl(item.img_url)}
+          alt={item.description ?? item._id}
+          className="w-full h-full object-cover"
+          loading="lazy"
+          onError={(e) => { e.currentTarget.style.display = 'none'; }}
+        />
+      )}
       {isVideo && (
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
           <div className="w-9 h-9 rounded-full bg-black/60 flex items-center justify-center">
@@ -1757,6 +1785,7 @@ function VaultConfigStep({
 }) {
   const firstItem = items[0];
   const isVideo = firstItem.fileStackType === 'video';
+  const isAudio = firstItem.fileStackType === 'audio';
   const [description, setDescription] = useState('');
   const [priceInput, setPriceInput] = useState(
     typeof firstItem.price === 'number' && firstItem.price > 0 ? (firstItem.price / 100).toFixed(2) : '',
@@ -1826,17 +1855,23 @@ function VaultConfigStep({
       <div className="flex gap-5 items-start">
         {/* Preview */}
         <div className="relative w-48 shrink-0 rounded-xl overflow-hidden bg-muted border border-border aspect-square">
-          <img
-            src={unblurUrl(firstItem.img_url)}
-            alt={firstItem.description ?? firstItem._id}
-            className="w-full h-full object-cover"
-          />
-          {isVideo && (
-            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-              <div className="w-12 h-12 rounded-full bg-black/60 flex items-center justify-center">
-                <IconMovie size={22} className="text-white" />
-              </div>
+          {isVideo ? (
+            <video
+              src={firstItem.media_url}
+              controls
+              playsInline
+              className="w-full h-full object-cover"
+            />
+          ) : isAudio ? (
+            <div className="w-full h-full flex items-center justify-center bg-gray-900 p-4">
+              <audio src={firstItem.media_url} controls className="w-full" />
             </div>
+          ) : (
+            <img
+              src={unblurUrl(firstItem.img_url)}
+              alt={firstItem.description ?? firstItem._id}
+              className="w-full h-full object-cover"
+            />
           )}
           {items.length > 1 && (
             <div className="absolute bottom-2 right-2 bg-black/70 rounded-full px-2 py-0.5 text-xs text-white font-semibold">

@@ -42,7 +42,6 @@ export const cloudApi = {
   async getAssets(
     fourbasedId: string,
     params: {
-      fileStackType?: string;
       limit?: number;
       offset?: number;
       belongs_to_folders?: string;
@@ -57,7 +56,6 @@ export const cloudApi = {
     q.set('offset', String(params.offset ?? 0));
     q.set('sort', JSON.stringify({ created_at: 'desc' }));
     q.set('with_source', 'true');
-    if (params.fileStackType) q.set('fileStackType', params.fileStackType);
     if (params.belongs_to_folders) q.set('belongs_to_folders', params.belongs_to_folders);
     if (params.file_type) q.set('file_type', params.file_type);
     if (params.sold !== undefined) q.set('sold', String(params.sold));
@@ -105,7 +103,8 @@ export function relativeTime(dateStr?: string | null): string {
  * Strips the 4based blur/obscure flag (?o=1) from a CDN URL so the
  * full-quality unblurred image is displayed.
  */
-export function unblurUrl(url: string): string {
+export function unblurUrl(url?: string | null): string {
+  if (!url) return '';
   try {
     const u = new URL(url);
     u.searchParams.delete('o');
