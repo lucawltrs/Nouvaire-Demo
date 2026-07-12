@@ -3,21 +3,22 @@ import { useNavigate } from 'react-router-dom';
 import { IconUsers, IconAlertCircle, IconRefresh } from '@tabler/icons-react';
 import { Card } from '../../../components/ui/Card';
 import { PageLoader } from '../../../components/ui/PageLoader';
-import { accountsApi } from '../../../modules/accounts/accountsApi';
+import { accountsApi, invalidateAccountsCache } from '../../../modules/accounts/accountsApi';
 import type { Account } from '../../../modules/accounts/types';
 import { toast } from '../../../lib/toast';
 
 export function AccountsListPage() {
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isReloading, setIsReloading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
 
-  const fetchAccounts = useCallback(async () => {
+  const fetchAccounts = useCallback(async (force = false) => {
     try {
       setIsLoading(true);
       setError(null);
-      const data = await accountsApi.getAccounts();
+      const data = await accountsApi.getAccounts(force);
       setAccounts(data ?? []);
     } catch (err) {
       console.error('Failed to fetch accounts:', err);
@@ -31,12 +32,37 @@ export function AccountsListPage() {
     fetchAccounts();
   }, [fetchAccounts]);
 
+  const handleReload = async () => {
+    if (isReloading) return;
+    setIsReloading(true);
+    try {
+      invalidateAccountsCache();
+      await fetchAccounts(true);
+      toast.success('Accounts aktualisiert');
+    } catch {
+      toast.error('Aktualisierung fehlgeschlagen');
+    } finally {
+      setIsReloading(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Accounts</h1>
-        <p className="mt-1 text-sm text-muted-foreground">{accounts.length} account{accounts.length !== 1 ? 's' : ''} connected</p>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Accounts</h1>
+          <p className="mt-1 text-sm text-muted-foreground">{accounts.length} account{accounts.length !== 1 ? 's' : ''} connected</p>
+        </div>
+        <button
+          onClick={handleReload}
+          disabled={isReloading || isLoading}
+          title="Local Storage leeren und Accounts neu laden"
+          className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-foreground bg-card border border-border rounded-lg hover:bg-muted transition-colors disabled:opacity-50 disabled:cursor-not-allowed self-start"
+        >
+          <IconRefresh size={16} className={isReloading ? 'animate-spin' : ''} />
+          {isReloading ? 'Reloading…' : 'Reload'}
+        </button>
       </div>
 
       {/* Content */}
