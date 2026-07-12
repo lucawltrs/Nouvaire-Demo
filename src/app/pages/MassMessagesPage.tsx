@@ -4,24 +4,16 @@ import { Card } from '../../components/ui/Card';
 import { PageLoader } from '../../components/ui/PageLoader';
 import { Modal } from '../../components/ui/Modal';
 import { Button } from '../../components/ui/Button';
-import { Textarea } from '../../components/ui/Textarea';
-import { Input } from '../../components/ui/Input';
 import { Badge } from '../../components/ui/Badge';
 import { ToastContainer, toast } from '../../lib/toast';
 import { useAuthStore } from '../../lib/auth/useAuthStore';
 import { accountsApi } from '../../modules/accounts/accountsApi';
 import { massMessagesApi } from '../../modules/mass-messages/massMessagesApi';
-import type { MassMessage, MassMessageStatus, UserList } from '../../modules/mass-messages/types';
+import { CreateMassMessageModal } from '../../modules/mass-messages/CreateMassMessageModal';
+import type { MassMessage, MassMessageStatus } from '../../modules/mass-messages/types';
 import type { Account } from '../../modules/accounts/types';
 
 const PAGE_LIMIT = 20;
-
-const FILTER_OPTIONS = [
-  { value: 'users_with_purchases', label: 'Users with purchases' },
-  { value: 'users_without_purchases', label: 'Users without purchases' },
-  { value: 'users_with_subscription', label: 'Users with subscription' },
-  { value: 'users_without_subscription', label: 'Users without subscription' },
-];
 
 const STATUS_TABS: { value: MassMessageStatus | ''; label: string }[] = [
   { value: '', label: 'All' },
@@ -50,11 +42,6 @@ function formatDate(dateStr: string | null) {
   });
 }
 
-function datetimeLocalToApi(value: string): string {
-  // "2026-04-25T18:00" → "2026-04-25 18:00:00"
-  return value.replace('T', ' ') + ':00';
-}
-
 export function MassMessagesPage() {
   const { team } = useAuthStore();
   const isAdmin = team?.role === 'admin';
@@ -80,19 +67,6 @@ export function MassMessagesPage() {
   const [isDeleting, setIsDeleting] = useState(false);
 
   const [isCreateOpen, setIsCreateOpen] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [userLists, setUserLists] = useState<UserList[]>([]);
-  const [userListsLoading, setUserListsLoading] = useState(false);
-  const [form, setForm] = useState({
-    message: '',
-    filter: [] as string[],
-    exclude_filter: [] as string[],
-    include_user_list: [] as string[],
-    exclude_user_list: [] as string[],
-    to_be_posted_at: '',
-    delete_latest: false,
-  });
-  const [formError, setFormError] = useState<string | null>(null);
 
   useEffect(() => {
     accountsApi.getAccounts()
@@ -152,74 +126,15 @@ export function MassMessagesPage() {
   };
 
   const handleOpenCreate = () => {
-    setForm({ message: '', filter: [], exclude_filter: [], include_user_list: [], exclude_user_list: [], to_be_posted_at: '', delete_latest: false });
-    setFormError(null);
     setIsCreateOpen(true);
-    setUserListsLoading(true);
-    massMessagesApi.getUserLists(selectedAccountId)
-      .then(setUserLists)
-      .catch(() => setUserLists([]))
-      .finally(() => setUserListsLoading(false));
   };
 
-  type SelectionMode = 'none' | 'include' | 'exclude';
-
-  const getFilterMode = (value: string): SelectionMode =>
-    form.filter.includes(value) ? 'include' : form.exclude_filter.includes(value) ? 'exclude' : 'none';
-
-  const setFilterMode = (value: string, mode: SelectionMode) => {
-    setForm((f) => ({
-      ...f,
-      filter: mode === 'include' ? [...f.filter.filter((v) => v !== value), value] : f.filter.filter((v) => v !== value),
-      exclude_filter: mode === 'exclude' ? [...f.exclude_filter.filter((v) => v !== value), value] : f.exclude_filter.filter((v) => v !== value),
-    }));
-  };
-
-  const getUserListMode = (id: string): SelectionMode =>
-    form.include_user_list.includes(id) ? 'include' : form.exclude_user_list.includes(id) ? 'exclude' : 'none';
-
-  const setUserListMode = (id: string, mode: SelectionMode) => {
-    setForm((f) => ({
-      ...f,
-      include_user_list: mode === 'include' ? [...f.include_user_list.filter((v) => v !== id), id] : f.include_user_list.filter((v) => v !== id),
-      exclude_user_list: mode === 'exclude' ? [...f.exclude_user_list.filter((v) => v !== id), id] : f.exclude_user_list.filter((v) => v !== id),
-    }));
-  };
-
-  const handleCreate = async () => {
-    if (!form.message.trim()) {
-      setFormError('Message text is required.');
-      return;
-    }
-    if (!selectedAccountId) {
-      setFormError('Please select an account first.');
-      return;
-    }
-    try {
-      setIsSubmitting(true);
-      setFormError(null);
-      const newMsg = await massMessagesApi.create(selectedAccountId, {
-        message: form.message.trim(),
-        filter: form.filter,
-        include_user_list: form.include_user_list,
-        exclude_user_list: form.exclude_user_list,
-        exclude_filter: form.exclude_filter,
-        file_stack_id: null,
-        to_be_posted_at: form.to_be_posted_at ? datetimeLocalToApi(form.to_be_posted_at) : null,
-        delete_latest: form.delete_latest,
-      });
-      toast.success('Mass message created.');
-      setIsCreateOpen(false);
-      if (newMsg) {
-        setMessages((prev) => [newMsg, ...prev]);
-        setTotalCount((c) => c + 1);
-      } else {
-        fetchMessages();
-      }
-    } catch (err) {
-      setFormError(err instanceof Error ? err.message : 'Failed to create mass message.');
-    } finally {
-      setIsSubmitting(false);
+  const handleMassMessageCreated = (newMsg: MassMessage | null) => {
+    if (newMsg) {
+      setMessages((prev) => [newMsg, ...prev]);
+      setTotalCount((c) => c + 1);
+    } else {
+      fetchMessages();
     }
   };
 
@@ -472,143 +387,12 @@ export function MassMessagesPage() {
       </Modal>
 
       {/* Create Modal */}
-      <Modal
+      <CreateMassMessageModal
         isOpen={isCreateOpen}
         onClose={() => setIsCreateOpen(false)}
-        title="New Mass Message"
-        size="md"
-      >
-        <div className="p-4 sm:p-6 space-y-5">
-          <Textarea
-            label="Message *"
-            placeholder="Enter your message…"
-            rows={4}
-            value={form.message}
-            onChange={(e) => setForm((f) => ({ ...f, message: e.target.value }))}
-          />
-
-          {/* Target group filters */}
-          <div>
-            <p className="text-sm font-medium text-foreground mb-2">Target Group</p>
-            <div className="space-y-1.5">
-              {FILTER_OPTIONS.map((opt) => {
-                const mode = getFilterMode(opt.value);
-                return (
-                  <div key={opt.value} className="flex items-center justify-between gap-3">
-                    <span className="text-sm text-foreground">{opt.label}</span>
-                    <div className="flex gap-1">
-                      <button
-                        type="button"
-                        onClick={() => setFilterMode(opt.value, mode === 'include' ? 'none' : 'include')}
-                        className={`px-2.5 py-1 rounded-md text-xs font-medium transition-colors ${
-                          mode === 'include' ? 'bg-brand text-white' : 'bg-muted text-muted-foreground hover:text-foreground'
-                        }`}
-                      >
-                        Include
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setFilterMode(opt.value, mode === 'exclude' ? 'none' : 'exclude')}
-                        className={`px-2.5 py-1 rounded-md text-xs font-medium transition-colors ${
-                          mode === 'exclude' ? 'bg-red-600 text-white' : 'bg-muted text-muted-foreground hover:text-foreground'
-                        }`}
-                      >
-                        Exclude
-                      </button>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-            {form.filter.length === 0 && form.include_user_list.length === 0 && (
-              <p className="mt-1.5 text-xs text-yellow-500">No target selected — add filters or include a user list.</p>
-            )}
-          </div>
-
-          {/* User Lists */}
-          {userListsLoading ? (
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <span className="w-3 h-3 border border-gray-600 border-t-gray-400 rounded-full animate-spin" />
-              Loading user lists…
-            </div>
-          ) : userLists.length > 0 && (
-            <div>
-              <p className="text-sm font-medium text-foreground mb-2">User Lists</p>
-              <div className="space-y-1.5 max-h-48 overflow-y-auto pr-1">
-                {userLists.map((list) => {
-                  const mode = getUserListMode(list._id);
-                  return (
-                    <div key={list._id} className="flex items-center justify-between gap-3">
-                      <span className="text-sm text-foreground">{list.name}</span>
-                      <div className="flex gap-1">
-                        <button
-                          type="button"
-                          onClick={() => setUserListMode(list._id, mode === 'include' ? 'none' : 'include')}
-                          className={`px-2.5 py-1 rounded-md text-xs font-medium transition-colors ${
-                            mode === 'include' ? 'bg-brand text-white' : 'bg-muted text-muted-foreground hover:text-foreground'
-                          }`}
-                        >
-                          Include
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setUserListMode(list._id, mode === 'exclude' ? 'none' : 'exclude')}
-                          className={`px-2.5 py-1 rounded-md text-xs font-medium transition-colors ${
-                            mode === 'exclude' ? 'bg-red-600 text-white' : 'bg-muted text-muted-foreground hover:text-foreground'
-                          }`}
-                        >
-                          Exclude
-                        </button>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
-          {/* Delete latest sent message */}
-          <label className="flex items-start gap-3 cursor-pointer group">
-            <input
-              type="checkbox"
-              checked={form.delete_latest}
-              onChange={(e) => setForm((f) => ({ ...f, delete_latest: e.target.checked }))}
-              className="w-4 h-4 mt-0.5 rounded border-border bg-muted text-brand focus:ring-brand-500 focus:ring-offset-slate-900"
-            />
-            <span className="text-sm text-foreground group-hover:text-foreground transition-colors">
-              Neueste bereits gesendete Nachricht löschen
-              <span className="block text-xs text-muted-foreground mt-0.5">Beim Erstellen dieser Nachricht wird die aktuell neueste, bereits an die Kunden zugestellte Nachricht entfernt.</span>
-            </span>
-          </label>
-
-          {/* Scheduled send */}
-          <Input
-            label="Schedule (optional)"
-            type="datetime-local"
-            value={form.to_be_posted_at}
-            onChange={(e) => setForm((f) => ({ ...f, to_be_posted_at: e.target.value }))}
-          />
-          {!form.to_be_posted_at && (
-            <p className="-mt-3 text-xs text-muted-foreground">Leave empty to send immediately.</p>
-          )}
-
-          {formError && (
-            <p className="text-sm text-red-400 flex items-center gap-1.5">
-              <IconAlertCircle size={14} /> {formError}
-            </p>
-          )}
-
-          <div className="flex justify-end gap-3 pt-1">
-            <Button variant="secondary" onClick={() => setIsCreateOpen(false)} disabled={isSubmitting}>
-              Cancel
-            </Button>
-            <Button onClick={handleCreate} disabled={isSubmitting} className="flex items-center gap-2">
-              <IconSend size={14} />
-              {isSubmitting ? 'Sending…' : 'Create'}
-            </Button>
-          </div>
-        </div>
-      </Modal>
+        accountId={selectedAccountId}
+        onCreated={handleMassMessageCreated}
+      />
     </div>
   );
 }

@@ -1,10 +1,7 @@
 import { useState, useEffect, useMemo, useCallback, useRef, memo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { PageLoader } from '../../components/ui/PageLoader';
-import { Modal } from '../../components/ui/Modal';
 import { Button } from '../../components/ui/Button';
-import { Textarea } from '../../components/ui/Textarea';
-import { Input } from '../../components/ui/Input';
 import { Card, CardContent } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
 import { IconClock, IconChevronDown, IconAlertCircle, IconUser, IconChecks, IconLoader2, IconRotate, IconSend, IconPlus, IconTrendingUp, IconUsers, IconReceipt, IconEye, IconInbox, IconCornerUpLeft, IconMessageCircle, IconHeart, IconX } from '@tabler/icons-react';
@@ -24,9 +21,8 @@ import { unreadCountStore } from '../../lib/unreadCountStore';
 import { inboxApi } from '../../modules/inbox/services/inbox.api';
 import { newMessageNotifications } from '../../lib/newMessageNotifications';
 import { accountsApi } from '../../modules/accounts/accountsApi';
-import { massMessagesApi } from '../../modules/mass-messages/massMessagesApi';
+import { CreateMassMessageModal } from '../../modules/mass-messages/CreateMassMessageModal';
 import type { Account } from '../../modules/accounts/types';
-import type { UserList } from '../../modules/mass-messages/types';
 import { cn } from '../../lib/utils';
 
 type RangeDays = 7 | 30 | 90;
@@ -181,12 +177,11 @@ export function DashboardPage() {
         </div>
       )}
 
-      {isCreateMassMessageOpen && (
-        <CreateMassMessageModal
-          accounts={accounts}
-          onClose={() => setIsCreateMassMessageOpen(false)}
-        />
-      )}
+      <CreateMassMessageModal
+        isOpen={isCreateMassMessageOpen}
+        onClose={() => setIsCreateMassMessageOpen(false)}
+        accounts={accounts}
+      />
 
       {chats.length > 0 && (
         <LatestChatsSection
@@ -684,180 +679,6 @@ function ErrorState({ error, onRetry }: { error: string; onRetry: () => void }) 
         </div>
       </CardContent>
     </Card>
-  );
-}
-
-// ============================================================================
-// Create Mass Message Modal
-// ============================================================================
-
-const FILTER_OPTIONS = [
-  { value: 'users_with_purchases', label: 'Users with purchases' },
-  { value: 'users_without_purchases', label: 'Users without purchases' },
-  { value: 'users_with_subscription', label: 'Users with subscription' },
-  { value: 'users_without_subscription', label: 'Users without subscription' },
-];
-
-interface CreateMassMessageModalProps {
-  accounts: Account[];
-  onClose: () => void;
-}
-
-function CreateMassMessageModal({ accounts, onClose }: CreateMassMessageModalProps) {
-  const [step, setStep] = useState<'account' | 'compose'>('account');
-  const [selectedAccount, setSelectedAccount] = useState<Account | null>(null);
-  const [userLists, setUserLists] = useState<UserList[]>([]);
-  const [userListsLoading, setUserListsLoading] = useState(false);
-  const [form, setForm] = useState({ message: '', filter: [] as string[], include_user_list: [] as string[], to_be_posted_at: '' });
-  const [formError, setFormError] = useState<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const handleSelectAccount = (account: Account) => {
-    setSelectedAccount(account);
-    setStep('compose');
-    setUserListsLoading(true);
-    massMessagesApi.getUserLists(account.fourbased_id)
-      .then(setUserLists).catch(() => setUserLists([])).finally(() => setUserListsLoading(false));
-  };
-
-  const toggleFilter = (value: string) => {
-    setForm((f) => ({
-      ...f,
-      filter: f.filter.includes(value) ? f.filter.filter((v) => v !== value) : [...f.filter, value],
-    }));
-  };
-
-  const handleCreate = async () => {
-    if (!form.message.trim()) { setFormError('Nachricht ist erforderlich.'); return; }
-    if (!selectedAccount) return;
-    try {
-      setIsSubmitting(true);
-      setFormError(null);
-      await massMessagesApi.create(selectedAccount.fourbased_id, {
-        message: form.message.trim(),
-        filter: form.filter,
-        include_user_list: form.include_user_list,
-        exclude_user_list: [],
-        exclude_filter: [],
-        file_stack_id: null,
-        to_be_posted_at: form.to_be_posted_at ? form.to_be_posted_at.replace('T', ' ') + ':00' : null,
-      });
-      toast.success('Massennachricht erstellt.');
-      onClose();
-    } catch (err) {
-      setFormError(err instanceof Error ? err.message : 'Fehler beim Erstellen.');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  return (
-    <Modal isOpen onClose={onClose} title="Massennachricht erstellen" size="md">
-      {step === 'account' ? (
-        <div className="p-5 space-y-3">
-          <p className="text-sm text-muted-foreground">Account auswählen:</p>
-          <div className="flex flex-col gap-2 max-h-72 overflow-y-auto">
-            {accounts.map((account) => (
-              <button
-                key={account.fourbased_id}
-                onClick={() => handleSelectAccount(account)}
-                className="flex items-center gap-3 px-4 py-3 rounded-lg border border-border bg-card hover:border-violet-300 hover:bg-violet-50/10 text-left transition-all"
-              >
-                {account.img_url ? (
-                  <img src={account.img_url} alt={account.name} className="w-8 h-8 rounded-full object-cover shrink-0" />
-                ) : (
-                  <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center shrink-0 text-sm font-semibold text-muted-foreground">
-                    {account.name.charAt(0).toUpperCase()}
-                  </div>
-                )}
-                <div className="min-w-0">
-                  <p className="text-sm font-medium text-foreground truncate">{account.name}</p>
-                  {account.followers != null && (
-                    <p className="text-xs text-muted-foreground">{account.followers.toLocaleString()} followers</p>
-                  )}
-                </div>
-              </button>
-            ))}
-          </div>
-        </div>
-      ) : (
-        <div className="p-5 space-y-4">
-          {selectedAccount && (
-            <div className="flex items-center gap-2">
-              <button onClick={() => setStep('account')} className="text-xs text-muted-foreground hover:text-foreground transition-colors">← zurück</button>
-              <span className="text-xs text-muted-foreground">Account:</span>
-              <span className="text-xs font-medium text-foreground">{selectedAccount.name}</span>
-            </div>
-          )}
-
-          <Textarea label="Nachricht *" placeholder="Nachricht eingeben…" rows={4}
-            value={form.message} onChange={(e) => setForm((f) => ({ ...f, message: e.target.value }))} />
-
-          <div>
-            <p className="text-sm font-medium text-foreground mb-2">Zielgruppe</p>
-            <div className="space-y-2">
-              {FILTER_OPTIONS.map((opt) => (
-                <label key={opt.value} className="flex items-center gap-2.5 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={form.filter.includes(opt.value)}
-                    onChange={() => toggleFilter(opt.value)}
-                    className="w-4 h-4 rounded border-border text-violet-600 focus:ring-violet-500"
-                  />
-                  <span className="text-sm text-foreground">{opt.label}</span>
-                </label>
-              ))}
-            </div>
-          </div>
-
-          {userListsLoading ? (
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <span className="w-3 h-3 border border-border border-t-violet-500 rounded-full animate-spin" />
-              Userlisten werden geladen…
-            </div>
-          ) : userLists.length > 0 && (
-            <div>
-              <p className="text-sm font-medium text-foreground mb-2">User Lists</p>
-              <div className="space-y-2 max-h-36 overflow-y-auto">
-                {userLists.map((list) => (
-                  <label key={list._id} className="flex items-center gap-2.5 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={form.include_user_list.includes(list._id)}
-                      onChange={() => setForm((f) => ({
-                        ...f,
-                        include_user_list: f.include_user_list.includes(list._id)
-                          ? f.include_user_list.filter((id) => id !== list._id)
-                          : [...f.include_user_list, list._id],
-                      }))}
-                      className="w-4 h-4 rounded border-border text-violet-600 focus:ring-violet-500"
-                    />
-                    <span className="text-sm text-foreground">{list.name}</span>
-                  </label>
-                ))}
-              </div>
-            </div>
-          )}
-
-          <Input label="Geplant (optional)" type="datetime-local"
-            value={form.to_be_posted_at} onChange={(e) => setForm((f) => ({ ...f, to_be_posted_at: e.target.value }))} />
-
-          {formError && (
-            <p className="text-sm text-red-500 flex items-center gap-1.5">
-              <IconAlertCircle size={14} /> {formError}
-            </p>
-          )}
-
-          <div className="flex justify-end gap-2 pt-1">
-            <Button variant="outline" size="sm" onClick={onClose} disabled={isSubmitting}>Abbrechen</Button>
-            <Button size="sm" onClick={handleCreate} disabled={isSubmitting} className="gap-1.5">
-              <IconSend size={13} />
-              {isSubmitting ? 'Senden…' : 'Erstellen'}
-            </Button>
-          </div>
-        </div>
-      )}
-    </Modal>
   );
 }
 
