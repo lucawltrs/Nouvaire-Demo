@@ -305,6 +305,7 @@ function ActionsMenu({ account, onEdit, onAssign, onUnassign, onDelete }: Accoun
   const [open, setOpen] = useState(false);
   const [pos, setPos] = useState({ top: 0, right: 0 });
   const btnRef = useRef<HTMLButtonElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
 
   const handleOpen = () => {
     if (btnRef.current) {
@@ -313,6 +314,15 @@ function ActionsMenu({ account, onEdit, onAssign, onUnassign, onDelete }: Accoun
     }
     setOpen((v) => !v);
   };
+
+  useEffect(() => {
+    if (!open || !btnRef.current || !menuRef.current) return;
+    const btnRect = btnRef.current.getBoundingClientRect();
+    const menuHeight = menuRef.current.offsetHeight;
+    if (btnRect.bottom + menuHeight + 4 > window.innerHeight) {
+      setPos((p) => ({ ...p, top: btnRect.top + window.scrollY - menuHeight - 4 }));
+    }
+  }, [open]);
 
   useEffect(() => {
     if (!open) return;
@@ -339,6 +349,7 @@ function ActionsMenu({ account, onEdit, onAssign, onUnassign, onDelete }: Accoun
 
       {open && createPortal(
         <div
+          ref={menuRef}
           style={{ position: 'absolute', top: pos.top, right: pos.right }}
           className="w-44 bg-card border border-border rounded-lg shadow-xl overflow-hidden z-[9999]"
           onMouseDown={(e) => e.stopPropagation()}
