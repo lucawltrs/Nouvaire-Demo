@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { IconArrowLeft, IconClock, IconAlertCircle, IconCalendar, IconClockHour3, IconPlayerStop, IconCurrencyDollar, IconX } from '@tabler/icons-react';
 import { Card } from '../../../components/ui/Card';
 import { PageLoader } from '../../../components/ui/PageLoader';
+import { DateRangeFilter } from '../../../components/ui/DateRangeFilter';
 import { teamApi, type TeamMember } from '../../../modules/shared/services/teamApi';
 import {
   getSessionOverview,
@@ -44,6 +45,10 @@ export function TeamMemberDetailPage() {
   const [isLoadingSessions, setIsLoadingSessions] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTill, setDateTill] = useState('');
+  const [dateError, setDateError] = useState<string | null>(null);
+
   // Admin-end modal state
   const [adminEndSession, setAdminEndSession] = useState<SessionOverviewSession | null>(null);
   const [adminNote, setAdminNote] = useState('');
@@ -76,7 +81,7 @@ export function TeamMemberDetailPage() {
       const endedAtIso = new Date(adminEndedAt).toISOString().slice(0, 19);
       await postAdminEndWorkSession(adminEndSession.id, adminNote, endedAtIso, token);
       closeAdminEndModal();
-      const overview = await getSessionOverview(Number(memberId));
+      const overview = await getSessionOverview(Number(memberId), dateFrom || undefined, dateTill || undefined);
       setSessions(overview?.sessions ?? []);
       setTotalRevenue(overview?.total_revenue ?? '$ 0.00');
     } catch (err) {
@@ -89,6 +94,12 @@ export function TeamMemberDetailPage() {
   const fetchData = useCallback(async () => {
     if (!memberId) return;
     const id = Number(memberId);
+
+    if (dateFrom && dateTill && dateTill < dateFrom) {
+      setDateError('Das "Bis"-Datum darf nicht vor dem "Von"-Datum liegen.');
+      return;
+    }
+    setDateError(null);
 
     setIsLoadingMember(true);
     setIsLoadingSessions(true);
@@ -105,7 +116,7 @@ export function TeamMemberDetailPage() {
     }
 
     try {
-      const overview = await getSessionOverview(id);
+      const overview = await getSessionOverview(id, dateFrom || undefined, dateTill || undefined);
       setSessions(overview?.sessions ?? []);
       setTotalRevenue(overview?.total_revenue ?? '$ 0.00');
     } catch {
@@ -121,11 +132,17 @@ export function TeamMemberDetailPage() {
     } catch {
       // leave null, fallback shown in header
     }
-  }, [memberId]);
+  }, [memberId, dateFrom, dateTill]);
 
   useEffect(() => {
     fetchData();
   }, [fetchData]);
+
+  const resetDateFilter = () => {
+    setDateFrom('');
+    setDateTill('');
+    setDateError(null);
+  };
 
   if (isLoadingMember) {
     return <PageLoader message="Lade Mitglied..." subtitle="Profil und Arbeitszeiten werden abgerufen" />;
@@ -234,8 +251,16 @@ export function TeamMemberDetailPage() {
 
       {/* Work Sessions Table */}
       <Card className="overflow-hidden border border-border">
-        <div className="px-6 py-4 border-b border-border">
+        <div className="px-6 py-4 border-b border-border flex items-center justify-between flex-wrap gap-3">
           <h2 className="text-base font-semibold text-foreground">Arbeitszeiten</h2>
+          <DateRangeFilter
+            from={dateFrom}
+            till={dateTill}
+            onFromChange={setDateFrom}
+            onTillChange={setDateTill}
+            onReset={resetDateFilter}
+            error={dateError}
+          />
         </div>
 
         {isLoadingSessions ? (

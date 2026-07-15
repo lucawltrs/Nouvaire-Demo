@@ -49,9 +49,17 @@ export async function getActiveWorkSession(): Promise<ActiveWorkSession | null> 
   return raw?.message ?? null;
 }
 
-export async function getWorkSessionsForUser(userId: number): Promise<WorkSession[]> {
+export async function getWorkSessionsForUser(
+  userId: number,
+  from?: string,
+  till?: string,
+): Promise<WorkSession[]> {
+  const params = new URLSearchParams();
+  if (from) params.set('from', from);
+  if (till) params.set('till', till);
+  const query = params.toString();
   const res = await apiFetch(
-    `${getConfig().API_URL}/members/${userId}/work-sessions`,
+    `${getConfig().API_URL}/members/${userId}/work-sessions${query ? `?${query}` : ''}`,
   );
   const raw = await res.json();
   return raw?.message ?? [];
@@ -114,8 +122,18 @@ export interface SessionOverview {
   chatter_percentage: number | null;
 }
 
-export async function getSessionOverview(userId: number): Promise<SessionOverview> {
-  const res = await apiFetch(`${getConfig().API_URL}/members/${userId}/session-overview`);
+export async function getSessionOverview(
+  userId: number,
+  from?: string,
+  till?: string,
+): Promise<SessionOverview> {
+  const params = new URLSearchParams();
+  if (from) params.set('from', from);
+  if (till) params.set('till', till);
+  const query = params.toString();
+  const res = await apiFetch(
+    `${getConfig().API_URL}/members/${userId}/session-overview${query ? `?${query}` : ''}`,
+  );
   const raw = await res.json();
   return raw?.message;
 }
