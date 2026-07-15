@@ -6,6 +6,7 @@ import { Modal } from '../../components/ui/Modal';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { OtpInput } from '../../components/ui/OtpInput';
+import { DateRangeFilter } from '../../components/ui/DateRangeFilter';
 import {
   getSessionOverview,
   postStartWorkSession,
@@ -46,6 +47,10 @@ export function MyProfilePage() {
   const [chatterPercentage, setChatterPercentage] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTill, setDateTill] = useState('');
+  const [dateError, setDateError] = useState<string | null>(null);
 
   const [startLoading, setStartLoading] = useState(false);
   const [startError, setStartError] = useState<string | null>(null);
@@ -136,10 +141,15 @@ export function MyProfilePage() {
 
   const fetchData = useCallback(async () => {
     if (!user?.id) return;
+    if (dateFrom && dateTill && dateTill < dateFrom) {
+      setDateError('Das "Bis"-Datum darf nicht vor dem "Von"-Datum liegen.');
+      return;
+    }
+    setDateError(null);
     setIsLoading(true);
     setError(null);
     try {
-      const overview = await getSessionOverview(user.id);
+      const overview = await getSessionOverview(user.id, dateFrom || undefined, dateTill || undefined);
       setSessions(overview?.sessions ?? []);
       setTotalRevenue(overview?.total_revenue ?? '$ 0.00');
       setChatterPercentage(overview?.chatter_percentage ?? null);
@@ -148,11 +158,17 @@ export function MyProfilePage() {
     } finally {
       setIsLoading(false);
     }
-  }, [user?.id]);
+  }, [user?.id, dateFrom, dateTill]);
 
   useEffect(() => {
     fetchData();
   }, [fetchData]);
+
+  const resetDateFilter = () => {
+    setDateFrom('');
+    setDateTill('');
+    setDateError(null);
+  };
 
   if (isLoading) {
     return <PageLoader message="Lade Profil..." subtitle="Deine Arbeitszeiten und Umsätze werden abgerufen" />;
@@ -433,14 +449,24 @@ export function MyProfilePage() {
 
       {/* Sessions Table */}
       <Card className="overflow-hidden border border-border">
-        <div className="px-6 py-4 border-b border-border flex items-center justify-between">
-          <h2 className="text-base font-semibold text-foreground">Meine Arbeitszeiten</h2>
-          {sessions.some((s) => s.is_active) && (
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-brand/10 text-brand border border-brand/20">
-              <span className="w-1.5 h-1.5 rounded-full bg-brand animate-pulse" />
-              Schicht aktiv
-            </span>
-          )}
+        <div className="px-6 py-4 border-b border-border flex items-center justify-between flex-wrap gap-3">
+          <div className="flex items-center gap-3">
+            <h2 className="text-base font-semibold text-foreground">Meine Arbeitszeiten</h2>
+            {sessions.some((s) => s.is_active) && (
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-brand/10 text-brand border border-brand/20">
+                <span className="w-1.5 h-1.5 rounded-full bg-brand animate-pulse" />
+                Schicht aktiv
+              </span>
+            )}
+          </div>
+          <DateRangeFilter
+            from={dateFrom}
+            till={dateTill}
+            onFromChange={setDateFrom}
+            onTillChange={setDateTill}
+            onReset={resetDateFilter}
+            error={dateError}
+          />
         </div>
 
         {sessions.length === 0 ? (
