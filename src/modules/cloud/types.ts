@@ -43,6 +43,10 @@ export interface CloudAsset {
   img_url?: string;
   /** Playable video/audio URL. Only set when fileStackType is "video" or "audio". */
   media_url?: string;
+  /** Clip length in seconds. Only set when fileStackType is "video" or "audio". */
+  duration?: number;
+  /** Clip length pre-formatted as "mm:ss" by the API. Only set when fileStackType is "video" or "audio". */
+  duration_formatted?: string;
 }
 
 /** CloudAssetDetails — same shape, all fields already present in CloudAsset */

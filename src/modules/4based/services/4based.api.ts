@@ -21,6 +21,10 @@ export interface FourBasedFileStackItem {
   own?: boolean;
   collection_id?: string;
   media_url?: string;
+  /** Clip length in seconds. Only set when fileStackType is "video" or "audio". */
+  duration?: number;
+  /** Clip length pre-formatted as "mm:ss" by the API. Only set when fileStackType is "video" or "audio". */
+  duration_formatted?: string;
   [key: string]: unknown;
 }
 
