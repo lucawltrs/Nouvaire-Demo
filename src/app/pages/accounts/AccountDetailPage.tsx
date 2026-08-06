@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { createPortal } from 'react-dom';
 import { IconArrowLeft, IconCurrencyDollar, IconUsers, IconAlertCircle, IconStack2, IconCircleCheck, IconMessage, IconPlus, IconPencil, IconTrash, IconLoader2, IconChevronDown, IconChevronRight, IconCamera, IconMovie, IconMusic, IconMoodSmile, IconTrendingUp, IconX, IconCircle, IconHeart, IconPhoto, IconCircleX, IconTag, IconGripVertical } from '@tabler/icons-react';
+import { Save } from 'lucide-react';
 import Picker from '@emoji-mart/react';
 import data from '@emoji-mart/data';
 import { Card } from '../../../components/ui/Card';
@@ -1762,6 +1763,11 @@ function CfgVaultThumbnail({
         <div className="absolute top-1.5 right-1.5 pointer-events-none">
           <IconCircleCheck size={18} className="text-brand drop-shadow" fill="white" />
         </div>
+      )}
+      {item.duration_formatted && (
+        <span className="absolute bottom-1 left-1 text-[10px] font-medium px-1.5 py-0.5 rounded bg-black/70 text-white tabular-nums">
+          {item.duration_formatted}
+        </span>
       )}
       {typeof item.price === 'number' && item.price > 0 && (
         <span className="absolute bottom-1 right-1 text-[10px] font-semibold px-1.5 py-0.5 rounded bg-black/70 text-brand">

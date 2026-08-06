@@ -84,6 +84,11 @@ function AssetTile({ asset }: { asset: CloudAsset }) {
               preload="metadata"
             />
             <IconMovie size={32} className="absolute text-white drop-shadow pointer-events-none" />
+            {asset.duration_formatted && (
+              <span className="absolute bottom-1.5 right-1.5 px-1.5 py-0.5 rounded bg-black/70 text-white text-[10px] font-medium tabular-nums pointer-events-none">
+                {asset.duration_formatted}
+              </span>
+            )}
           </div>
         ) : isAudio ? (
           <div className="w-full h-full flex items-center justify-center bg-gray-900">

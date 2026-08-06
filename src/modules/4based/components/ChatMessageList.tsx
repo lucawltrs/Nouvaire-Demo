@@ -1,5 +1,6 @@
 import { UIEvent, useEffect, useRef, useState } from 'react';
 import { FourBasedChatMessage, FourBasedFileStackItem } from '../services/4based.api';
+import { formatDuration } from '../../cloud/cloudApi';
 
 function VoiceMessagePlayer({ src, isOwn }: { src: string; isOwn: boolean }) {
   const audioRef = useRef<HTMLAudioElement>(null);
@@ -130,6 +131,17 @@ function MediaCarousel({ items, isPurchased, price, previewUrl }: MediaCarouselP
             className="w-full h-full object-cover"
           />
         )}
+
+        {/* Duration badge — chat messages only carry the raw `duration` seconds, not
+            `duration_formatted` (that's only present on vault assets), so format it here */}
+        {isVideo && (() => {
+          const label = current?.duration_formatted ?? formatDuration(current?.duration);
+          return label ? (
+            <span className="absolute top-2 right-2 text-[10px] font-medium px-2 py-0.5 rounded-full bg-black/60 text-white tabular-nums">
+              {label}
+            </span>
+          ) : null;
+        })()}
 
         {/* Price badge */}
         {typeof price === 'number' && (
