@@ -4,24 +4,31 @@ on:
   push:
     branches:
       - main
+  workflow_dispatch:
+    inputs:
+      target:
+        description: "Was deployen?"
+        required: true
+        default: "live"
+        type: choice
+        options:
+          - live
 
 jobs:
-  deploy:
+  deploy-beta:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
           token: ${{ secrets.GH_TOKEN }}
-
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'npm'
-
       - name: Bump patch version
         run: |
           git config user.name "github-actions[bot]"
@@ -32,15 +39,12 @@ jobs:
           git add package.json
           git commit -m "chore: bump version to $VERSION [skip ci]"
           git push
-
       - name: Install dependencies
         run: npm ci
-
       - name: Build
         run: npm run build
         env:
           VITE_API_URL: ${{ secrets.VITE_API_URL }}
-
       - name: Deploy to IONOS
         uses: appleboy/scp-action@v0.1.7
         with:
@@ -51,7 +55,6 @@ jobs:
           target: "~/public/dashboard-beta"
           strip_components: 1
           rm: true
-
       - name: Notify Discord via API
         if: success()
         run: |
@@ -62,3 +65,34 @@ jobs:
             -H "Authorization: Bearer ${{ secrets.DEPLOY_SECRET }}" \
             -H "Content-Type: application/json" \
             -d "{\"version\":\"$VERSION\",\"commits\":\"$COMMITS_ESCAPED\",\"deployed_at\":\"$(date '+%Y-%m-%d %H:%M:%S')\"}"
+
+  deploy-live:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GH_TOKEN }}
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - name: Install dependencies
+        run: npm ci
+      - name: Build
+        run: npm run build
+        env:
+          VITE_API_URL: ${{ secrets.VITE_API_URL_LIVE }}
+      - name: Deploy to IONOS
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: access-5019953950.webspace-host.com
+          username: su1182555
+          key: ${{ secrets.IONOS_SSH_KEY }}
+          source: "dist/*"
+          target: "~/public/dashboard"
+          strip_components: 1
+          rm: true
