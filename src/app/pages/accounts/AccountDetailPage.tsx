@@ -979,6 +979,7 @@ function ConfiguredMessagesCard({ fourbasedId, isAdmin, categories }: { fourbase
   const [isVaultModalOpen, setIsVaultModalOpen] = useState(false);
   // 'add' | 'edit' — which form triggered the vault modal
   const [vaultTarget, setVaultTarget] = useState<'add' | 'edit'>('add');
+  const [vaultInitialDescription, setVaultInitialDescription] = useState('');
   const [vaultItems, setVaultItems] = useState<CloudAsset[]>([]);
   const [isLoadingVault, setIsLoadingVault] = useState(false);
   const [vaultError, setVaultError] = useState<string | null>(null);
@@ -1039,6 +1040,7 @@ function ConfiguredMessagesCard({ fourbasedId, isAdmin, categories }: { fourbase
 
   const handleOpenVault = (target: 'add' | 'edit') => {
     setVaultTarget(target);
+    setVaultInitialDescription((target === 'add' ? newMessage : editMessage).trim());
     setIsVaultModalOpen(true);
     setVaultItems([]);
     setVaultOffset(0);
@@ -1570,6 +1572,7 @@ function ConfiguredMessagesCard({ fourbasedId, isAdmin, categories }: { fourbase
       {vaultStep === 2 && selectedVaultItems.length > 0 ? (
         <VaultConfigStep
           items={selectedVaultItems}
+          initialDescription={vaultInitialDescription}
           onBack={() => setVaultStep(1)}
           onSave={handleSaveVaultItem}
           isSaving={isSavingVault}
@@ -1780,11 +1783,13 @@ function CfgVaultThumbnail({
 
 function VaultConfigStep({
   items,
+  initialDescription = '',
   onBack,
   onSave,
   isSaving = false,
 }: {
   items: CloudAsset[];
+  initialDescription?: string;
   onBack: () => void;
   onSave: (description: string, priceInCents: number) => void;
   isSaving?: boolean;
@@ -1792,7 +1797,7 @@ function VaultConfigStep({
   const firstItem = items[0];
   const isVideo = firstItem.fileStackType === 'video';
   const isAudio = firstItem.fileStackType === 'audio';
-  const [description, setDescription] = useState('');
+  const [description, setDescription] = useState(initialDescription);
   const [priceInput, setPriceInput] = useState(
     typeof firstItem.price === 'number' && firstItem.price > 0 ? (firstItem.price / 100).toFixed(2) : '',
   );
