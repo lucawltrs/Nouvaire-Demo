@@ -36,7 +36,7 @@ function NotificationItem({
   const style = TYPE_STYLES[notification.type];
   const Icon = style?.icon ?? IconBell;
   const isUnread = !notification.read_at;
-  const avatarUrl = notification.fourbased_user?.media_url;
+  const avatarUrl = notification.fourbased_user?.avatar;
 
   return (
     <button

@@ -21,7 +21,7 @@ function Toast({
   const isMessage = notification.type === 'message';
   const isVoiceMessage = notification.type === 'voice_message';
   const isSale = notification.type === 'sale';
-  const avatarUrl = notification.fourbased_user?.media_url;
+  const avatarUrl = notification.fourbased_user?.avatar;
 
   return (
     <div className="flex items-start gap-3 w-80 bg-card border border-border rounded-xl shadow-2xl p-4 pointer-events-auto animate-in slide-in-from-right">

@@ -47,11 +47,29 @@ const nextId = (prefix: string) => {
   return `${prefix}_${seq.toString(36)}`;
 }
 
-function buildMessages(fourbasedId: string, chatId: string, customerId: string, count: number, startHoursAgo: number): FourBasedChatMessage[] {
+/**
+ * Builds the back-and-forth history, then explicitly appends a tail that
+ * determines the chat's unread state:
+ *   - `trailingInboundCount > 0`: the conversation ends with that many
+ *     consecutive customer messages — nobody has replied yet, chat is
+ *     unread/"needs a reply".
+ *   - `trailingInboundCount === 0`: one final creator message is appended —
+ *     the chat has been answered, last message is outbound.
+ * This makes the seed's message direction and its unread state consistent
+ * by construction, instead of two independently-rolled random values.
+ */
+function buildMessages(
+  fourbasedId: string,
+  chatId: string,
+  customerId: string,
+  historyCount: number,
+  startHoursAgo: number,
+  trailingInboundCount: number,
+): FourBasedChatMessage[] {
   const messages: FourBasedChatMessage[] = [];
   let t = startHoursAgo;
-  for (let i = 0; i < count; i++) {
-    const isFan = i % 2 === 0;
+
+  const push = (isFan: boolean, lineIndex: number) => {
     t -= Math.random() * 3 + 0.2;
     const created = fmt(hoursAgo(Math.max(t, 0.05)));
     messages.push({
@@ -60,12 +78,25 @@ function buildMessages(fourbasedId: string, chatId: string, customerId: string, 
       chat_id: chatId,
       user_id: isFan ? customerId : fourbasedId,
       receiver_user_id: isFan ? fourbasedId : customerId,
-      message: isFan ? FAN_LINES[i % FAN_LINES.length] : CREATOR_LINES[i % CREATOR_LINES.length],
+      message: isFan ? FAN_LINES[lineIndex % FAN_LINES.length] : CREATOR_LINES[lineIndex % CREATOR_LINES.length],
       sender_status: 'sent',
       created_at: created,
       updated_at: created,
     });
+  };
+
+  for (let i = 0; i < historyCount; i++) {
+    push(i % 2 === 0, i);
   }
+
+  if (trailingInboundCount > 0) {
+    for (let k = 0; k < trailingInboundCount; k++) {
+      push(true, historyCount + k);
+    }
+  } else {
+    push(false, historyCount);
+  }
+
   return messages;
 }
 
@@ -75,11 +106,12 @@ function buildChatsForAccount(fourbasedId: string, chatCount: number): DemoChat[
     const customerId = `cust_${fourbasedId}_${i}`;
     const chatId = `chat_${fourbasedId}_${i}`;
     const customerName = CUSTOMER_NAMES[(i + fourbasedId.length * 3) % CUSTOMER_NAMES.length];
-    const messageCount = 4 + ((i * 3) % 10);
+    const historyCount = 4 + ((i * 3) % 8);
     const startHoursAgo = 2 + i * 7 + Math.random() * 5;
-    const messages = buildMessages(fourbasedId, chatId, customerId, messageCount, startHoursAgo);
-    const isUnread = i % 3 === 0;
-    const unreadCount = isUnread ? 1 + (i % 3) : 0;
+    // Roughly a third of chats are still waiting on a reply from the creator.
+    const isWaitingOnReply = i % 3 === 0;
+    const trailingInboundCount = isWaitingOnReply ? 1 + (i % 2) : 0;
+    const messages = buildMessages(fourbasedId, chatId, customerId, historyCount, startHoursAgo, trailingInboundCount);
 
     chats.push({
       chat_id: chatId,
@@ -89,8 +121,7 @@ function buildChatsForAccount(fourbasedId: string, chatCount: number): DemoChat[
       customer_avatar_url: null,
       customer_is_online: i % 4 === 0,
       messages,
-      unread_count: unreadCount,
-      is_unread: isUnread,
+      unread_count: trailingInboundCount,
       sales_volume: Math.round((5 + i * 12.5) * 100) / 100,
       pivot: {
         _id: `pivot_${fourbasedId}_${i}`,

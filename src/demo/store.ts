@@ -22,7 +22,7 @@ import type {
   SessionOverview,
   SessionOverviewSession,
 } from '../modules/work-sessions/services/workSession.api.real';
-import type { Notification } from '../modules/notifications/types';
+import type { NotificationsResponse } from '../modules/notifications/types';
 import type { DashboardApiResponse } from '../modules/dashboard/types';
 import type { DemoChat } from './types';
 import { buildDemoSnapshot, type DemoSnapshot } from './seed';
@@ -49,6 +49,17 @@ function findChatByCustomer(fourbasedId: string, customerId: string): DemoChat |
   return state.chats[fourbasedId]?.find((c) => c.customer_id === customerId);
 }
 
+/**
+ * Single source of truth for "is this chat unread / needs a reply": true iff
+ * there are inbound (customer) messages since the chat was last read. Never
+ * derive this any other way — `unread_count` is the only stored state, kept
+ * consistent by `markChatAsRead` (→ 0), `sendMessage` (creator reply → 0),
+ * and new inbound messages (→ +1).
+ */
+function chatIsUnread(chat: DemoChat): boolean {
+  return chat.unread_count > 0;
+}
+
 function accountName(fourbasedId: string): { name?: string; img_url?: string } {
   const account = state.accounts.find((a) => a.fourbased_id === fourbasedId);
   return { name: account?.name, img_url: account?.img_url ?? undefined };
@@ -68,7 +79,7 @@ function toChatListItem(chat: DemoChat): ChatListItem {
     last_message_preview: last?.message ?? '',
     last_message_at: last?.created_at ?? '',
     unread_count: chat.unread_count,
-    is_unread: chat.is_unread,
+    is_unread: chatIsUnread(chat),
     sales_volume: chat.sales_volume,
     customer_is_online: chat.customer_is_online,
   };
@@ -216,7 +227,7 @@ export const store = {
         const last = c.messages[c.messages.length - 1];
         return last ? new Date(last.created_at ?? 0).getTime() >= cutoff : true;
       })
-      .filter((c) => (filter === 'unread' ? c.is_unread : filter === 'online' ? c.customer_is_online : true))
+      .filter((c) => (filter === 'unread' ? chatIsUnread(c) : filter === 'online' ? c.customer_is_online : true))
       .sort((a, b) => {
         const at = a.messages[a.messages.length - 1]?.created_at ?? '';
         const bt = b.messages[b.messages.length - 1]?.created_at ?? '';
@@ -287,7 +298,7 @@ export const store = {
         generated_at: new Date().toISOString(),
         total_accounts: state.accounts.length,
         total_chats: total,
-        total_unread: allChats().filter((c) => c.is_unread).length,
+        total_unread: allChats().filter(chatIsUnread).length,
         partial_errors: [],
       },
     };
@@ -296,7 +307,7 @@ export const store = {
   searchChats(params: { query?: string; limit?: number; offset?: number; list_names?: 'unread' | 'online'; fourbasedId?: string }): { items: ChatListItem[]; hasMore: boolean; total: number } {
     const { query, limit = 60, offset = 0, list_names, fourbasedId } = params;
     let items = allChats().filter((c) => !fourbasedId || c.fourbased_id === fourbasedId);
-    if (list_names === 'unread') items = items.filter((c) => c.is_unread);
+    if (list_names === 'unread') items = items.filter(chatIsUnread);
     if (list_names === 'online') items = items.filter((c) => c.customer_is_online);
     if (query) {
       const q = query.toLowerCase();
@@ -318,7 +329,6 @@ export const store = {
     const chat = findChat(fourbasedId, chatId);
     if (chat) {
       chat.unread_count = 0;
-      chat.is_unread = false;
     }
   },
 
@@ -357,6 +367,9 @@ export const store = {
       ...(fileStackId && fileStackRegistry().has(fileStackId) ? { file_stack: fileStackRegistry().get(fileStackId) } : {}),
     };
     chat.messages.push(sent);
+    // The creator just replied — last message is now outbound, so the chat
+    // is answered (see `chatIsUnread`).
+    chat.unread_count = 0;
 
     // Occasionally simulate a fan reply a few seconds later so the inbox feels alive.
     if (Math.random() < 0.5) {
@@ -377,7 +390,6 @@ export const store = {
           updated_at: replyAt,
         });
         stillExists.unread_count += 1;
-        stillExists.is_unread = true;
       }, replyDelay);
     }
 
@@ -807,9 +819,9 @@ export const store = {
   },
 
   // ── Notifications ─────────────────────────────────────────────────────
-  getNotifications(type?: string): Notification[] {
-    const list = type ? state.notifications.filter((n) => n.type === type) : state.notifications;
-    return list.slice(0, 20);
+  getNotifications(type?: string, limit = 20): NotificationsResponse {
+    const filtered = type ? state.notifications.filter((n) => n.type === type) : state.notifications;
+    return { data: filtered.slice(0, limit), total: filtered.length, limit, offset: 0 };
   },
 
   getUnreadNotificationCount(): number {
@@ -831,7 +843,7 @@ export const store = {
     const generatedAt = new Date().toISOString();
     const data = state.accounts.map((account) => {
       const chats = state.chats[account.fourbased_id] ?? [];
-      const unreadChats = chats.filter((c) => c.is_unread);
+      const unreadChats = chats.filter(chatIsUnread);
       return {
         profile: { fourbased_id: account.fourbased_id, name: account.name, email: account.identifier, img_url: account.img_url ?? undefined },
         kpis: {

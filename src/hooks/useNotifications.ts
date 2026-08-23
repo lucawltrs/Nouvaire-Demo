@@ -79,10 +79,7 @@ export function useNotifications(teamSlug: string, type?: NotificationType) {
     setLoading(true);
     try {
       const [notifRes, countRes]: [NotificationsResponse, UnreadCountResponse] = DEMO_MODE
-        ? [
-            { data: store.getNotifications(type), total: store.getNotifications(type).length },
-            { unread_count: store.getUnreadNotificationCount() },
-          ]
+        ? [store.getNotifications(type), { unread_count: store.getUnreadNotificationCount() }]
         : await Promise.all([
             notifFetch(listUrl).then((res) => {
               if (!res.ok) throw new Error('Failed to fetch notifications');

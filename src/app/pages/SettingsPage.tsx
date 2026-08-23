@@ -42,7 +42,7 @@ export function SettingsPage() {
                 </div>
                 <div>
                   <p className="text-sm font-medium text-foreground">User Management</p>
-                  <p className="text-xs text-muted-foreground">View and manage team members</p>
+                  <p className="text-xs text-muted-foreground">View and manage team chatters</p>
                 </div>
               </div>
               <IconChevronRight size={16} className="text-muted-foreground group-hover:text-brand transition-colors" />

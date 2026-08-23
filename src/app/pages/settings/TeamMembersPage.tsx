@@ -26,7 +26,7 @@ export function TeamMembersPage() {
       setMembers(data);
     } catch (err) {
       console.error('Failed to fetch team members:', err);
-      setError('Failed to load team members. Please try again.');
+      setError('Failed to load team chatters. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -70,14 +70,14 @@ export function TeamMembersPage() {
               </span>
             )}
           </div>
-          <p className="mt-0.5 text-sm text-muted-foreground">{members.length} member{members.length !== 1 ? 's' : ''} in this team</p>
+          <p className="mt-0.5 text-sm text-muted-foreground">{members.length} chatter{members.length !== 1 ? 's' : ''} in this team</p>
         </div>
         <button
           onClick={() => setShowAddModal(true)}
           className="flex items-center gap-2 px-4 py-2 rounded-lg bg-brand hover:bg-brand-hover text-white text-sm font-medium transition-all"
         >
           <IconUserPlus size={16} />
-          Mitglied hinzufügen
+          Chatter hinzufügen
         </button>
       </div>
 
@@ -88,7 +88,7 @@ export function TeamMembersPage() {
       />
 
       {isLoading ? (
-        <PageLoader message="Lade Team-Mitglieder..." subtitle="Nutzer und Rollen werden abgerufen" />
+        <PageLoader message="Lade Team-Chatter..." subtitle="Nutzer und Rollen werden abgerufen" />
       ) : error ? (
         <ErrorState error={error} onRetry={fetchMembers} />
       ) : members.length === 0 ? (
@@ -258,7 +258,7 @@ function EmptyState() {
     <Card className="p-12 border border-border">
       <div className="text-center">
         <IconUsers className="w-12 h-12 mx-auto mb-3 text-muted-foreground/40" />
-        <p className="text-muted-foreground font-medium">No members found</p>
+        <p className="text-muted-foreground font-medium">No chatters found</p>
       </div>
     </Card>
   );
@@ -271,7 +271,7 @@ function ErrorState({ error, onRetry }: { error: string; onRetry: () => void }) 
         <div className="w-16 h-16 rounded-full bg-destructive/10 flex items-center justify-center mx-auto mb-4">
           <IconAlertCircle className="w-8 h-8 text-destructive" />
         </div>
-        <h3 className="text-lg font-semibold text-foreground mb-2">Error loading members</h3>
+        <h3 className="text-lg font-semibold text-foreground mb-2">Error loading chatters</h3>
         <p className="text-muted-foreground mb-6">{error}</p>
         <button
           onClick={onRetry}
@@ -306,7 +306,7 @@ function AddMemberModal({ isOpen, onClose, onSuccess }: { isOpen: boolean; onClo
       setForm({ name: '', email: '', password: '', password_confirmation: '' });
       onSuccess();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Fehler beim Hinzufügen des Mitglieds.');
+      setError(err instanceof Error ? err.message : 'Fehler beim Hinzufügen des Chatters.');
     } finally {
       setLoading(false);
     }
@@ -319,7 +319,7 @@ function AddMemberModal({ isOpen, onClose, onSuccess }: { isOpen: boolean; onClo
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={handleClose} title="Mitglied hinzufügen" size="sm">
+    <Modal isOpen={isOpen} onClose={handleClose} title="Chatter hinzufügen" size="sm">
       <form onSubmit={handleSubmit} className="space-y-4">
         <Input label="Name" name="name" value={form.name} onChange={handleChange} placeholder="Max Mustermann" required />
         <Input label="E-Mail" name="email" type="email" value={form.email} onChange={handleChange} placeholder="max@example.com" required />

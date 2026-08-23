@@ -87,7 +87,7 @@ export function GroupsPage() {
     try {
       setIsRemoving(true);
       await groupsApi.removeMember(group.id, member.id);
-      toast.success('Member removed from group');
+      toast.success('Chatter removed from group');
       setRemoveMemberTarget(null);
       setGroups((prev) =>
         prev.map((g) =>
@@ -98,7 +98,7 @@ export function GroupsPage() {
       );
     } catch (err) {
       console.error('Failed to remove member:', err);
-      toast.error('Failed to remove member. Please try again.');
+      toast.error('Failed to remove chatter. Please try again.');
     } finally {
       setIsRemoving(false);
     }
@@ -180,7 +180,7 @@ export function GroupsPage() {
                 <button
                   onClick={() => setAddMemberTarget(group)}
                   className="p-1.5 rounded-lg text-muted-foreground hover:text-brand hover:bg-brand/10 transition-all shrink-0"
-                  title="Add member"
+                  title="Add chatter"
                 >
                   <IconUserPlus size={15} />
                 </button>
@@ -211,7 +211,7 @@ export function GroupsPage() {
                   ))}
                 </ul>
               ) : (
-                <p className="text-xs text-muted-foreground italic">No members yet</p>
+                <p className="text-xs text-muted-foreground italic">No chatters yet</p>
               )}
             </Card>
           ))}
@@ -262,7 +262,7 @@ export function GroupsPage() {
       <Modal
         isOpen={!!removeMemberTarget}
         onClose={() => setRemoveMemberTarget(null)}
-        title="Remove Member"
+        title="Remove Chatter"
         size="sm"
       >
         <div className="p-4 sm:p-6 space-y-4">
@@ -306,7 +306,7 @@ function AddMemberModal({ group, onClose, onSaved }: AddMemberModalProps) {
     setIsLoadingMembers(true);
     teamApi.getMembers()
       .then(setMembers)
-      .catch(() => setError('Failed to load team members.'))
+      .catch(() => setError('Failed to load team chatters.'))
       .finally(() => setIsLoadingMembers(false));
   }, [group]);
 
@@ -317,19 +317,19 @@ function AddMemberModal({ group, onClose, onSaved }: AddMemberModalProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!group || !selectedMemberId) {
-      setError('Please select a team member.');
+      setError('Please select a chatter.');
       return;
     }
     try {
       setIsSaving(true);
       setError(null);
       await groupsApi.assignMember(group.id, Number(selectedMemberId));
-      toast.success('Member added to group');
+      toast.success('Chatter added to group');
       onClose();
       onSaved();
     } catch (err) {
       console.error(err);
-      setError('Failed to add member. Please try again.');
+      setError('Failed to add chatter. Please try again.');
     } finally {
       setIsSaving(false);
     }
@@ -341,16 +341,16 @@ function AddMemberModal({ group, onClose, onSaved }: AddMemberModalProps) {
   }));
 
   return (
-    <Modal isOpen={!!group} onClose={onClose} title={`Add Member — ${group?.name}`} size="sm">
+    <Modal isOpen={!!group} onClose={onClose} title={`Add Chatter — ${group?.name}`} size="sm">
       <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-4">
         <Select
-          label="Team Member"
+          label="Chatter"
           options={
             isLoadingMembers
               ? [{ value: '', label: 'Loading…' }]
               : availableMembers.length === 0
-              ? [{ value: '', label: 'All members already in group' }]
-              : [{ value: '', label: 'Select a member…' }, ...memberOptions]
+              ? [{ value: '', label: 'All chatters already in group' }]
+              : [{ value: '', label: 'Select a chatter…' }, ...memberOptions]
           }
           value={selectedMemberId}
           onChange={(e) => setSelectedMemberId(e.target.value)}

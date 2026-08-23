@@ -110,7 +110,7 @@ export function TeamMemberDetailPage() {
       const found = members.find((m) => m.user_id === id);
       setMember(found ?? null);
     } catch {
-      setError('Mitglied konnte nicht geladen werden.');
+      setError('Chatter konnte nicht geladen werden.');
     } finally {
       setIsLoadingMember(false);
     }
@@ -145,7 +145,7 @@ export function TeamMemberDetailPage() {
   };
 
   if (isLoadingMember) {
-    return <PageLoader message="Lade Mitglied..." subtitle="Profil und Arbeitszeiten werden abgerufen" />;
+    return <PageLoader message="Lade Chatter..." subtitle="Profil und Arbeitszeiten werden abgerufen" />;
   }
 
   if (error || !member) {
@@ -156,7 +156,7 @@ export function TeamMemberDetailPage() {
             <IconAlertCircle className="w-8 h-8 text-destructive" />
           </div>
           <h3 className="text-lg font-semibold text-foreground mb-2">Fehler beim Laden</h3>
-          <p className="text-muted-foreground mb-6">{error ?? 'Mitglied nicht gefunden'}</p>
+          <p className="text-muted-foreground mb-6">{error ?? 'Chatter nicht gefunden'}</p>
           <div className="flex justify-center gap-3">
             <button
               onClick={() => navigate('/settings/members')}
