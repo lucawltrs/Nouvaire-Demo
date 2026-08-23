@@ -543,13 +543,15 @@ export const store = {
 
   // ── Cloud ─────────────────────────────────────────────────────────────
   getCloudUsers(): CloudUser[] {
+    // The real cloudApi.getUsers()/getUser() only proxy the basic
+    // /teams/:id/fourbased-users list (same endpoint as accountsApi) — it
+    // never returns `assets_count` or `last_asset_at`, so those badges never
+    // show in production. Don't set them here either.
     return state.accounts.map((a) => ({
       fourbased_id: a.fourbased_id,
       name: a.name,
       email: a.identifier,
       img_url: a.img_url,
-      assets_count: state.cloudAssets[a.fourbased_id]?.length ?? 0,
-      last_asset_at: state.cloudAssets[a.fourbased_id]?.[0]?.created_at ?? null,
       folders: Array.from(new Set((state.cloudAssets[a.fourbased_id] ?? []).flatMap((c) => c.folders ?? []))),
     }));
   },

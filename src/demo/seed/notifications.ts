@@ -1,4 +1,14 @@
 import type { Notification } from '../../modules/notifications/types';
+import { DEMO_ACCOUNTS } from './accounts';
+import { DEMO_CHATS } from './chats';
+
+// The "Neue Nachricht" notification deep-links into a chat (NotificationBell
+// navigates to /inbox/:fourbased_id/chat/:chat_id for type 'message'/'sale').
+// Point it at a chat that actually exists in the seed instead of the
+// fixture's placeholder ids ("fb_9982"/"abc123"), which don't resolve to
+// anything and land on "Chat nicht gefunden".
+const linkedAccount = DEMO_ACCOUNTS[0];
+const linkedChat = DEMO_CHATS[linkedAccount.fourbased_id][0];
 
 /**
  * Exact fixture handed over for the demo: one of each notification type
@@ -8,7 +18,10 @@ import type { Notification } from '../../modules/notifications/types';
  * The source payload's `fourbased_user.avatar` was a literal placeholder
  * ("https://.../avatar.jpg") that would render as a broken image — omitted
  * here so NotificationBell falls back to its existing type-icon avatar
- * instead of a broken <img>.
+ * instead of a broken <img>. `fourbased_user.fourbased_id` and
+ * `data.chat_id` were also placeholders — repointed at a real seeded chat
+ * (see `linkedAccount`/`linkedChat` above) so clicking the notification
+ * actually opens a conversation instead of "Chat nicht gefunden".
  */
 export const DEMO_NOTIFICATIONS: Notification[] = [
   {
@@ -19,11 +32,11 @@ export const DEMO_NOTIFICATIONS: Notification[] = [
     type: 'message',
     title: 'Neue Nachricht 💬',
     body: 'Nina P.: Hey, wie geht\'s? 😊',
-    data: { chat_id: 'abc123', message: 'Hey, wie geht\'s? 😊', user: { name: 'Nina P.' } },
+    data: { chat_id: linkedChat.chat_id, message: 'Hey, wie geht\'s? 😊', user: { name: 'Nina P.' } },
     read_at: null,
     created_at: '2026-08-23T09:12:04.000000Z',
     updated_at: '2026-08-23T09:12:04.000000Z',
-    fourbased_user: { id: 12, name: 'OnlyModel_Lisa', fourbased_id: 'fb_9982' },
+    fourbased_user: { id: 12, name: linkedAccount.name, fourbased_id: linkedAccount.fourbased_id },
   },
   {
     id: '496',
@@ -37,7 +50,7 @@ export const DEMO_NOTIFICATIONS: Notification[] = [
     read_at: null,
     created_at: '2026-08-23T08:55:00.000000Z',
     updated_at: '2026-08-23T08:55:00.000000Z',
-    fourbased_user: { id: 12, name: 'OnlyModel_Lisa', fourbased_id: 'fb_9982' },
+    fourbased_user: { id: 12, name: linkedAccount.name, fourbased_id: linkedAccount.fourbased_id },
   },
   {
     id: '500',
@@ -51,7 +64,7 @@ export const DEMO_NOTIFICATIONS: Notification[] = [
     read_at: '2026-08-23T08:00:00.000000Z',
     created_at: '2026-08-23T07:59:10.000000Z',
     updated_at: '2026-08-23T08:00:00.000000Z',
-    fourbased_user: { id: 12, name: 'OnlyModel_Lisa', fourbased_id: 'fb_9982' },
+    fourbased_user: { id: 12, name: linkedAccount.name, fourbased_id: linkedAccount.fourbased_id },
   },
   {
     id: '499',
@@ -65,6 +78,6 @@ export const DEMO_NOTIFICATIONS: Notification[] = [
     read_at: null,
     created_at: '2026-08-23T07:30:00.000000Z',
     updated_at: '2026-08-23T07:30:00.000000Z',
-    fourbased_user: { id: 12, name: 'OnlyModel_Lisa', fourbased_id: 'fb_9982' },
+    fourbased_user: { id: 12, name: linkedAccount.name, fourbased_id: linkedAccount.fourbased_id },
   },
 ];
