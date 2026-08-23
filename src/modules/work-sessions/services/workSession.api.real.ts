@@ -1,0 +1,160 @@
+import { getConfig } from '../../../lib/config';
+
+interface StartWorkSessionResponse {
+  started_at: string;
+  id: number;
+}
+
+export interface WorkSession {
+  id: number;
+  team_user_id: number;
+  started_at: string;
+  ended_at: string | null;
+  duration: number | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ActiveWorkSession {
+  id: number;
+  team_user_id: number;
+  started_at: string;
+  ended_at: null;
+  duration: null;
+  ended_by_admin: boolean;
+  admin_note: string | null;
+  team_user: Record<string, unknown>;
+}
+
+const apiFetch = async (url: string, options: RequestInit = {}) => {
+  const token = localStorage.getItem('auth_token');
+  const response = await fetch(url, {
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token && { Authorization: `Bearer ${token}` }),
+      ...options.headers,
+    },
+  });
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(`API error ${response.status}: ${text}`);
+  }
+  return response;
+};
+
+export async function getActiveWorkSession(): Promise<ActiveWorkSession | null> {
+  const res = await apiFetch(`${getConfig().API_URL}/work-sessions/active`);
+  const raw = await res.json();
+  return raw?.message ?? null;
+}
+
+export async function getWorkSessionsForUser(
+  userId: number,
+  from?: string,
+  till?: string,
+): Promise<WorkSession[]> {
+  const params = new URLSearchParams();
+  if (from) params.set('from', from);
+  if (till) params.set('till', till);
+  const query = params.toString();
+  const res = await apiFetch(
+    `${getConfig().API_URL}/members/${userId}/work-sessions${query ? `?${query}` : ''}`,
+  );
+  const raw = await res.json();
+  return raw?.message ?? [];
+}
+
+export async function postStartWorkSession(startedAt: string, token: string): Promise<StartWorkSessionResponse> {
+  const response = await fetch(`${getConfig().API_URL}/work-sessions`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ started_at: startedAt }),
+  });
+
+  const json = await response.json();
+
+  if (!response.ok || json?.status === 'error') {
+    throw new Error(json?.message ?? 'Failed to start work session');
+  }
+
+  return {
+    started_at: json.message?.started_at ?? startedAt,
+    id: json.message?.id ?? 0,
+  };
+}
+
+export async function putEndWorkSession(id: number, endedAt: string, token: string): Promise<void> {
+  const response = await fetch(`${getConfig().API_URL}/work-sessions/${id}`, {
+    method: 'PUT',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ ended_at: endedAt }),
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to end work session');
+  }
+}
+
+export interface SessionOverviewSession {
+  id: number;
+  started_at: string;
+  ended_at: string | null;
+  duration: number | null;
+  is_active: boolean;
+  revenue: string;
+}
+
+export interface SessionOverview {
+  user: {
+    id: number;
+    name: string;
+    email: string;
+  };
+  sessions: SessionOverviewSession[];
+  total_revenue: string;
+  chatter_percentage: number | null;
+}
+
+export async function getSessionOverview(
+  userId: number,
+  from?: string,
+  till?: string,
+): Promise<SessionOverview> {
+  const params = new URLSearchParams();
+  if (from) params.set('from', from);
+  if (till) params.set('till', till);
+  const query = params.toString();
+  const res = await apiFetch(
+    `${getConfig().API_URL}/members/${userId}/session-overview${query ? `?${query}` : ''}`,
+  );
+  const raw = await res.json();
+  return raw?.message;
+}
+
+export async function postAdminEndWorkSession(
+  id: number,
+  adminNote: string,
+  endedAt: string,
+  token: string,
+): Promise<void> {
+  const response = await fetch(`${getConfig().API_URL}/work-sessions/${id}/admin-end`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ admin_note: adminNote, ended_at: endedAt }),
+  });
+
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(`API error ${response.status}: ${text}`);
+  }
+}

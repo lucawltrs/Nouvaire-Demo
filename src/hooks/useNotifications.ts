@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { getConfig } from '../lib/config';
+import { DEMO_MODE } from '../demo/config';
+import { store } from '../demo/store';
 import type { Notification, NotificationsResponse, NotificationType, UnreadCountResponse } from '../modules/notifications/types';
 
 const POLL_INTERVAL_MS = 5_000;
@@ -76,16 +78,21 @@ export function useNotifications(teamSlug: string, type?: NotificationType) {
   const fetchNotifications = useCallback(async () => {
     setLoading(true);
     try {
-      const [notifRes, countRes] = await Promise.all([
-        notifFetch(listUrl).then((res) => {
-          if (!res.ok) throw new Error('Failed to fetch notifications');
-          return res.json() as Promise<NotificationsResponse>;
-        }),
-        notifFetch(`${apiBase}/unread-count`).then((res) => {
-          if (!res.ok) throw new Error('Failed to fetch unread count');
-          return res.json() as Promise<UnreadCountResponse>;
-        }),
-      ]);
+      const [notifRes, countRes]: [NotificationsResponse, UnreadCountResponse] = DEMO_MODE
+        ? [
+            { data: store.getNotifications(type), total: store.getNotifications(type).length },
+            { unread_count: store.getUnreadNotificationCount() },
+          ]
+        : await Promise.all([
+            notifFetch(listUrl).then((res) => {
+              if (!res.ok) throw new Error('Failed to fetch notifications');
+              return res.json() as Promise<NotificationsResponse>;
+            }),
+            notifFetch(`${apiBase}/unread-count`).then((res) => {
+              if (!res.ok) throw new Error('Failed to fetch unread count');
+              return res.json() as Promise<UnreadCountResponse>;
+            }),
+          ]);
       setNotifications(notifRes.data);
       setUnreadCount(countRes.unread_count);
 
@@ -126,13 +133,17 @@ export function useNotifications(teamSlug: string, type?: NotificationType) {
     } finally {
       setLoading(false);
     }
-  }, [apiBase, listUrl]);
+  }, [apiBase, listUrl, type]);
 
   const markAsRead = useCallback(async (id: string) => {
     setNotifications((prev) =>
       prev.map((n) => (n.id === id ? { ...n, read_at: new Date().toISOString() } : n)),
     );
     setUnreadCount((c) => Math.max(0, c - 1));
+    if (DEMO_MODE) {
+      store.markNotificationRead(id);
+      return;
+    }
     try {
       const res = await notifFetch(`${apiBase}/${id}/read`, { method: 'PUT' });
       if (!res.ok) throw new Error('Failed to mark notification as read');
@@ -144,6 +155,10 @@ export function useNotifications(teamSlug: string, type?: NotificationType) {
   const markAllAsRead = useCallback(async () => {
     setNotifications((prev) => prev.map((n) => ({ ...n, read_at: n.read_at ?? new Date().toISOString() })));
     setUnreadCount(0);
+    if (DEMO_MODE) {
+      store.markAllNotificationsRead();
+      return;
+    }
     try {
       const res = await notifFetch(`${apiBase}/read-all`, { method: 'PUT' });
       if (!res.ok) throw new Error('Failed to mark all notifications as read');

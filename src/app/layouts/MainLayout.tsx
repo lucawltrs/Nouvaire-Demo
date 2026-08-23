@@ -1,7 +1,7 @@
 import { ReactNode, useEffect, useState, useSyncExternalStore } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../lib/auth/useAuthStore';
-import { IconLayoutDashboard, IconLogout, IconMessage, IconUsers, IconSettings, IconCloud, IconUserCircle, IconSquare, IconSend, IconMenu2, IconChevronDown, IconSun, IconMoon } from '@tabler/icons-react';
+import { IconLayoutDashboard, IconLogout, IconMessage, IconUsers, IconSettings, IconCloud, IconUserCircle, IconSquare, IconSend, IconMenu2, IconChevronDown, IconSun, IconMoon, IconRefresh } from '@tabler/icons-react';
 import { NotificationsProvider } from '../../contexts/NotificationsContext';
 import { NotificationBell } from '../../components/NotificationBell';
 import { PushNotificationBanner } from '../../components/PushNotificationBanner';
@@ -10,6 +10,8 @@ import { WorkSessionModal } from '../../modules/work-sessions/components/WorkSes
 import { putEndWorkSession } from '../../modules/work-sessions/services/workSession.api';
 import { unreadCountStore } from '../../lib/unreadCountStore';
 import { dashboardApi } from '../../modules/dashboard/services/dashboard.api';
+import { DEMO_MODE } from '../../demo/config';
+import { resetDemoStore } from '../../demo/store';
 import { useTheme } from '../../contexts/ThemeContext';
 import { cn } from '../../lib/utils';
 import { Avatar, AvatarFallback } from '../../components/ui/avatar';
@@ -184,6 +186,13 @@ export function MainLayout({ children }: MainLayoutProps) {
 
   const handleLogout = () => { logout(); navigate('/login'); };
 
+  const handleResetDemo = () => {
+    resetDemoStore();
+    // Full reload so every already-mounted view re-fetches from the freshly
+    // reset store instead of continuing to show stale local component state.
+    window.location.href = '/';
+  };
+
   const handleEndSession = async () => {
     if (!token || !sessionId) return;
     setSessionLoading(true);
@@ -289,6 +298,16 @@ export function MainLayout({ children }: MainLayoutProps) {
                           <p className="text-xs text-destructive">{sessionError}</p>
                         </div>
                       )}
+                    </>
+                  )}
+
+                  {DEMO_MODE && (
+                    <>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={handleResetDemo}>
+                        <IconRefresh size={15} />
+                        Demo zurücksetzen
+                      </DropdownMenuItem>
                     </>
                   )}
 
