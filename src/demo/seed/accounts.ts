@@ -1,8 +1,5 @@
 import type { Account } from '../../modules/accounts/types';
 
-const usd = (amount: number) =>
-  new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
-
 const hoursAgo = (h: number) => new Date(Date.now() - h * 60 * 60 * 1000).toISOString();
 
 interface AccountSeedInput {
@@ -107,6 +104,19 @@ const RAW: AccountSeedInput[] = [
   },
 ];
 
+/**
+ * The real `accountsApi.getAccount()`/`getAccounts()` only ever proxy the
+ * basic `/teams/:id/fourbased-users` list endpoint — the extended fields
+ * below (`total_netto_amount`, `follower_count`, `likes_count`,
+ * `file_stack_count`, `file_stack_with_price_count`,
+ * `has_subscription_configuration`) are documented as "only present on
+ * detailed endpoints" and are in practice never populated by that call.
+ * AccountDetailPage's KPI card grid is entirely gated on those fields being
+ * non-null, so it never renders in production. DO NOT set them here — doing
+ * so makes that KPI grid appear, which is a card section this app doesn't
+ * actually have. Revenue/followers for other views come from the base
+ * `revenue`/`followers` fields below, which the real endpoint does return.
+ */
 export const DEMO_ACCOUNTS: Account[] = RAW.map((a) => ({
   online_status_dot: a.is_online ? 'green' : 'gray',
   last_activity: a.is_online ? 'Gerade eben' : `vor ${Math.round(a.lastActivityHoursAgo)} Std.`,
@@ -119,10 +129,32 @@ export const DEMO_ACCOUNTS: Account[] = RAW.map((a) => ({
   is_online: a.is_online,
   assigned_to: a.assigned_to ?? null,
   last_activity_date: hoursAgo(a.lastActivityHoursAgo),
-  total_netto_amount: a.netto,
-  follower_count: a.followers,
-  likes_count: a.likes,
-  file_stack_count: a.fileStacks,
-  file_stack_with_price_count: a.fileStacksWithPrice,
-  has_subscription_configuration: a.hasSubscription,
 }));
+
+/**
+ * Internal-only per-account numbers that legitimately-separate real
+ * endpoints DO return (e.g. `/4based/dashboard`, revenue forecast) — kept
+ * out of the `Account` shape itself so `getAccount()` stays faithful to
+ * production. Used by `dashboardApi.getDashboard`, `getRevenueForecast` and
+ * `refreshAccount` in store.ts.
+ */
+export const DEMO_ACCOUNT_DETAILS: Record<
+  string,
+  { netto: number; followers: number; likes: number; fileStacks: number; fileStacksWithPrice: number; hasSubscription: boolean }
+> = Object.fromEntries(
+  RAW.map((a) => [
+    a.fourbased_id,
+    {
+      netto: a.netto,
+      followers: a.followers,
+      likes: a.likes,
+      fileStacks: a.fileStacks,
+      fileStacksWithPrice: a.fileStacksWithPrice,
+      hasSubscription: a.hasSubscription,
+    },
+  ]),
+);
+
+export function usd(amount: number): string {
+  return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
+}

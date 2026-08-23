@@ -1,5 +1,5 @@
 import type { AccountEmoji } from '../../modules/accounts/types';
-import { DEMO_ACCOUNTS } from './accounts';
+import { DEMO_ACCOUNTS, DEMO_ACCOUNT_DETAILS } from './accounts';
 import { DEMO_CHATS } from './chats';
 import { DEMO_ACCOUNT_EXTRAS } from './accountExtras';
 import { DEMO_CLOUD_ASSETS } from './cloud';
@@ -30,6 +30,12 @@ const DEMO_ACCOUNT_EMOJIS: Record<string, AccountEmoji[]> = Object.fromEntries(
 export function buildDemoSnapshot() {
   return {
     accounts: DEMO_ACCOUNTS,
+    // Internal-only running revenue per account (drives dashboard KPIs,
+    // revenue forecast, and refreshAccount's bump) — kept separate from the
+    // public Account shape, see DEMO_ACCOUNT_DETAILS' doc comment.
+    accountNetto: Object.fromEntries(
+      Object.entries(DEMO_ACCOUNT_DETAILS).map(([id, d]) => [id, d.netto]),
+    ) as Record<string, number>,
     accountEmojis: DEMO_ACCOUNT_EMOJIS,
     chats: DEMO_CHATS,
     accountExtras: DEMO_ACCOUNT_EXTRAS,

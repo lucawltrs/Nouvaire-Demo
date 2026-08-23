@@ -26,6 +26,7 @@ import type { NotificationsResponse } from '../modules/notifications/types';
 import type { DashboardApiResponse } from '../modules/dashboard/types';
 import type { DemoChat } from './types';
 import { buildDemoSnapshot, type DemoSnapshot } from './seed';
+import { DEMO_ACCOUNT_DETAILS } from './seed/accounts';
 import { DEMO_USER } from './seed/auth';
 import { generateId, pickRandom, randomInt } from './utils';
 
@@ -124,10 +125,9 @@ export const store = {
     const account = this.getAccount(fourbasedId);
     if (!account) return undefined;
     const bump = randomInt(5, 80);
-    account.total_netto_amount = (account.total_netto_amount ?? 0) + bump;
-    account.revenue = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(
-      account.total_netto_amount,
-    );
+    const netto = (state.accountNetto[fourbasedId] ?? 0) + bump;
+    state.accountNetto[fourbasedId] = netto;
+    account.revenue = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(netto);
     account.last_activity = 'Gerade eben';
     account.last_activity_date = new Date().toISOString();
     return account;
@@ -147,13 +147,8 @@ export const store = {
       is_online: true,
       assigned_to: null,
       last_activity_date: new Date().toISOString(),
-      total_netto_amount: 0,
-      follower_count: 0,
-      likes_count: 0,
-      file_stack_count: 0,
-      file_stack_with_price_count: 0,
-      has_subscription_configuration: false,
     };
+    state.accountNetto[fourbasedId] = 0;
     state.accounts.push(account);
     state.chats[fourbasedId] = [];
     state.cloudAssets[fourbasedId] = [];
@@ -175,6 +170,7 @@ export const store = {
     delete state.userLists[fourbasedId];
     delete state.accountExtras[fourbasedId];
     delete state.accountEmojis[fourbasedId];
+    delete state.accountNetto[fourbasedId];
     delete fourBasedGroupAssignment[fourbasedId];
   },
 
@@ -847,11 +843,11 @@ export const store = {
       return {
         profile: { fourbased_id: account.fourbased_id, name: account.name, email: account.identifier, img_url: account.img_url ?? undefined },
         kpis: {
-          revenue_net: account.total_netto_amount ?? 0,
+          revenue_net: state.accountNetto[account.fourbased_id] ?? 0,
           unread_chats: unreadChats.length,
           unread_messages: chats.reduce((sum, c) => sum + c.unread_count, 0),
-          likes: account.likes_count ?? 0,
-          followers: account.follower_count ?? 0,
+          likes: DEMO_ACCOUNT_DETAILS[account.fourbased_id]?.likes ?? 0,
+          followers: account.followers ?? 0,
           status: { is_online: account.is_online ?? false, last_activity_date: account.last_activity_date ?? generatedAt },
         },
         lists: {
@@ -871,8 +867,7 @@ export const store = {
   },
 
   getRevenueForecast(fourbasedUserId: string, days: number): RevenueForecastResult {
-    const account = this.getAccount(fourbasedUserId);
-    const dailyAverage = (account?.total_netto_amount ?? 3000) / 90;
+    const dailyAverage = (state.accountNetto[fourbasedUserId] ?? 3000) / 90;
     const today = new Date();
     const historical = Array.from({ length: days }, (_, i) => {
       const date = new Date(today);
